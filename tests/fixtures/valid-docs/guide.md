@@ -1,17 +1,7 @@
 # User Guide
 
-Welcome to the user guide!
+This is the user guide.
 
-## Getting Started
+See also: [API Documentation](./api.md)
 
-See the [API Reference](./api.md) for details.
-
-Back to [README](./README.md).
-
-## Advanced Topics
-
-Check out the [advanced section](#advanced-section) below.
-
-### Advanced Section
-
-This is the advanced section that we link to above.
+[Back to README](./README.md)

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'child_process';
 
-const CLI = 'node dist/index.js';
+const CLI = 'node dist/src/index.js';
 
 describe('CLI', () => {
   it('shows version', () => {

@@ -1,16 +1,91 @@
-import { DocLintConfig } from '../types/config.js';
+import { RuntimeConfig } from '../types/config.js';
 import { LintResults } from '../types/results.js';
 import { Logger } from '../utils/logger.js';
 import { GraphAnalyzer } from './graph-analyzer.js';
 import { LinkValidator } from './link-validator.js';
 import { RemarkEngine } from './remark-engine.js';
 
+/**
+ * Main documentation linter orchestrator
+ *
+ * Coordinates graph building, link validation, orphan detection,
+ * and content linting to produce a comprehensive lint report.
+ *
+ * The linting process follows these steps:
+ * 1. Build dependency graph from entrypoint file
+ * 2. Detect orphaned files (not reachable from entrypoint)
+ * 3. Validate all links (files and anchors)
+ * 4. Run remark content linting on all reachable files
+ * 5. Aggregate and return results
+ *
+ * @example
+ * ```typescript
+ * import { DocLinter } from './core/doc-linter.js';
+ * import { Logger } from './utils/logger.js';
+ *
+ * const linter = new DocLinter(
+ *   {
+ *     entrypoint: 'README.md',
+ *     format: 'text',
+ *     colors: true,
+ *     verbose: false,
+ *     rules: {
+ *       'dead-link': 'error',
+ *       'orphan-files': 'warn'
+ *     }
+ *   },
+ *   new Logger({ colors: true, verbose: false })
+ * );
+ *
+ * const results = await linter.lint('./docs');
+ * console.log(`Errors: ${results.errorCount}, Warnings: ${results.warningCount}`);
+ * ```
+ */
 export class DocLinter {
+  /**
+   * Create a new DocLinter instance
+   *
+   * @param config - Runtime configuration for the linter
+   * @param logger - Logger instance for output
+   */
   constructor(
-    private config: DocLintConfig,
+    private config: RuntimeConfig,
     private logger: Logger
   ) {}
 
+  /**
+   * Lint a documentation directory
+   *
+   * Performs comprehensive documentation linting including:
+   * - Dependency graph building
+   * - Orphan file detection
+   * - Link validation (files and anchors)
+   * - Content linting with remark
+   *
+   * @param basePath - Absolute path to the documentation directory
+   * @param quiet - Suppress progress output (default: false)
+   * @returns Lint results with errors, warnings, and statistics
+   * @throws {DirectoryNotFoundError} If the directory doesn't exist
+   * @throws {GraphBuildError} If graph building fails
+   * @throws {FileNotFoundError} If entrypoint file doesn't exist
+   *
+   * @example
+   * ```typescript
+   * const results = await linter.lint('./docs');
+   *
+   * if (results.errorCount > 0) {
+   *   console.error('Found errors:', results.errors);
+   *   process.exit(1);
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Quiet mode for programmatic use
+   * const results = await linter.lint('./docs', true);
+   * return results.toJSON();
+   * ```
+   */
   async lint(basePath: string, quiet = false): Promise<LintResults> {
     if (!quiet) this.logger.info('Building dependency graph...');
 

@@ -3,6 +3,7 @@ import { DocLinter } from '../core/doc-linter.js';
 import { ConfigManager } from '../core/config-manager.js';
 import { Reporter } from '../core/reporter.js';
 import { Logger } from '../utils/logger.js';
+import { CliOptions } from '../types/config.js';
 
 export function lintCommand(): Command {
   return new Command('lint')
@@ -10,25 +11,40 @@ export function lintCommand(): Command {
     .argument('[path]', 'Documentation directory', '.')
     .option('--fix', 'Auto-fix issues (not implemented in v1)')
     .option('--format <type>', 'Output format (text|json)', 'text')
+    .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
     .action(async (path: string, options, command) => {
+      const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
-      const logger = new Logger(command.optsWithGlobals().colors !== false && !isJsonFormat);
+
+      // Determine colors setting: disabled for JSON format or if explicitly disabled
+      const colors = !isJsonFormat && globalOpts.colors !== false;
+      const logger = new Logger(colors);
 
       try {
         if (!isJsonFormat) {
           logger.header('doc-lint');
         }
 
-        // Load configuration
-        const configManager = new ConfigManager();
-        const config = await configManager.load({
-          ...command.optsWithGlobals(),
-          basePath: path,
-        });
+        // Build CLI options for the new layered config system
+        const cliOptions: CliOptions = {
+          entrypoint: options.entrypoint,
+          format: options.format,
+          colors,
+          verbose: globalOpts.verbose,
+          config: globalOpts.config,
+        };
+
+        // Load configuration with proper layering
+        const configManager = await ConfigManager.load(cliOptions);
+        const config = configManager.getConfig();
 
         if (!isJsonFormat) {
           logger.info(`Linting: ${path}`);
           logger.info(`Entrypoint: ${config.entrypoint}`);
+          if (config.verbose) {
+            logger.info(`Format: ${config.format}`);
+            logger.info(`Colors: ${config.colors}`);
+          }
           logger.line();
         }
 

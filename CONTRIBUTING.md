@@ -1,0 +1,536 @@
+# Contributing to doc-lint
+
+Thanks for your interest in contributing to doc-lint! This document provides guidelines for contributing to the project.
+
+## Code of Conduct
+
+Be respectful, inclusive, and constructive. We're all here to build something great together.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 18.0.0
+- npm
+- Git
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/doc-lint.git
+cd doc-lint
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Link for local testing
+npm link
+
+# Test the CLI
+doc-lint --version
+```
+
+## Git Hooks
+
+This project uses git hooks to maintain code quality.
+
+### Setup
+
+Hooks are automatically configured when you run `npm install`.
+
+To manually configure:
+
+```bash
+npm run hooks:setup
+```
+
+### Pre-commit Hook
+
+The pre-commit hook:
+- Prevents committing `scratch/` directory
+- Runs ESLint on staged files
+- Runs Prettier on staged files
+- Prevents committing `coverage/` and `node_modules/`
+
+### Commit Message Hook
+
+Validates commit messages follow [Conventional Commits](https://conventionalcommits.org/) format:
+
+```
+type(scope): description
+
+[optional body]
+
+[optional footer]
+```
+
+**Valid types:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `style:` - Formatting
+- `refactor:` - Code restructuring
+- `test:` - Tests
+- `chore:` - Build/tooling
+- `perf:` - Performance
+
+### Bypassing Hooks
+
+In exceptional cases, you can bypass hooks:
+
+```bash
+git commit --no-verify
+```
+
+**Note:** This is not recommended and should only be used when absolutely necessary.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Coverage report
+npm run test:coverage
+
+# Run specific test files
+npm run test:unit
+npm run test:integration
+```
+
+### Code Quality Checks
+
+```bash
+# Lint code
+npm run lint
+
+# Type check
+npm run typecheck
+
+# Format code
+npm run format
+
+# Run all checks (lint + typecheck + test)
+npm run validate
+```
+
+## Development Workflow
+
+### 1. Fork and Clone
+
+Fork the repository on GitHub, then clone your fork:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/doc-lint.git
+cd doc-lint
+git remote add upstream https://github.com/original/doc-lint.git
+```
+
+### 2. Create a Branch
+
+Create a feature branch from `main`:
+
+```bash
+git checkout main
+git pull upstream main
+git checkout -b feature/my-awesome-feature
+```
+
+Use descriptive branch names:
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation updates
+- `refactor/` - Code refactoring
+- `test/` - Test improvements
+
+### 3. Make Changes
+
+- Write clean, readable code
+- Follow existing code style and conventions
+- Add tests for new functionality
+- Update documentation as needed
+- Keep commits focused and atomic
+
+### 4. Test Your Changes
+
+```bash
+# Run validation suite
+npm run validate
+
+# Test the CLI locally
+npm run build
+npm link
+doc-lint --version
+doc-lint init
+```
+
+### 5. Commit Your Changes
+
+Follow [Conventional Commits](https://conventionalcommits.org/) format:
+
+```
+type(scope): brief description
+
+Longer description if needed.
+
+- Bullet points for details
+- More information
+
+Closes #123
+```
+
+**Types:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `refactor:` - Code refactoring (no functional changes)
+- `test:` - Test additions or changes
+- `chore:` - Build process, tooling, dependencies
+- `perf:` - Performance improvements
+- `style:` - Code style changes (formatting, etc.)
+
+**Examples:**
+
+```bash
+git commit -m "feat: add external link validation"
+
+git commit -m "fix: handle missing frontmatter gracefully
+
+- Check if frontmatter exists before parsing
+- Return empty object if missing
+- Add tests for edge case
+
+Closes #45"
+
+git commit -m "docs: add examples for custom rules"
+```
+
+### 6. Push and Create Pull Request
+
+```bash
+# Push to your fork
+git push origin feature/my-awesome-feature
+
+# Create PR on GitHub
+```
+
+**PR Guidelines:**
+- Fill out the PR template completely
+- Reference related issues
+- Ensure all CI checks pass
+- Respond to review feedback promptly
+
+## Project Structure
+
+```
+doc-lint/
+├── src/
+│   ├── commands/         # CLI command implementations
+│   ├── core/             # Business logic (linting, validation, etc.)
+│   ├── types/            # Zod schemas and TypeScript types
+│   ├── utils/            # Utilities (logger, fs, errors)
+│   ├── cli.ts            # CLI setup (Commander.js)
+│   └── index.ts          # Entry point
+├── tests/
+│   ├── unit/             # Unit tests
+│   ├── integration/      # Integration tests
+│   ├── fixtures/         # Test fixtures
+│   └── setup.ts          # Test configuration
+└── dist/                 # Compiled output (generated)
+```
+
+**Key files:**
+- `src/cli.ts` - Register new commands here
+- `src/types/*.ts` - Zod schemas for validation
+- `tests/fixtures/` - Sample docs for testing
+
+## Architecture Patterns
+
+### Adding a New Command
+
+1. Create command file: `src/commands/my-command.ts`
+2. Export command function that returns a Commander `Command`
+3. Register in `src/cli.ts`
+4. Add tests in `tests/unit/` or `tests/integration/`
+5. Update README.md with command documentation
+
+**Example:**
+
+```typescript
+// src/commands/my-command.ts
+import { Command } from 'commander';
+import { Logger } from '../utils/logger.js';
+
+export function myCommand(): Command {
+  return new Command('my-command')
+    .description('Do something awesome')
+    .argument('<path>', 'Path argument')
+    .option('-f, --force', 'Force flag')
+    .action(async (path, options) => {
+      const logger = new Logger();
+      logger.info(`Running my-command for ${path}`);
+      // Implementation...
+    });
+}
+```
+
+```typescript
+// src/cli.ts
+import { myCommand } from './commands/my-command.js';
+
+// In cli() function:
+program.addCommand(myCommand());
+```
+
+### Adding a New Rule
+
+1. Define rule logic in appropriate module
+2. Add to rule configuration in types
+3. Update documentation
+4. Add comprehensive tests
+
+### Testing Guidelines
+
+- **All new features need tests**
+- Tests should be fast (<10 seconds for full suite)
+- Tests should be deterministic (no flaky tests)
+- Use test fixtures for complex scenarios
+- Mock external dependencies when appropriate
+
+**Test structure:**
+
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+describe('MyFeature', () => {
+  beforeEach(() => {
+    // Setup
+  });
+
+  afterEach(() => {
+    // Cleanup
+  });
+
+  it('should do something', () => {
+    // Arrange
+    const input = 'test';
+
+    // Act
+    const result = doSomething(input);
+
+    // Assert
+    expect(result).toBe('expected');
+  });
+});
+```
+
+## Documentation
+
+- Update README.md for user-facing features
+- Add JSDoc comments for public APIs
+- Update examples as needed
+- Keep documentation in sync with code
+
+## Release Process
+
+> **Note:** This section is for maintainers with publish rights.
+
+### Prerequisites
+
+- Maintainer access to repository
+- npm account with publish rights to `doc-lint` package
+- `NPM_TOKEN` configured in GitHub repository secrets
+
+### Release Steps
+
+#### 1. Ensure Clean State
+
+```bash
+git checkout main
+git pull origin main
+npm run validate  # All tests must pass
+```
+
+#### 2. Update CHANGELOG
+
+Before versioning, ensure CHANGELOG.md is up-to-date:
+- Move items from `[Unreleased]` section to the new version section
+- Update version header with release date
+- Review that all notable changes are documented
+
+#### 3. Version Bump
+
+Use npm version command to bump the version following [Semantic Versioning](https://semver.org/):
+
+```bash
+# For bug fixes (0.1.0 → 0.1.1)
+npm version patch
+
+# For new features (0.1.0 → 0.2.0)
+npm version minor
+
+# For breaking changes (0.1.0 → 1.0.0)
+npm version major
+```
+
+This command will:
+- Run `npm run validate` to ensure code quality (preversion hook)
+- Update version in package.json
+- Update CHANGELOG.md with the new version (version hook)
+- Create a git commit with the version change
+- Create a git tag (e.g., `v0.1.1`)
+- Push changes and tags to remote (postversion hook)
+
+#### 4. Automated Publishing
+
+Once the tag is pushed, GitHub Actions automatically:
+1. Detects the tag push
+2. Runs all tests
+3. Builds the project
+4. Publishes to npm with provenance attestation
+5. Creates a GitHub release with CHANGELOG link
+
+#### 5. Verify Release
+
+After the GitHub Action completes:
+
+```bash
+# Check npm package
+open https://www.npmjs.com/package/doc-lint
+
+# Check GitHub release
+open https://github.com/yourusername/doc-lint/releases
+
+# Test installation
+npm install -g doc-lint@latest
+doc-lint --version
+```
+
+### Versioning Guidelines
+
+Follow [Semantic Versioning](https://semver.org/):
+
+- **Patch** (0.0.X) - Bug fixes, no API changes, backward compatible
+- **Minor** (0.X.0) - New features, backward compatible, no breaking changes
+- **Major** (X.0.0) - Breaking changes, not backward compatible
+
+**Examples:**
+- Fix a bug → `npm version patch`
+- Add a new command option → `npm version minor`
+- Remove or change command interface → `npm version major`
+
+### Pre-release Versions
+
+For beta or release candidate versions:
+
+```bash
+# Create a beta version (e.g., 1.0.0-beta.1)
+npm version premajor --preid=beta
+
+# Or manually set version
+npm version 1.0.0-beta.1
+```
+
+### Troubleshooting
+
+#### GitHub Actions Workflow Fails
+
+- Check [Actions tab](https://github.com/yourusername/doc-lint/actions) for logs
+- Verify `NPM_TOKEN` secret is valid and not expired
+- Ensure all tests pass locally: `npm run validate`
+- Check that build succeeds: `npm run build`
+
+#### npm Publish Fails
+
+- Verify package name availability on npm
+- Check npm account has publish permissions
+- Ensure `.npmignore` doesn't exclude `dist/` directory
+- Verify provenance is supported (requires npm 9+ and Node 18+)
+
+#### Tag Already Exists
+
+If you need to recreate a tag:
+
+```bash
+# Delete local tag
+git tag -d v1.0.0
+
+# Delete remote tag (use with caution!)
+git push origin :refs/tags/v1.0.0
+
+# Recreate tag
+npm version 1.0.0
+```
+
+#### Reverting a Release
+
+If a release has critical issues:
+
+1. Publish a patch version with fix
+2. Deprecate the broken version on npm:
+   ```bash
+   npm deprecate doc-lint@1.0.0 "Critical bug, use 1.0.1 instead"
+   ```
+
+### NPM Token Setup
+
+For maintainers setting up automated releases:
+
+#### 1. Generate npm Access Token
+
+```bash
+# Login to npm
+npm login
+
+# Generate an automation token
+npm token create --type=automation
+```
+
+Copy the token value (you won't be able to see it again).
+
+#### 2. Add Token to GitHub Secrets
+
+1. Go to repository **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `NPM_TOKEN`
+4. Value: Paste the token from step 1
+5. Click **Add secret**
+
+#### 3. Verify Setup
+
+Create a test tag to verify the workflow (on a feature branch):
+
+```bash
+git checkout -b test-release
+git tag v0.0.1-test
+git push origin v0.0.1-test
+```
+
+Check the Actions tab to see if the workflow runs. Delete the test tag after verification:
+
+```bash
+git tag -d v0.0.1-test
+git push origin :refs/tags/v0.0.1-test
+```
+
+## Questions?
+
+If something is unclear:
+1. Check existing issues and discussions
+2. Review the codebase (it's well-documented!)
+3. Ask in a new discussion or issue
+
+## License
+
+By contributing to doc-lint, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+---
+
+**Thank you for contributing to doc-lint!** 🚀

@@ -1,28 +1,48 @@
 {
   "name": "doc-lint",
   "version": "0.1.0",
-  "description": "Project-level documentation linter",
+  "description": "Project-level linter for validating the structural integrity and consistency of Markdown documentation repositories",
   "type": "module",
   "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "bin": {
     "doc-lint": "./dist/src/index.js"
   },
   "scripts": {
-    "build": "tsc",
-    "postbuild": "chmod +x dist/src/index.js",
+    "// Development": "",
     "dev": "tsc --watch",
+    "build": "tsc && npm run copy-package-files",
+    "postbuild": "chmod +x dist/src/index.js",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "copy-package-files": "node ./scripts/copy-files.js",
+    "validate-build": "node ./scripts/validate-build.js",
+    "// Testing": "",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "// Code Quality": "",
     "lint": "eslint src tests --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
-    "validate": "npm run lint && npm run typecheck && npm test"
+    "validate": "npm run lint && npm run typecheck && npm test",
+    "// Package Management": "",
+    "pack:dry": "npm pack --dry-run",
+    "size:check": "npm pack --dry-run 2>&1 | grep 'package size' | head -1 || echo 'Run npm pack to see size'",
+    "verify:package": "node scripts/verify-package.js",
+    "release:prepare": "npm run validate && npm run build && npm run verify:package && npm run size:check && echo '\nReady for release. Run: npm version [patch|minor|major]'",
+    "// Release Lifecycle": "",
+    "preversion": "npm run validate",
+    "version": "node scripts/update-changelog.js $npm_package_version && git add CHANGELOG.md",
+    "postversion": "git push && git push --tags",
+    "prepublishOnly": "npm run validate && npm run build",
+    "postinstall": "sh scripts/setup-hooks.sh 2>/dev/null || true",
+    "// Utility": "",
+    "verify:cli": "node dist/src/index.js --version && node dist/src/index.js --help",
+    "hooks:setup": "sh scripts/setup-hooks.sh"
   },
   "keywords": [
     "markdown",
@@ -30,9 +50,30 @@
     "linter",
     "lint",
     "docs",
-    "doc-lint"
+    "doc-lint",
+    "markdown-linter",
+    "documentation-quality",
+    "orphan-detection",
+    "link-validation",
+    "graph-traversal",
+    "remark",
+    "unified",
+    "markdown-validator",
+    "static-analysis"
   ],
-  "author": "",
+  "homepage": "https://github.com/yourusername/doc-lint#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/doc-lint/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/doc-lint.git"
+  },
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com",
+    "url": "https://github.com/yourusername"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
@@ -64,8 +105,13 @@
     "vitest": "^2.1.8"
   },
   "files": [
-    "dist/",
+    "dist/src/",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

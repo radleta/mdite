@@ -5,13 +5,13 @@ import remarkGfm from 'remark-gfm';
 import remarkLint from 'remark-lint';
 import { VFile } from 'vfile';
 import * as fs from 'fs/promises';
-import { DocLintConfig } from '../types/config.js';
+import { RuntimeConfig } from '../types/config.js';
 import { LintError } from '../types/errors.js';
 
 export class RemarkEngine {
   private processor: ReturnType<typeof this.createProcessor>;
 
-  constructor(_config: DocLintConfig) {
+  constructor(_config: RuntimeConfig) {
     this.processor = this.createProcessor();
   }
 
@@ -32,7 +32,7 @@ export class RemarkEngine {
 
     try {
       await this.processor.process(vfile);
-    } catch (error) {
+    } catch {
       // Processor errors are already in vfile.messages
     }
 

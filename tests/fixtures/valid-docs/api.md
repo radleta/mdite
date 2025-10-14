@@ -1,14 +1,5 @@
-# API Reference
+# API Documentation
 
-Complete API documentation.
+This is the API documentation.
 
-## Methods
-
-### initialize()
-
-Initializes the system.
-
-## See Also
-
-- [User Guide](./guide.md)
-- [Home](./README.md)
+[Back to README](./README.md)

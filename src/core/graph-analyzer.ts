@@ -1,28 +1,88 @@
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { DocLintConfig } from '../types/config.js';
+import { RuntimeConfig } from '../types/config.js';
 import { DocGraph } from '../types/graph.js';
 import { findMarkdownFiles } from '../utils/fs.js';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import { visit } from 'unist-util-visit';
 
+/**
+ * Documentation dependency graph analyzer
+ *
+ * Builds a directed graph of markdown files by following links from an entrypoint.
+ * The graph is used for:
+ * - Orphan detection (files not reachable from entrypoint)
+ * - Link validation (ensuring all references are valid)
+ * - Coverage analysis (understanding documentation structure)
+ *
+ * @example
+ * ```typescript
+ * import { GraphAnalyzer } from './graph-analyzer.js';
+ *
+ * const analyzer = new GraphAnalyzer('./docs', {
+ *   entrypoint: 'README.md',
+ *   // ... other config
+ * });
+ *
+ * const graph = await analyzer.buildGraph();
+ * console.log('Reachable files:', graph.getAllFiles());
+ *
+ * const orphans = await analyzer.findOrphans(graph);
+ * console.log('Orphaned files:', orphans);
+ * ```
+ */
 export class GraphAnalyzer {
   private graph: DocGraph;
 
+  /**
+   * Create a new GraphAnalyzer instance
+   *
+   * @param basePath - Base directory for documentation (absolute path)
+   * @param config - Runtime configuration with entrypoint setting
+   */
   constructor(
     private basePath: string,
-    private config: DocLintConfig
+    private config: RuntimeConfig
   ) {
     this.graph = new DocGraph();
   }
 
+  /**
+   * Build a dependency graph starting from the configured entrypoint
+   *
+   * Recursively follows all relative markdown links to build a complete
+   * graph of reachable files. Only follows `.md` links, ignoring:
+   * - External links (http://, https://)
+   * - Anchor-only links (#heading)
+   * - Non-markdown files
+   *
+   * @returns DocGraph containing all reachable files and their relationships
+   * @throws {FileNotFoundError} If entrypoint doesn't exist
+   * @throws {GraphBuildError} If graph building fails
+   *
+   * @example
+   * ```typescript
+   * const graph = await analyzer.buildGraph();
+   * const files = graph.getAllFiles();
+   * const links = graph.getEdges(files[0]);
+   * ```
+   */
   async buildGraph(): Promise<DocGraph> {
     const entrypoint = path.join(this.basePath, this.config.entrypoint);
     await this.visitFile(entrypoint);
     return this.graph;
   }
 
+  /**
+   * Recursively visit a file and follow its links
+   *
+   * This method implements depth-first traversal with cycle detection.
+   * Files are only visited once to prevent infinite loops from circular references.
+   *
+   * @param filePath - Absolute path to the markdown file
+   * @private
+   */
   private async visitFile(filePath: string): Promise<void> {
     const normalized = path.resolve(filePath);
 
@@ -51,6 +111,23 @@ export class GraphAnalyzer {
     }
   }
 
+  /**
+   * Extract markdown links from file content
+   *
+   * Parses markdown AST and extracts all relative `.md` links,
+   * filtering out external links and anchor-only references.
+   *
+   * @param content - Markdown file content
+   * @returns Array of relative file paths (may include anchors)
+   * @private
+   *
+   * @example
+   * ```typescript
+   * const content = '[Guide](./guide.md) [API](./api.md#methods)';
+   * const links = await this.extractMarkdownLinks(content);
+   * // Returns: ['./guide.md', './api.md']
+   * ```
+   */
   private async extractMarkdownLinks(content: string): Promise<string[]> {
     const links: string[] = [];
     const processor = unified().use(remarkParse);
@@ -71,6 +148,34 @@ export class GraphAnalyzer {
     return links;
   }
 
+  /**
+   * Find orphaned files not reachable from the dependency graph
+   *
+   * Compares all markdown files in the directory tree against the
+   * files reachable in the graph. Files not in the graph are considered orphans.
+   *
+   * Orphaned files may indicate:
+   * - Forgotten documentation
+   * - Missing links from main documentation
+   * - Work-in-progress files
+   * - Files that should be deleted
+   *
+   * @param graph - The dependency graph built from the entrypoint
+   * @returns Array of absolute paths to orphaned files
+   *
+   * @example
+   * ```typescript
+   * const graph = await analyzer.buildGraph();
+   * const orphans = await analyzer.findOrphans(graph);
+   *
+   * if (orphans.length > 0) {
+   *   console.warn('Orphaned files:', orphans);
+   * }
+   * ```
+   *
+   * @remarks
+   * Skips hidden directories (starting with `.`) and `node_modules`
+   */
   async findOrphans(graph: DocGraph): Promise<string[]> {
     const allFiles = await findMarkdownFiles(this.basePath);
     const reachableFiles = new Set(graph.getAllFiles());

@@ -1,12 +1,10 @@
 # Valid Documentation
 
-This is a valid documentation set with no orphans and no broken links.
+This is a valid documentation structure for testing.
 
 ## Contents
 
 - [Guide](./guide.md)
-- [API Reference](./api.md)
+- [API Documentation](./api.md)
 
-## Overview
-
-Everything is properly linked and reachable from this entry point.
+All links are valid and no files are orphaned.
