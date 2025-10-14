@@ -1,0 +1,12 @@
+src/
+tests/
+coverage/
+*.log
+.vscode/
+.idea/
+tsconfig.json
+vitest.config.ts
+.prettierrc
+eslint.config.js
+.github/
+.githooks/
