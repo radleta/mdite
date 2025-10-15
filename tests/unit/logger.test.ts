@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Logger } from '../../src/utils/logger.js';
+import type { MockInstance } from 'vitest';
 
 describe('Logger', () => {
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
-  let originalLog: any;
-  let originalError: any;
+  let consoleLogSpy: MockInstance;
+  let consoleErrorSpy: MockInstance;
+  let originalLog: typeof console.log;
+  let originalError: typeof console.error;
 
   beforeEach(() => {
     originalLog = console.log;
     originalError = console.error;
     consoleLogSpy = vi.fn();
     consoleErrorSpy = vi.fn();
-    console.log = consoleLogSpy;
-    console.error = consoleErrorSpy;
+    console.log = consoleLogSpy as unknown as typeof console.log;
+    console.error = consoleErrorSpy as unknown as typeof console.error;
   });
 
   afterEach(() => {
@@ -62,7 +63,7 @@ describe('Logger', () => {
       const logger = new Logger(false);
       logger.header('Header');
 
-      expect(consoleLogSpy.mock.calls[0][0]).toBe('');
+      expect(consoleLogSpy.mock.calls[0]?.[0]).toBe('');
     });
 
     it('should add separator line', () => {
@@ -70,7 +71,7 @@ describe('Logger', () => {
       logger.header('Header');
 
       const calls = consoleLogSpy.mock.calls;
-      expect(calls[2][0]).toBe('-'.repeat(50));
+      expect(calls[2]?.[0]).toBe('-'.repeat(50));
     });
   });
 
@@ -87,7 +88,7 @@ describe('Logger', () => {
       logger.info('Info');
 
       expect(consoleLogSpy).toHaveBeenCalled();
-      const output = consoleLogSpy.mock.calls[0][0];
+      const output = consoleLogSpy.mock.calls[0]?.[0];
       expect(output).toContain('Info');
     });
 
@@ -120,7 +121,7 @@ describe('Logger', () => {
       logger.success('Success');
 
       expect(consoleLogSpy).toHaveBeenCalled();
-      const output = consoleLogSpy.mock.calls[0][0];
+      const output = consoleLogSpy.mock.calls[0]?.[0];
       expect(output).toContain('Success');
     });
 
@@ -145,7 +146,7 @@ describe('Logger', () => {
       logger.error('Error');
 
       expect(consoleErrorSpy).toHaveBeenCalled();
-      const output = consoleErrorSpy.mock.calls[0][0];
+      const output = consoleErrorSpy.mock.calls[0]?.[0];
       expect(output).toContain('Error');
     });
 
@@ -264,9 +265,9 @@ describe('Logger', () => {
       logger.info('Second');
       logger.success('Third');
 
-      expect(consoleLogSpy.mock.calls[0][0]).toBe('i First');
-      expect(consoleLogSpy.mock.calls[1][0]).toBe('i Second');
-      expect(consoleLogSpy.mock.calls[2][0]).toBe('✓ Third');
+      expect(consoleLogSpy.mock.calls[0]?.[0]).toBe('i First');
+      expect(consoleLogSpy.mock.calls[1]?.[0]).toBe('i Second');
+      expect(consoleLogSpy.mock.calls[2]?.[0]).toBe('✓ Third');
     });
 
     it('should work in realistic scenario', () => {
@@ -293,14 +294,14 @@ describe('Logger', () => {
       logger.error('Error 1');
 
       const allOutput = [
-        ...consoleLogSpy.mock.calls.map((c: any[]) => c[0]),
-        ...consoleErrorSpy.mock.calls.map((c: any[]) => c[0]),
+        ...consoleLogSpy.mock.calls.map((c: unknown[]) => c[0] as string),
+        ...consoleErrorSpy.mock.calls.map((c: unknown[]) => c[0] as string),
       ];
 
       // All output should use plain icons
-      expect(allOutput.some((o: string) => o.includes('i Info 1'))).toBe(true);
-      expect(allOutput.some((o: string) => o.includes('✓ Success 1'))).toBe(true);
-      expect(allOutput.some((o: string) => o.includes('✗ Error 1'))).toBe(true);
+      expect(allOutput.some(o => o.includes('i Info 1'))).toBe(true);
+      expect(allOutput.some(o => o.includes('✓ Success 1'))).toBe(true);
+      expect(allOutput.some(o => o.includes('✗ Error 1'))).toBe(true);
     });
   });
 });

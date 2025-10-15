@@ -138,12 +138,12 @@ export class ConsoleCapture {
     this.logs = [];
     this.errors = [];
 
-    console.log = (...args: any[]) => {
-      this.logs.push(args.join(' '));
+    console.log = (...args: unknown[]) => {
+      this.logs.push(args.map(String).join(' '));
     };
 
-    console.error = (...args: any[]) => {
-      this.errors.push(args.join(' '));
+    console.error = (...args: unknown[]) => {
+      this.errors.push(args.map(String).join(' '));
     };
   }
 

@@ -6,6 +6,7 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import { visit } from 'unist-util-visit';
 import { slugify } from '../utils/slug.js';
+import type { Link, Heading, PhrasingContent } from 'mdast';
 
 /**
  * Link validator for markdown documentation
@@ -92,7 +93,7 @@ export class LinkValidator {
 
     const linkChecks: Promise<LintError | null>[] = [];
 
-    visit(ast, 'link', (node: any) => {
+    visit(ast, 'link', (node: Link) => {
       const url = node.url;
       const position = node.position?.start || { line: 0, column: 0 };
 
@@ -231,11 +232,11 @@ export class LinkValidator {
     const ast = processor.parse(content);
 
     const headings: string[] = [];
-    visit(ast, 'heading', (node: any) => {
+    visit(ast, 'heading', (node: Heading) => {
       // Extract text from heading
       const text = node.children
-        .filter((child: any) => child.type === 'text')
-        .map((child: any) => child.value)
+        .filter((child: PhrasingContent) => child.type === 'text')
+        .map((child: PhrasingContent) => (child.type === 'text' ? child.value : ''))
         .join('');
       headings.push(slugify(text));
     });

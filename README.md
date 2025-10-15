@@ -120,6 +120,37 @@ Initialize a configuration file.
 
 Display current configuration (merged from all sources).
 
+### `doc-lint deps <file>`
+
+Show dependencies for a specific file in the documentation graph.
+
+**Options:**
+- `--incoming` - Show only incoming dependencies (what references this file)
+- `--outgoing` - Show only outgoing dependencies (what this file references)
+- `--depth <n>` - Maximum depth of traversal (default: unlimited)
+- `--format <type>` - Output format: `tree`, `list`, or `json` (default: `tree`)
+
+**Examples:**
+```bash
+# Show all dependencies (both incoming and outgoing)
+doc-lint deps README.md
+
+# Show only what references this file
+doc-lint deps docs/api.md --incoming
+
+# Show only what this file references
+doc-lint deps docs/guide.md --outgoing
+
+# Limit to direct dependencies only
+doc-lint deps README.md --depth 1
+
+# Get JSON output for scripting
+doc-lint deps docs/guide.md --format json
+
+# Show as flat list instead of tree
+doc-lint deps README.md --format list
+```
+
 ## How It Works
 
 ### 1. Graph Building

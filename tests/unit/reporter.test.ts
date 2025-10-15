@@ -2,18 +2,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Reporter } from '../../src/core/reporter.js';
 import { LintResults } from '../../src/types/results.js';
 import { Logger } from '../../src/utils/logger.js';
+import type { MockInstance } from 'vitest';
 
 describe('Reporter', () => {
   let logger: Logger;
-  let consoleLogSpy: any;
-  let originalLog: any;
+  let consoleLogSpy: MockInstance;
+  let originalLog: typeof console.log;
 
   beforeEach(() => {
     logger = new Logger();
     // Spy on console.log
     originalLog = console.log;
     consoleLogSpy = vi.fn();
-    console.log = consoleLogSpy;
+    console.log = consoleLogSpy as unknown as typeof console.log;
   });
 
   afterEach(() => {
@@ -45,7 +46,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toContain('orphan.md');
     });
 
@@ -68,7 +71,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toContain('Dead link');
       expect(output).toContain('5:10');
     });
@@ -108,7 +113,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toContain('file1.md');
       expect(output).toContain('file2.md');
     });
@@ -132,7 +139,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toContain('dead-link');
     });
 
@@ -155,7 +164,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toContain('error');
     });
   });
@@ -180,7 +191,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('json', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       const parsed = JSON.parse(output);
 
       expect(Array.isArray(parsed)).toBe(true);
@@ -206,7 +219,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('json', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       const parsed = JSON.parse(output);
 
       expect(parsed[0]).toHaveProperty('rule');
@@ -227,7 +242,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('json', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       const parsed = JSON.parse(output);
 
       expect(Array.isArray(parsed)).toBe(true);
@@ -246,7 +263,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toBeDefined();
     });
 
@@ -278,7 +297,9 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      const output = consoleLogSpy.mock.calls.map((call: any) => call.join(' ')).join('\n');
+      const output = consoleLogSpy.mock.calls
+        .map((call: unknown[]) => (call as string[]).join(' '))
+        .join('\n');
       expect(output).toContain('orphan.md');
       expect(output).toContain('Dead link');
       expect(output).toContain('Remark error');

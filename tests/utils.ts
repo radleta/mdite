@@ -51,6 +51,7 @@ export function delay(ms: number): Promise<void> {
  * Create a spy function that tracks calls
  * @returns Spy function with call tracking
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createSpy<T extends (...args: any[]) => any>(): T & {
   calls: Array<Parameters<T>>;
   callCount: number;
@@ -60,7 +61,11 @@ export function createSpy<T extends (...args: any[]) => any>(): T & {
 
   const spy = ((...args: Parameters<T>) => {
     calls.push(args);
-  }) as any;
+  }) as T & {
+    calls: Array<Parameters<T>>;
+    callCount: number;
+    reset: () => void;
+  };
 
   spy.calls = calls;
 

@@ -3,6 +3,12 @@ import { execSync } from 'child_process';
 
 const CLI = 'node dist/src/index.js';
 
+// Type guard for exec errors with stdout/status
+interface ExecError extends Error {
+  stdout: Buffer;
+  status: number;
+}
+
 describe('CLI', () => {
   it('shows version', () => {
     const output = execSync(`${CLI} --version`).toString();
@@ -24,41 +30,45 @@ describe('CLI', () => {
   it('detects orphaned files', () => {
     try {
       execSync(`${CLI} lint tests/fixtures/with-orphans`);
-    } catch (error: any) {
-      const output = error.stdout.toString();
+    } catch (error: unknown) {
+      const execError = error as ExecError;
+      const output = execError.stdout.toString();
       expect(output).toContain('orphan.md');
       expect(output).toContain('Orphaned file');
-      expect(error.status).toBe(1);
+      expect(execError.status).toBe(1);
     }
   });
 
   it('detects broken links', () => {
     try {
       execSync(`${CLI} lint tests/fixtures/broken-links`);
-    } catch (error: any) {
-      const output = error.stdout.toString();
+    } catch (error: unknown) {
+      const execError = error as ExecError;
+      const output = execError.stdout.toString();
       expect(output).toContain('Dead link');
       expect(output).toContain('nonexistent.md');
-      expect(error.status).toBe(1);
+      expect(execError.status).toBe(1);
     }
   });
 
   it('detects broken anchors', () => {
     try {
       execSync(`${CLI} lint tests/fixtures/broken-anchors`);
-    } catch (error: any) {
-      const output = error.stdout.toString();
+    } catch (error: unknown) {
+      const execError = error as ExecError;
+      const output = execError.stdout.toString();
       expect(output).toContain('Dead anchor');
       expect(output).toContain('nonexistent-section');
-      expect(error.status).toBe(1);
+      expect(execError.status).toBe(1);
     }
   });
 
   it('supports JSON output format', () => {
     try {
       execSync(`${CLI} lint tests/fixtures/with-orphans --format json`);
-    } catch (error: any) {
-      const output = error.stdout.toString();
+    } catch (error: unknown) {
+      const execError = error as ExecError;
+      const output = execError.stdout.toString();
       const json = JSON.parse(output);
       expect(Array.isArray(json)).toBe(true);
       expect(json[0]).toHaveProperty('rule');

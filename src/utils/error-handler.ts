@@ -40,7 +40,7 @@ export async function handleError(
 /**
  * Wrap async function with error handling
  */
-export function withErrorHandler<T extends any[], R>(
+export function withErrorHandler<T extends unknown[], R>(
   fn: (...args: T) => Promise<R>,
   options?: { verbose?: boolean; colors?: boolean }
 ): (...args: T) => Promise<R | void> {

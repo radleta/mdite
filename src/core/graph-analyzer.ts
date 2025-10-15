@@ -6,6 +6,7 @@ import { findMarkdownFiles } from '../utils/fs.js';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import { visit } from 'unist-util-visit';
+import type { Link } from 'mdast';
 
 /**
  * Documentation dependency graph analyzer
@@ -133,7 +134,7 @@ export class GraphAnalyzer {
     const processor = unified().use(remarkParse);
     const ast = processor.parse(content);
 
-    visit(ast, 'link', (node: any) => {
+    visit(ast, 'link', (node: Link) => {
       const url = node.url;
       // Only follow relative .md links
       if (!url.startsWith('http') && !url.startsWith('#')) {

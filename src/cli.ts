@@ -3,6 +3,7 @@ import { createRequire } from 'module';
 import { lintCommand } from './commands/lint.js';
 import { initCommand } from './commands/init.js';
 import { configCommand } from './commands/config.js';
+import { depsCommand } from './commands/deps.js';
 
 // Import version from package.json
 const require = createRequire(import.meta.url);
@@ -11,10 +12,7 @@ const { version: VERSION } = require('../../package.json');
 export async function cli() {
   const program = new Command();
 
-  program
-    .name('doc-lint')
-    .description('Project-level documentation linter')
-    .version(VERSION);
+  program.name('doc-lint').description('Project-level documentation linter').version(VERSION);
 
   // Global options
   program
@@ -26,6 +24,7 @@ export async function cli() {
   program.addCommand(lintCommand());
   program.addCommand(initCommand());
   program.addCommand(configCommand());
+  program.addCommand(depsCommand());
 
   await program.parseAsync(process.argv);
 }

@@ -6,6 +6,12 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+// Type for exec errors
+interface ExecError extends Error {
+  stdout: string;
+  stderr: string;
+}
+
 describe('lint command (integration)', () => {
   let testDir: string;
 
@@ -25,9 +31,10 @@ describe('lint command (integration)', () => {
         });
         // Should fail
         expect(true).toBe(false);
-      } catch (error: any) {
-        expect(error.stdout).toContain('orphan.md');
-        expect(error.stdout).toContain('Orphaned file');
+      } catch (error: unknown) {
+        const execError = error as ExecError;
+        expect(execError.stdout).toContain('orphan.md');
+        expect(execError.stdout).toContain('Orphaned file');
       }
     });
 
@@ -51,9 +58,10 @@ describe('lint command (integration)', () => {
         await execAsync(`node dist/src/index.js lint ${testDir}`, {
           cwd: '/workspace/repo',
         });
-      } catch (error: any) {
-        expect(error.stdout).toContain('orphan1.md');
-        expect(error.stdout).toContain('orphan2.md');
+      } catch (error: unknown) {
+        const execError = error as ExecError;
+        expect(execError.stdout).toContain('orphan1.md');
+        expect(execError.stdout).toContain('orphan2.md');
       }
     });
   });
@@ -66,9 +74,10 @@ describe('lint command (integration)', () => {
         await execAsync(`node dist/src/index.js lint ${testDir}`, {
           cwd: '/workspace/repo',
         });
-      } catch (error: any) {
-        expect(error.stdout).toContain('Dead link');
-        expect(error.stdout).toContain('missing.md');
+      } catch (error: unknown) {
+        const execError = error as ExecError;
+        expect(execError.stdout).toContain('Dead link');
+        expect(execError.stdout).toContain('missing.md');
       }
     });
 
@@ -104,9 +113,10 @@ describe('lint command (integration)', () => {
         await execAsync(`node dist/src/index.js lint ${testDir}`, {
           cwd: '/workspace/repo',
         });
-      } catch (error: any) {
-        expect(error.stdout).toContain('Dead anchor');
-        expect(error.stdout).toContain('missing-section');
+      } catch (error: unknown) {
+        const execError = error as ExecError;
+        expect(execError.stdout).toContain('Dead anchor');
+        expect(execError.stdout).toContain('missing-section');
       }
     });
 
@@ -147,8 +157,9 @@ describe('lint command (integration)', () => {
         await execAsync(`node dist/src/index.js lint ${testDir} --format json`, {
           cwd: '/workspace/repo',
         });
-      } catch (error: any) {
-        const results = JSON.parse(error.stdout);
+      } catch (error: unknown) {
+        const execError = error as ExecError;
+        const results = JSON.parse(execError.stdout);
         expect(Array.isArray(results)).toBe(true);
         expect(results[0]).toHaveProperty('rule');
         expect(results[0]).toHaveProperty('severity');

@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSON and text output formats
 - Configurable rules with severity levels
 - Cosmiconfig-based configuration management
+- **deps command**: Show file dependencies in documentation graph
+  - Display incoming and outgoing links
+  - Tree, list, and JSON output formats
+  - Cycle detection and annotation
+  - Configurable depth limiting
 
 ### Features
 
@@ -34,7 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `doc-lint lint [path]` - Lint documentation
 - `doc-lint init` - Initialize configuration
 - `doc-lint config` - Display current configuration
-- Multiple output formats (text, JSON)
+- `doc-lint deps <file>` - Show file dependencies in the documentation graph
+- Multiple output formats (text, JSON, tree, list)
 - Colored output (optional)
 - Verbose mode
 

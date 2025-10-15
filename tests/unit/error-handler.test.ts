@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleError, withErrorHandler } from '../../src/utils/error-handler.js';
 import { DocLintError, FileNotFoundError } from '../../src/utils/errors.js';
+import type { MockInstance } from 'vitest';
 
 describe('Error Handler', () => {
-  let consoleErrorSpy: any;
-  let processExitSpy: any;
+  let consoleErrorSpy: MockInstance;
+  let processExitSpy: MockInstance;
 
   beforeEach(() => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+    processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as never);
   });
 
   afterEach(() => {
@@ -22,7 +23,7 @@ describe('Error Handler', () => {
       await handleError(error, { exit: false });
 
       expect(consoleErrorSpy).toHaveBeenCalled();
-      const errorMessage = consoleErrorSpy.mock.calls[0][0];
+      const errorMessage = consoleErrorSpy.mock.calls[0]?.[0];
       expect(errorMessage).toContain('FileNotFoundError');
       expect(errorMessage).toContain('/test.md');
     });
@@ -32,7 +33,7 @@ describe('Error Handler', () => {
       await handleError(error, { exit: false });
 
       expect(consoleErrorSpy).toHaveBeenCalled();
-      const errorMessage = consoleErrorSpy.mock.calls[0][0];
+      const errorMessage = consoleErrorSpy.mock.calls[0]?.[0];
       expect(errorMessage).toContain('Generic error');
     });
 
@@ -40,7 +41,7 @@ describe('Error Handler', () => {
       await handleError('string error', { exit: false });
 
       expect(consoleErrorSpy).toHaveBeenCalled();
-      const errorMessage = consoleErrorSpy.mock.calls[0][0];
+      const errorMessage = consoleErrorSpy.mock.calls[0]?.[0];
       expect(errorMessage).toContain('Unknown error');
     });
 
@@ -71,8 +72,8 @@ describe('Error Handler', () => {
       // Check that error message and context were logged
       expect(consoleErrorSpy).toHaveBeenCalled();
       const allLogs = [
-        ...consoleErrorSpy.mock.calls.map((c: any) => c[0]),
-        ...consoleSpy.mock.calls.map((c: any) => c[0]),
+        ...consoleErrorSpy.mock.calls.map((c: unknown[]) => c[0]),
+        ...consoleSpy.mock.calls.map((c: unknown[]) => c[0]),
       ].join(' ');
 
       expect(allLogs).toContain('Context:');
