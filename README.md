@@ -372,7 +372,15 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## License
 
-MIT © 2025
+MIT © 2025 Richard Adleta
+
+## Disclaimer
+
+**This is a developer tool - use at your own risk.**
+
+This software is provided "as is", without warranty of any kind. The tool performs static analysis of local markdown files and does not execute code or transmit data externally.
+
+**Issues and bugs:** Please report all issues (including security-related ones) via [GitHub Issues](https://github.com/radleta/doc-lint/issues). We make no guarantees about response times or fixes.
 
 ## Acknowledgments
 
