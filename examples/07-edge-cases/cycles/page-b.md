@@ -27,7 +27,7 @@ Page B is in the middle of the circular reference:
 
 ## Content
 
-This is example content for Page B. The cycle tests doc-lint's graph traversal algorithm.
+This is example content for Page B. The cycle tests mdite's graph traversal algorithm.
 
 ## Next
 

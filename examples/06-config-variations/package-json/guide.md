@@ -4,11 +4,11 @@ Guide for package.json configuration approach.
 
 ## Configuration Location
 
-When using package.json, the `doclint` field contains all configuration:
+When using package.json, the `mdite` field contains all configuration:
 
 ```json
 {
-  "doclint": {
+  "mdite": {
     "entrypoint": "README.md",
     "rules": { ... }
   }
@@ -32,9 +32,9 @@ When using package.json, the `doclint` field contains all configuration:
 ## Alternative Formats
 
 If you need comments or JavaScript features, use:
-- `doclint.config.js` - JavaScript with comments
-- `.doclintrc.yaml` - YAML with comments
-- `.doclintrc` - JSON or YAML
+- `mdite.config.js` - JavaScript with comments
+- `.mditerc.yaml` - YAML with comments
+- `.mditerc` - JSON or YAML
 
 ## Return
 

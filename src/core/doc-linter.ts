@@ -3,20 +3,18 @@ import { LintResults } from '../types/results.js';
 import { Logger } from '../utils/logger.js';
 import { GraphAnalyzer } from './graph-analyzer.js';
 import { LinkValidator } from './link-validator.js';
-import { RemarkEngine } from './remark-engine.js';
 
 /**
- * Main documentation linter orchestrator
+ * Main documentation structure analyzer
  *
- * Coordinates graph building, link validation, orphan detection,
- * and content linting to produce a comprehensive lint report.
+ * Coordinates graph building, link validation, and orphan detection
+ * to analyze markdown documentation structure.
  *
- * The linting process follows these steps:
+ * The analysis process follows these steps:
  * 1. Build dependency graph from entrypoint file
  * 2. Detect orphaned files (not reachable from entrypoint)
  * 3. Validate all links (files and anchors)
- * 4. Run remark content linting on all reachable files
- * 5. Aggregate and return results
+ * 4. Aggregate and return results
  *
  * @example
  * ```typescript
@@ -54,17 +52,16 @@ export class DocLinter {
   ) {}
 
   /**
-   * Lint a documentation directory
+   * Analyze documentation structure
    *
-   * Performs comprehensive documentation linting including:
+   * Performs comprehensive structural analysis including:
    * - Dependency graph building
    * - Orphan file detection
    * - Link validation (files and anchors)
-   * - Content linting with remark
    *
    * @param basePath - Absolute path to the documentation directory
    * @param quiet - Suppress progress output (default: false)
-   * @returns Lint results with errors, warnings, and statistics
+   * @returns Analysis results with errors, warnings, and statistics
    * @throws {DirectoryNotFoundError} If the directory doesn't exist
    * @throws {GraphBuildError} If graph building fails
    * @throws {FileNotFoundError} If entrypoint file doesn't exist
@@ -118,31 +115,12 @@ export class DocLinter {
       }
     }
 
-    // 4. Run remark
-    if (!quiet) this.logger.info('Running remark linter...');
-    const remarkEngine = new RemarkEngine(this.config);
-    const remarkErrors = [];
-
-    for (const file of graph.getAllFiles()) {
-      const fileErrors = await remarkEngine.processFile(file);
-      remarkErrors.push(...fileErrors);
-    }
-
-    if (!quiet) {
-      if (remarkErrors.length > 0) {
-        this.logger.error(`Found ${remarkErrors.length} style error(s)`);
-      } else {
-        this.logger.success('No style errors');
-      }
-    }
-
     if (!quiet) this.logger.line();
 
-    // 5. Return results
+    // 4. Return results
     return new LintResults({
       orphans,
       linkErrors,
-      remarkErrors,
     });
   }
 }

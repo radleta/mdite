@@ -1,10 +1,10 @@
 # Minimal Configuration Example
 
-This example demonstrates a minimal doc-lint configuration.
+This example demonstrates a minimal mdite configuration.
 
 ## Configuration
 
-The `.doclintrc` file contains only the entrypoint:
+The `.mditerc` file contains only the entrypoint:
 
 ```json
 {
@@ -28,12 +28,12 @@ This minimal doc set has:
 Use minimal configuration when:
 - You're happy with the defaults
 - You want quick setup
-- You're just getting started with doc-lint
+- You're just getting started with mdite
 
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Should pass with no errors.

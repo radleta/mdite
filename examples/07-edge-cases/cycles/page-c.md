@@ -31,15 +31,15 @@ From here, you can:
 Page C closes the circular reference:
 - [Page B](./page-b.md) links to this page
 - **This page links back to [Page A](./page-a.md)** ← Creates the cycle
-- doc-lint should detect the cycle and not infinite loop
+- mdite should detect the cycle and not infinite loop
 
 ## Content
 
-This is example content for Page C. When doc-lint encounters the link back to Page A, it should recognize that Page A has already been visited and not traverse it again.
+This is example content for Page C. When mdite encounters the link back to Page A, it should recognize that Page A has already been visited and not traverse it again.
 
 ## Test It
 
-Run `doc-lint lint` from the cycles directory:
+Run `mdite lint` from the cycles directory:
 - Should complete without hanging
 - Should find all 4 files
 - Should handle the cycle gracefully

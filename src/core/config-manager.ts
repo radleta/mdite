@@ -30,7 +30,7 @@ export class ConfigManager {
     // Start with defaults
     let config: RuntimeConfig = { ...DEFAULT_CONFIG };
 
-    // Layer 1: User config (~/.config/doc-lint/config.json)
+    // Layer 1: User config (~/.config/mdite/config.json)
     const userConfig = await ConfigManager.loadUserConfig();
     if (userConfig) {
       config = ConfigManager.mergeUserConfig(config, userConfig);
@@ -73,7 +73,7 @@ export class ConfigManager {
    * Load project config using cosmiconfig
    */
   private static async loadProjectConfig(explicitPath?: string): Promise<ProjectConfig | null> {
-    const explorer = cosmiconfig('doclint');
+    const explorer = cosmiconfig('mdite');
 
     try {
       const result = explicitPath ? await explorer.load(explicitPath) : await explorer.search();
@@ -119,7 +119,6 @@ export class ConfigManager {
         ...config.rules,
         ...(projectConfig.rules || {}),
       },
-      frontmatterSchema: projectConfig.frontmatterSchema || config.frontmatterSchema,
     };
   }
 

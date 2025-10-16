@@ -22,7 +22,7 @@ export function lintCommand(): Command {
 
       try {
         if (!isJsonFormat) {
-          logger.header('doc-lint');
+          logger.header('mdite');
         }
 
         // Build CLI options for the new layered config system

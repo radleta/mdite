@@ -1,6 +1,6 @@
 # Orphan Files Example
 
-This example demonstrates orphan file detection in doc-lint.
+This example demonstrates orphan file detection in mdite.
 
 ## What is an Orphan File?
 
@@ -16,14 +16,14 @@ This file links to:
 
 ## The Orphan
 
-In this directory, there's a file called `orphaned.md` that is **not** linked from anywhere in the documentation graph. When you run `doc-lint lint`, it should detect this orphan.
+In this directory, there's a file called `orphaned.md` that is **not** linked from anywhere in the documentation graph. When you run `mdite lint`, it should detect this orphan.
 
 ## Expected Output
 
-When you run doc-lint on this directory:
+When you run mdite on this directory:
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 You should see an error like:
@@ -39,12 +39,12 @@ orphaned.md
 
 ## Try It Yourself
 
-1. Run `doc-lint lint` to see the orphan detection
+1. Run `mdite lint` to see the orphan detection
 2. Try linking to `orphaned.md` from this file to fix the issue
-3. Run `doc-lint lint` again to verify it's fixed
+3. Run `mdite lint` again to verify it's fixed
 
 ## How It Works
 
-doc-lint builds a dependency graph starting from the entrypoint (this README.md) and follows all relative markdown links. Any `.md` files in the directory that aren't in the graph are reported as orphans.
+mdite builds a dependency graph starting from the entrypoint (this README.md) and follows all relative markdown links. Any `.md` files in the directory that aren't in the graph are reported as orphans.
 
 See [Connected Document](./connected.md) for more information.

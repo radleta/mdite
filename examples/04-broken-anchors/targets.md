@@ -52,7 +52,7 @@ To fix it, you could either:
 
 ## Testing Anchors
 
-When doc-lint validates anchors:
+When mdite validates anchors:
 1. It parses markdown to extract all headings
 2. Generates slugs for each heading using GitHub rules
 3. Compares link anchors against the slug list
@@ -64,7 +64,7 @@ To maintain valid anchors:
 - Keep heading names stable (avoid frequent renaming)
 - Use descriptive but concise headings
 - Test links after restructuring documents
-- Run doc-lint in CI/CD to catch broken anchors early
+- Run mdite in CI/CD to catch broken anchors early
 
 ## Return
 

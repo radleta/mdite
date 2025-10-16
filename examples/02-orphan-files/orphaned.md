@@ -9,7 +9,7 @@ This file exists in the same directory as `README.md` and `connected.md`, but:
 - ❌ It's not linked from connected.md
 - ❌ It's not linked from any other file in the graph
 
-Therefore, it's unreachable from the entrypoint and will be detected as an orphan by doc-lint.
+Therefore, it's unreachable from the entrypoint and will be detected as an orphan by mdite.
 
 ## Why This Is a Problem
 
@@ -25,9 +25,9 @@ Orphans often occur when:
 - New files are created but never linked
 - Files are unlinked during refactoring and forgotten
 
-## How doc-lint Detects This
+## How mdite Detects This
 
-doc-lint:
+mdite:
 1. Starts at the entrypoint (README.md)
 2. Follows all relative markdown links recursively
 3. Builds a graph of reachable files
@@ -36,7 +36,7 @@ doc-lint:
 
 ## Try It
 
-Run `doc-lint lint` in the `02-orphan-files` directory to see this file detected as an orphan.
+Run `mdite lint` in the `02-orphan-files` directory to see this file detected as an orphan.
 
 To "fix" this example, you could link to this file from README.md:
 ```markdown

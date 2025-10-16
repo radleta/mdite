@@ -26,7 +26,6 @@ describe('Reporter', () => {
       const results = new LintResults({
         orphans: [],
         linkErrors: [],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -40,7 +39,6 @@ describe('Reporter', () => {
       const results = new LintResults({
         orphans: ['/path/to/orphan.md'],
         linkErrors: [],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -65,7 +63,6 @@ describe('Reporter', () => {
             message: 'Dead link: missing.md',
           },
         ],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -107,7 +104,6 @@ describe('Reporter', () => {
             message: 'Error 3',
           },
         ],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -133,7 +129,6 @@ describe('Reporter', () => {
             message: 'Dead link',
           },
         ],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -158,7 +153,6 @@ describe('Reporter', () => {
             message: 'Error message',
           },
         ],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -185,7 +179,6 @@ describe('Reporter', () => {
             message: 'Dead link',
           },
         ],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('json', logger);
@@ -213,7 +206,6 @@ describe('Reporter', () => {
             message: 'Dead link',
           },
         ],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('json', logger);
@@ -236,7 +228,6 @@ describe('Reporter', () => {
       const results = new LintResults({
         orphans: [],
         linkErrors: [],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('json', logger);
@@ -257,7 +248,6 @@ describe('Reporter', () => {
       const results = new LintResults({
         orphans: ['/path/to/orphan.md'],
         linkErrors: [],
-        remarkErrors: [],
       });
 
       const reporter = new Reporter('text', logger);
@@ -282,16 +272,6 @@ describe('Reporter', () => {
             message: 'Dead link',
           },
         ],
-        remarkErrors: [
-          {
-            rule: 'remark-rule',
-            severity: 'error',
-            file: '/path/to/other.md',
-            line: 3,
-            column: 1,
-            message: 'Remark error',
-          },
-        ],
       });
 
       const reporter = new Reporter('text', logger);
@@ -302,7 +282,6 @@ describe('Reporter', () => {
         .join('\n');
       expect(output).toContain('orphan.md');
       expect(output).toContain('Dead link');
-      expect(output).toContain('Remark error');
     });
   });
 });

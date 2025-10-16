@@ -1,6 +1,8 @@
-# Contributing to doc-lint
+# Contributing to mdite
 
-Thanks for your interest in contributing to doc-lint! This document provides guidelines for contributing to the project.
+Thanks for your interest in contributing to mdite! This document provides guidelines for contributing to the project.
+
+**mdite** is a markdown documentation toolkit that treats documentation as a connected system. We're building features that enable system-wide operations: validation, dependency analysis, search, and output.
 
 ## Code of Conduct
 
@@ -18,8 +20,8 @@ Be respectful, inclusive, and constructive. We're all here to build something gr
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/doc-lint.git
-cd doc-lint
+git clone https://github.com/yourusername/mdite.git
+cd mdite
 
 # Install dependencies
 npm install
@@ -31,7 +33,7 @@ npm run build
 npm link
 
 # Test the CLI
-doc-lint --version
+mdite --version
 
 # Run smoke tests against examples
 cd examples
@@ -114,7 +116,7 @@ npm run examples
 cd examples && ./run-all-examples.sh
 
 # Test specific example
-cd examples/01-valid-docs && doc-lint lint
+cd examples/01-valid-docs && mdite lint
 ```
 
 ### Test Coverage
@@ -146,9 +148,9 @@ npm run validate
 Fork the repository on GitHub, then clone your fork:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/doc-lint.git
-cd doc-lint
-git remote add upstream https://github.com/original/doc-lint.git
+git clone https://github.com/YOUR_USERNAME/mdite.git
+cd mdite
+git remote add upstream https://github.com/original/mdite.git
 ```
 
 ### 2. Create a Branch
@@ -188,8 +190,8 @@ npm run examples
 # Test the CLI locally
 npm run build
 npm link
-doc-lint --version
-doc-lint init
+mdite --version
+mdite init
 ```
 
 ### 5. Commit Your Changes
@@ -258,10 +260,15 @@ git push origin feature/my-awesome-feature
 ## Project Structure
 
 ```
-doc-lint/
+mdite/
 ├── src/
-│   ├── commands/         # CLI command implementations
-│   ├── core/             # Business logic (linting, validation, etc.)
+│   ├── commands/         # CLI command implementations (lint, deps, init, config)
+│   │                     # Future: query, cat, toc
+│   ├── core/             # Business logic (graph analysis, validation, etc.)
+│   │   ├── doc-linter.ts      # Main orchestrator
+│   │   ├── graph-analyzer.ts  # Graph foundation (enables all features)
+│   │   ├── link-validator.ts  # Link/anchor validation
+│   │   └── ...
 │   ├── types/            # Zod schemas and TypeScript types
 │   ├── utils/            # Utilities (logger, fs, errors)
 │   ├── cli.ts            # CLI setup (Commander.js)
@@ -277,6 +284,7 @@ doc-lint/
 
 **Key files:**
 - `src/cli.ts` - Register new commands here
+- `src/core/graph-analyzer.ts` - Graph foundation for all features
 - `src/types/*.ts` - Zod schemas for validation
 - `tests/fixtures/` - Sample docs for automated testing
 - `examples/` - Runnable examples for manual testing & documentation
@@ -383,7 +391,7 @@ Add an example if:
 2. **Create files:**
    - `README.md` - Explain the example clearly
    - Markdown files demonstrating the feature
-   - Config file (`.doclintrc`, `doclint.config.js`, etc.)
+   - Config file (`.mditerc`, `mdite.config.js`, etc.)
 
 3. **Update `examples/run-all-examples.sh`:**
    ```bash
@@ -398,7 +406,7 @@ Add an example if:
 
 5. **Test:**
    ```bash
-   cd examples/your-example && doc-lint lint
+   cd examples/your-example && mdite lint
    cd .. && ./run-all-examples.sh
    ```
 
@@ -418,7 +426,7 @@ See [examples/README.md](./examples/README.md) for existing examples and detaile
 ### Prerequisites
 
 - Maintainer access to repository
-- npm account with publish rights to `doc-lint` package
+- npm account with publish rights to `mdite` package
 - `NPM_TOKEN` configured in GitHub repository secrets
 
 ### Release Steps
@@ -476,14 +484,14 @@ After the GitHub Action completes:
 
 ```bash
 # Check npm package
-open https://www.npmjs.com/package/doc-lint
+open https://www.npmjs.com/package/mdite
 
 # Check GitHub release
-open https://github.com/yourusername/doc-lint/releases
+open https://github.com/yourusername/mdite/releases
 
 # Test installation
-npm install -g doc-lint@latest
-doc-lint --version
+npm install -g mdite@latest
+mdite --version
 ```
 
 ### Versioning Guidelines
@@ -515,7 +523,7 @@ npm version 1.0.0-beta.1
 
 #### GitHub Actions Workflow Fails
 
-- Check [Actions tab](https://github.com/yourusername/doc-lint/actions) for logs
+- Check [Actions tab](https://github.com/yourusername/mdite/actions) for logs
 - Verify `NPM_TOKEN` secret is valid and not expired
 - Ensure all tests pass locally: `npm run validate`
 - Check that build succeeds: `npm run build`
@@ -549,7 +557,7 @@ If a release has critical issues:
 1. Publish a patch version with fix
 2. Deprecate the broken version on npm:
    ```bash
-   npm deprecate doc-lint@1.0.0 "Critical bug, use 1.0.1 instead"
+   npm deprecate mdite@1.0.0 "Critical bug, use 1.0.1 instead"
    ```
 
 ### NPM Token Setup
@@ -602,8 +610,8 @@ If something is unclear:
 
 ## License
 
-By contributing to doc-lint, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing to mdite, you agree that your contributions will be licensed under the [MIT License](LICENSE).
 
 ---
 
-**Thank you for contributing to doc-lint!** 🚀
+**Thank you for contributing to mdite!** 🚀

@@ -15,8 +15,8 @@ const DEFAULT_CONFIG = `module.exports = {
 
 export function initCommand(): Command {
   return new Command('init')
-    .description('Initialize doc-lint configuration file')
-    .option('--config <path>', 'Config file path', 'doclint.config.js')
+    .description('Initialize mdite configuration file')
+    .option('--config <path>', 'Config file path', 'mdite.config.js')
     .action(async (options, command) => {
       const logger = new Logger(command.optsWithGlobals().colors !== false);
 
@@ -41,7 +41,7 @@ export function initCommand(): Command {
         logger.line();
         logger.info('Next steps:');
         logger.log('  1. Edit the configuration to match your project');
-        logger.log('  2. Run: doc-lint lint');
+        logger.log('  2. Run: mdite check');
         logger.line();
       } catch (error) {
         logger.error('Failed to create configuration', error as Error);

@@ -12,7 +12,7 @@ const { version: VERSION } = require('../../package.json');
 export async function cli() {
   const program = new Command();
 
-  program.name('doc-lint').description('Project-level documentation linter').version(VERSION);
+  program.name('mdite').description('Map your markdown documentation structure').version(VERSION);
 
   // Global options
   program

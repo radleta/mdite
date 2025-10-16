@@ -1,6 +1,6 @@
 # Broken Links Example
 
-This example demonstrates dead link detection in doc-lint.
+This example demonstrates dead link detection in mdite.
 
 ## What is a Dead Link?
 
@@ -27,10 +27,10 @@ Here's a link outside this directory:
 
 ## Expected Output
 
-When you run `doc-lint lint` on this directory:
+When you run `mdite lint` on this directory:
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 You should see errors like:
@@ -47,9 +47,9 @@ README.md
 
 ## Try It Yourself
 
-1. Run `doc-lint lint` to see the broken links detected
+1. Run `mdite lint` to see the broken links detected
 2. Create `missing.md` and `../outside-document.md` to fix the errors
-3. Run `doc-lint lint` again to verify they're fixed
+3. Run `mdite lint` again to verify they're fixed
 
 ## Why Dead Links Matter
 
@@ -58,9 +58,9 @@ Dead links are problems because:
 - **Trust** - Broken links make documentation seem unmaintained
 - **Navigation** - Users can't reach important content
 
-## How doc-lint Detects Dead Links
+## How mdite Detects Dead Links
 
-For each link in markdown files, doc-lint:
+For each link in markdown files, mdite:
 1. Resolves the relative path
 2. Checks if the target file exists
 3. Reports an error if the file is not found

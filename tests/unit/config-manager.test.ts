@@ -58,14 +58,6 @@ describe('ConfigManager', () => {
 
       expect(config.verbose).toBe(true);
     });
-
-    it('should handle frontmatterSchema option', async () => {
-      // Note: frontmatterSchema comes from project config, not CLI
-      const manager = await ConfigManager.load();
-      const config = manager.getConfig();
-
-      expect(config.frontmatterSchema).toBeUndefined();
-    });
   });
 
   describe('methods', () => {

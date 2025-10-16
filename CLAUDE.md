@@ -1,4 +1,4 @@
-# doc-lint - Developer Guide for Claude
+# mdite - Developer Guide for Claude
 
 ## CLAUDE.md Documentation Standards
 
@@ -23,16 +23,16 @@ These standards apply to this file and any other CLAUDE*.md files in the reposit
 @CONTRIBUTING.md - Contributing guidelines
 @CHANGELOG.md - Version history
 
-**This file is for developers working ON doc-lint, not users of the tool.**
+**This file is for developers working ON mdite, not users of the tool.**
 
 ## Project Purpose
 
-CLI tool for validating the structural integrity and consistency of Markdown documentation repositories. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, Vitest (251 tests with 80%+ coverage), Node 18+.
+**Markdown documentation toolkit** for working with documentation as a connected system. Treats documentation as a graph (files = nodes, links = edges), enabling system-wide operations: validation, dependency analysis, search, and output. Current focus: structural validation and dependency analysis. Future: query, cat (pipe output), toc generation. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, Vitest (251 tests with 80%+ coverage), Node 18+.
 
 ## Architecture Quick Reference
 
 **Core modules** (see `src/` for implementation):
-- `commands/` - CLI command handlers (lint, init, config, deps)
+- `commands/` - CLI command handlers (lint, init, config, deps; future: query, cat, toc)
 - `core/` - Business logic (doc-linter orchestrator, graph-analyzer, link-validator, config-manager, remark-engine, reporter)
 - `types/` - Zod schemas (config, graph, results, errors)
 - `utils/` - Shared utilities (logger, errors, error-handler, fs, paths, slug)
@@ -47,8 +47,8 @@ CLI tool for validating the structural integrity and consistency of Markdown doc
 **Key files:**
 - `src/index.ts` - CLI entry point (shebang for bin)
 - `src/cli.ts` - Commander setup, register all commands here
-- `src/core/doc-linter.ts` - Main orchestrator coordinating all linting phases
-- `src/core/graph-analyzer.ts` - Dependency graph building via depth-first traversal
+- `src/core/doc-linter.ts` - Main orchestrator coordinating all operations
+- `src/core/graph-analyzer.ts` - **Graph foundation**: Dependency graph building via depth-first traversal (enables all features)
 - `src/core/link-validator.ts` - Validates file links and anchors
 - `src/types/config.ts` - Multi-layer config schema (defaults → user → project → CLI)
 - `tests/setup.ts` - Test utilities and fixture helpers
@@ -56,7 +56,7 @@ CLI tool for validating the structural integrity and consistency of Markdown doc
 ## Critical Concepts
 
 ### scratch/ Directory
-YOUR working directory for development tasks on doc-lint itself:
+YOUR working directory for development tasks on mdite itself:
 - NOT .gitignored (so you can access it)
 - Protected by pre-commit hook (won't be committed)
 - Separate from user docs being linted
@@ -69,17 +69,26 @@ AI workspace directory:
 - Contains iteration workspaces and reports
 - Never commit this to repo
 
+### Graph Foundation (Core Concept)
+**mdite treats documentation as a graph:**
+- **Nodes**: Markdown files
+- **Edges**: Links between files
+- **Root**: Entrypoint file (default: README.md)
+
+This graph model enables ALL current and future features:
+- **Current**: Validation (lint), dependency analysis (deps), orphan detection
+- **Future**: Search (query), output (cat), TOC generation (toc), metrics (stats)
+
+**Graph traversal**: Depth-first from entrypoint → follows all relative `.md` links → builds reachable set → orphans = all markdown files NOT in graph. Cycle detection prevents infinite loops.
+
 ### Multi-Layer Configuration
 Config loads in priority order (highest first):
 1. CLI options (`--entrypoint`, `--format`)
-2. Project config (`.doclintrc`, `doclint.config.js`, `package.json#doclint`)
-3. User config (`~/.config/doc-lint/config.json`)
+2. Project config (`.mditerc`, `mdite.config.js`, `package.json#mdite`)
+3. User config (`~/.config/mdite/config.json`)
 4. Defaults (in `src/types/config.ts`)
 
 See `src/core/config-manager.ts` for implementation.
-
-### Graph Traversal Algorithm
-Depth-first from entrypoint → follows all relative `.md` links → builds reachable set → orphans = all markdown files NOT in graph. Cycle detection prevents infinite loops.
 
 ### Error Hierarchy
 All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18 custom error classes for specific scenarios. See `src/utils/errors.ts`.
@@ -117,7 +126,7 @@ All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18
 cd examples && ./run-all-examples.sh
 
 # Test individual example
-cd examples/01-valid-docs && doc-lint lint
+cd examples/01-valid-docs && mdite lint
 ```
 
 **Structure:**
@@ -143,7 +152,7 @@ Use `tests/fixtures/` when:
 2. Create files with README.md + config + example docs
 3. Update `examples/run-all-examples.sh`
 4. Update `examples/README.md`
-5. Test: `cd examples/XX && doc-lint lint`
+5. Test: `cd examples/XX && mdite lint`
 
 See `examples/README.md` for full documentation.
 
@@ -188,9 +197,9 @@ Setup: `git config core.hooksPath .githooks` (auto-run via `npm postinstall`)
 
 ## Key Metadata
 
-- **Repo:** github.com/yourusername/doc-lint (update after publishing)
+- **Repo:** github.com/yourusername/mdite (update after publishing)
 - **Author:** Your Name (update in package.json)
-- **Package:** `doc-lint` (not yet published to npm)
+- **Package:** `mdite` (not yet published to npm)
 - **License:** MIT
 - **Engines:** Node 18+
 - **Package size:** ~25.6 kB (optimized)
@@ -202,4 +211,4 @@ See @README.md for user guide, @ARCHITECTURE.md for detailed design, @CONTRIBUTI
 
 ---
 
-**Remember:** This is developer context for building doc-lint. For usage docs, see README.md.
+**Remember:** This is developer context for building mdite. For usage docs, see README.md.

@@ -1,5 +1,5 @@
 /**
- * doc-lint configuration for MyProject
+ * mdite configuration for MyProject
  *
  * This configuration demonstrates a real-world setup with:
  * - Custom entrypoint (README.md is standard)
@@ -32,5 +32,5 @@ module.exports = {
   // frontmatterSchema: { ... },
 
   // Future: Extend from shared configurations
-  // extends: ['@myproject/doclint-config'],
+  // extends: ['@myproject/mdite-config'],
 };

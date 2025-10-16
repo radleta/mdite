@@ -1,10 +1,10 @@
 # Warnings Configuration Example
 
-This example demonstrates a flexible doc-lint configuration using warnings instead of errors for some rules.
+This example demonstrates a flexible mdite configuration using warnings instead of errors for some rules.
 
 ## Configuration
 
-The `.doclintrc.yaml` file uses YAML format:
+The `.mditerc.yaml` file uses YAML format:
 
 ```yaml
 entrypoint: README.md
@@ -18,7 +18,7 @@ rules:
 ## Why Use Warnings?
 
 Use warnings when:
-- **Gradual Adoption** - Introducing doc-lint to existing projects
+- **Gradual Adoption** - Introducing mdite to existing projects
 - **Non-Blocking CI** - Don't want to fail builds on documentation issues
 - **Active Editing** - Documentation is being reorganized
 - **Flexibility** - Want to see issues without enforcement
@@ -40,7 +40,7 @@ This doc set includes:
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Even with warnings, this example should pass cleanly.

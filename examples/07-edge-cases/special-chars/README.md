@@ -1,10 +1,10 @@
 # Special Characters Example
 
-This example demonstrates how doc-lint handles files with special characters in their names.
+This example demonstrates how mdite handles files with special characters in their names.
 
 ## Overview
 
-File names can contain various special characters. doc-lint should handle them gracefully.
+File names can contain various special characters. mdite should handle them gracefully.
 
 ## Files in This Example
 
@@ -48,7 +48,7 @@ Special characters in filenames test:
 
 ## Expected Behavior
 
-When running `doc-lint lint`:
+When running `mdite lint`:
 - ✅ Should handle all valid filename characters
 - ✅ Should parse links with special characters correctly
 - ✅ Should validate files regardless of naming pattern
@@ -57,7 +57,7 @@ When running `doc-lint lint`:
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Should output:

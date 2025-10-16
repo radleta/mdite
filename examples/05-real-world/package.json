@@ -1,11 +1,11 @@
 {
   "name": "myproject-example",
   "version": "1.0.0",
-  "description": "Example project demonstrating doc-lint usage",
+  "description": "Example project demonstrating mdite usage",
   "private": true,
   "scripts": {
-    "docs:lint": "doc-lint lint",
-    "docs:lint:json": "doc-lint lint --format json"
+    "docs:lint": "mdite lint",
+    "docs:lint:json": "mdite lint --format json"
   },
   "keywords": [
     "example",

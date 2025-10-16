@@ -31,7 +31,7 @@ describe('ConfigManager - Layered Configuration', () => {
     });
 
     it('should merge project config over defaults', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
+      await writeTestConfig(path.join(testDir, '.mditerc'), {
         entrypoint: 'docs/index.md',
         rules: {
           'orphan-files': 'warn',
@@ -48,7 +48,7 @@ describe('ConfigManager - Layered Configuration', () => {
     });
 
     it('should merge CLI options over project config', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
+      await writeTestConfig(path.join(testDir, '.mditerc'), {
         entrypoint: 'docs/index.md',
       });
 
@@ -159,32 +159,32 @@ describe('ConfigManager - Layered Configuration', () => {
   });
 
   describe('project config formats', () => {
-    it('should load .doclintrc JSON config', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
-        entrypoint: 'from-doclintrc.md',
+    it('should load .mditerc JSON config', async () => {
+      await writeTestConfig(path.join(testDir, '.mditerc'), {
+        entrypoint: 'from-mditerc.md',
       });
 
       const manager = await ConfigManager.load();
       const config = manager.getConfig();
 
-      expect(config.entrypoint).toBe('from-doclintrc.md');
+      expect(config.entrypoint).toBe('from-mditerc.md');
     });
 
-    it('should load .doclintrc.json config', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc.json'), {
-        entrypoint: 'from-doclintrc-json.md',
+    it('should load .mditerc.json config', async () => {
+      await writeTestConfig(path.join(testDir, '.mditerc.json'), {
+        entrypoint: 'from-mditerc-json.md',
       });
 
       const manager = await ConfigManager.load();
       const config = manager.getConfig();
 
-      expect(config.entrypoint).toBe('from-doclintrc-json.md');
+      expect(config.entrypoint).toBe('from-mditerc-json.md');
     });
 
-    it('should support package.json doclint field', async () => {
+    it('should support package.json mdite field', async () => {
       const packageJson = {
         name: 'test-project',
-        doclint: {
+        mdite: {
           entrypoint: 'from-package-json.md',
         },
       };
@@ -199,7 +199,7 @@ describe('ConfigManager - Layered Configuration', () => {
 
   describe('rule merging', () => {
     it('should merge project rules with default rules', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
+      await writeTestConfig(path.join(testDir, '.mditerc'), {
         rules: {
           'orphan-files': 'warn',
         },
@@ -215,7 +215,7 @@ describe('ConfigManager - Layered Configuration', () => {
     });
 
     it('should support adding new rules', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
+      await writeTestConfig(path.join(testDir, '.mditerc'), {
         rules: {
           'custom-rule': 'error',
         },
@@ -232,7 +232,7 @@ describe('ConfigManager - Layered Configuration', () => {
 
   describe('error handling', () => {
     it('should throw on invalid project config', async () => {
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
+      await writeTestConfig(path.join(testDir, '.mditerc'), {
         rules: {
           'test-rule': 'invalid-severity', // Invalid severity
         },
@@ -243,26 +243,5 @@ describe('ConfigManager - Layered Configuration', () => {
 
     // Note: cosmiconfig handles malformed JSON gracefully by skipping the file
     // This is expected behavior, so we don't test for it throwing
-  });
-
-  describe('frontmatterSchema support', () => {
-    it('should pass through frontmatterSchema from project config', async () => {
-      const schema = {
-        type: 'object',
-        properties: {
-          title: { type: 'string' },
-          author: { type: 'string' },
-        },
-      };
-
-      await writeTestConfig(path.join(testDir, '.doclintrc'), {
-        frontmatterSchema: schema,
-      });
-
-      const manager = await ConfigManager.load();
-      const config = manager.getConfig();
-
-      expect(config.frontmatterSchema).toEqual(schema);
-    });
   });
 });

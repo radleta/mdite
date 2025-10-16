@@ -2,7 +2,9 @@
 
 ## Overview
 
-doc-lint is a comprehensive documentation linter built as a modular system with clear separation of concerns. The architecture follows a layered approach, separating CLI concerns from core business logic and shared utilities.
+mdite is a comprehensive **documentation toolkit** built as a modular system with clear separation of concerns. The architecture follows a layered approach, separating CLI concerns from core business logic and shared utilities.
+
+**Core Philosophy**: mdite treats documentation as a **connected system** (graph), not isolated files. This graph foundation enables all current and future features: validation, dependency analysis, search, output, and more.
 
 ## Core Components
 
@@ -14,8 +16,11 @@ doc-lint is a comprehensive documentation linter built as a modular system with 
 
 **Key files**:
 - `cli.ts` - Main CLI setup with Commander.js, registers all commands
-- `commands/lint.ts` - Lint command implementation (primary command)
+- `commands/lint.ts` - Validation command (structural integrity)
+- `commands/deps.ts` - Dependency analysis command
 - `commands/config.ts` - Configuration management commands
+- `commands/init.ts` - Initialize configuration
+- **Future**: `commands/query.ts`, `commands/cat.ts`, `commands/toc.ts`
 
 **Responsibilities**:
 - Parse CLI arguments and options
@@ -26,23 +31,27 @@ doc-lint is a comprehensive documentation linter built as a modular system with 
 
 ### Core Layer
 
-**Purpose**: Business logic and orchestration of linting operations
+**Purpose**: Business logic and orchestration of documentation system operations
 
 **Location**: `src/core/`
 
 **Key files**:
-- `doc-linter.ts` - Main orchestrator that coordinates all linting phases
-- `graph-analyzer.ts` - Dependency graph building and traversal
+- `doc-linter.ts` - Main orchestrator that coordinates all operations
+- `graph-analyzer.ts` - **Graph foundation**: Dependency graph building and traversal (enables all features)
 - `link-validator.ts` - Link and anchor validation
 - `config-manager.ts` - Multi-layer configuration management
 - `remark-engine.ts` - Content linting with remark plugins
+- `reporter.ts` - Result formatting and output
+- **Future**: Query engine, content output processor, TOC generator
 
 **Responsibilities**:
-- Build documentation dependency graphs
+- Build documentation dependency graph (foundation for all features)
 - Validate links (files and anchors)
 - Detect orphaned files
+- Analyze dependencies and relationships
 - Run content linting with remark
 - Aggregate and return results
+- **Future**: Search/query operations, content output, TOC generation
 
 ### Type Layer
 
@@ -85,6 +94,8 @@ doc-lint is a comprehensive documentation linter built as a modular system with 
 
 ## Data Flow
 
+### Current Operations (lint, deps)
+
 ```
 1. User runs CLI command
    ↓
@@ -93,18 +104,30 @@ doc-lint is a comprehensive documentation linter built as a modular system with 
 3. ConfigManager loads and merges config
    (Defaults → User Config → Project Config → CLI Options)
    ↓
-4. DocLinter orchestrates linting:
-   ├─ GraphAnalyzer builds dependency graph from entrypoint
+4. GraphAnalyzer builds dependency graph from entrypoint
+   (Foundation step - used by ALL commands)
+   ↓
+5. Command-specific operations:
+
+   lint:
    ├─ GraphAnalyzer detects orphaned files
    ├─ LinkValidator validates all links (files + anchors)
    └─ RemarkEngine runs content linting
+
+   deps:
+   ├─ Extract dependencies for target file
+   └─ Format as tree, list, or JSON
    ↓
-5. LintResults aggregates all errors/warnings
+6. Results aggregation
    ↓
-6. Reporter formats results (text or JSON)
+7. Reporter formats results (text, JSON, tree, list)
    ↓
-7. CLI outputs results and sets exit code
+8. CLI outputs results and sets exit code
 ```
+
+### Future Operations (query, cat, toc)
+
+All will leverage the same graph foundation built by GraphAnalyzer, with command-specific processing layers.
 
 ## Configuration System
 
@@ -112,8 +135,8 @@ The configuration system uses a layered approach with clear priority:
 
 **Priority (highest to lowest)**:
 1. **CLI Options** - Flags passed on command line (`--entrypoint`, `--format`, etc.)
-2. **Project Config** - `.doclintrc`, `doclint.config.js`, or `package.json#doclint`
-3. **User Config** - `~/.config/doc-lint/config.json` (personal defaults)
+2. **Project Config** - `.mditerc`, `mdite.config.js`, or `package.json#mdite`
+3. **User Config** - `~/.config/mdite/config.json` (personal defaults)
 4. **Defaults** - Built-in defaults from `src/types/config.ts`
 
 Each layer is merged into the next, with higher priority layers overriding lower ones.
@@ -261,7 +284,7 @@ examples/
 
 Examples serve three purposes:
 
-1. **User Documentation** - Show how doc-lint works
+1. **User Documentation** - Show how mdite works
 2. **Manual Testing** - Quick smoke tests during development
 3. **Regression Testing** - Verify behavior across releases
 
@@ -279,7 +302,7 @@ Examples serve three purposes:
 
 ```bash
 # Individual example
-cd examples/01-valid-docs && doc-lint lint
+cd examples/01-valid-docs && mdite lint
 
 # Full smoke test suite
 cd examples && ./run-all-examples.sh
@@ -342,7 +365,7 @@ src/
 │   ├── lint.ts
 │   └── config.ts
 ├── core/               # Business logic
-│   ├── doc-linter.ts
+│   ├── mditeer.ts
 │   ├── graph-analyzer.ts
 │   ├── link-validator.ts
 │   ├── config-manager.ts
@@ -366,14 +389,23 @@ src/
 
 Potential areas for expansion:
 
-1. **Plugin System**: Allow external plugins for custom rules
-2. **Watch Mode**: Monitor files and re-lint on changes
-3. **Fix Mode**: Automatically fix certain issues
-4. **Remote Link Validation**: Check external URLs (with caching)
-5. **Frontmatter Validation**: Validate YAML frontmatter against schemas
-6. **Custom Reporters**: Allow custom output formatters
-7. **IDE Integration**: Language server protocol support
-8. **Configuration Presets**: Shareable configuration packages
+1. **`mdite query`**: Search across documentation system
+   - Full-text search across connected docs
+   - Pattern matching on file names
+   - Metadata/frontmatter queries
+2. **`mdite cat`**: Output documentation content
+   - Pipe to shell tools
+   - Order by dependency graph
+   - Filter and concatenate
+3. **`mdite toc`**: Generate table of contents from graph
+4. **`mdite stats`**: Documentation metrics and analysis
+5. **External link validation**: Check HTTP/HTTPS URLs (with caching)
+6. **Watch mode**: Monitor files and re-lint on changes
+7. **Plugin System**: Allow external plugins for custom rules
+8. **Fix Mode**: Automatically fix certain issues
+9. **LSP Server**: Language server protocol for editor integration
+10. **Custom Reporters**: Allow custom output formatters
+11. **Configuration Presets**: Shareable configuration packages
 
 ## Resources
 

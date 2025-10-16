@@ -17,7 +17,7 @@ However, the README also contains links to files that don't exist:
 
 ## Link Validation
 
-doc-lint validates that:
+mdite validates that:
 - ✅ Links point to files that exist
 - ✅ Relative paths resolve correctly
 - ✅ File extensions match (`.md`)
@@ -32,7 +32,7 @@ To fix broken links, you can:
 
 ## Testing Links
 
-When you run `doc-lint lint`, it will:
+When you run `mdite lint`, it will:
 1. Parse all markdown files
 2. Extract link references
 3. Resolve relative paths
@@ -45,7 +45,7 @@ To avoid broken links:
 - Use consistent naming conventions
 - Update links when moving files
 - Verify links after creating them
-- Run doc-lint regularly in CI/CD
+- Run mdite regularly in CI/CD
 
 ## Return
 

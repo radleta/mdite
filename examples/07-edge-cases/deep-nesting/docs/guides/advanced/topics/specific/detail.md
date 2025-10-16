@@ -37,7 +37,7 @@ That's **5 levels up** with `../` repeated 6 times!
 ## Why This Matters
 
 This deep nesting demonstrates:
-- ✅ doc-lint can find files at any depth
+- ✅ mdite can find files at any depth
 - ✅ Relative paths resolve correctly across many levels
 - ✅ Links work bidirectionally (down and up the tree)
 - ✅ No performance issues with deep structures
@@ -54,7 +54,7 @@ Navigate back up:
 
 ## Content
 
-This is the deepest file in the example. doc-lint should have no trouble finding and validating it!
+This is the deepest file in the example. mdite should have no trouble finding and validating it!
 
 ## Quick Return
 

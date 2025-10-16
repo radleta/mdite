@@ -22,12 +22,12 @@ export type Severity = z.infer<typeof SeveritySchema>;
 /**
  * User-level configuration schema
  *
- * User configuration is stored in `~/.config/doc-lint/config.json` and provides
+ * User configuration is stored in `~/.config/mdite/config.json` and provides
  * personal defaults that apply across all projects.
  *
  * @example
  * ```typescript
- * // ~/.config/doc-lint/config.json
+ * // ~/.config/mdite/config.json
  * {
  *   "defaultEntrypoint": "docs/README.md",
  *   "defaultFormat": "json",
@@ -57,26 +57,19 @@ export type UserConfig = z.infer<typeof UserConfigSchema>;
 /**
  * Project-level configuration schema
  *
- * Project configuration is defined in `doclint.config.js`, `.doclintrc`, or
- * the `doclint` field in `package.json`. These settings override user config
+ * Project configuration is defined in `mdite.config.js`, `.mditerc`, or
+ * the `mdite` field in `package.json`. These settings override user config
  * and apply to the specific project.
  *
  * @example
  * ```typescript
- * // doclint.config.js
+ * // mdite.config.js
  * export default {
  *   entrypoint: 'docs/README.md',
  *   rules: {
  *     'orphan-files': 'error',
  *     'dead-link': 'error',
  *     'dead-anchor': 'warn'
- *   },
- *   frontmatterSchema: {
- *     type: 'object',
- *     properties: {
- *       title: { type: 'string' },
- *       date: { type: 'string' }
- *     }
  *   }
  * };
  * ```
@@ -86,8 +79,6 @@ export const ProjectConfigSchema = z.object({
   entrypoint: z.string().optional(),
   /** Rule configuration with severity levels */
   rules: z.record(SeveritySchema).optional(),
-  /** JSON Schema for frontmatter validation */
-  frontmatterSchema: z.any().optional(),
   /** Configuration files to extend (not yet implemented) */
   extends: z.array(z.string()).optional(),
 });
@@ -132,8 +123,6 @@ export const RuntimeConfigSchema = z.object({
   verbose: z.boolean(),
   /** Rule configuration with severity levels */
   rules: z.record(SeveritySchema),
-  /** Optional JSON Schema for frontmatter validation */
-  frontmatterSchema: z.any().optional(),
 });
 
 export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;

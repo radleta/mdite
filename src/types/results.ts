@@ -5,7 +5,6 @@ export class LintResults {
     private data: {
       orphans: string[];
       linkErrors: LintError[];
-      remarkErrors: LintError[];
     }
   ) {}
 
@@ -15,10 +14,6 @@ export class LintResults {
 
   get linkErrors(): LintError[] {
     return this.data.linkErrors;
-  }
-
-  get remarkErrors(): LintError[] {
-    return this.data.remarkErrors;
   }
 
   get errorCount(): number {
@@ -34,7 +29,7 @@ export class LintResults {
   }
 
   getAllErrors(): LintError[] {
-    return [...this.orphanErrors(), ...this.data.linkErrors, ...this.data.remarkErrors];
+    return [...this.orphanErrors(), ...this.data.linkErrors];
   }
 
   private orphanErrors(): LintError[] {

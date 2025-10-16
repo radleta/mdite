@@ -1,10 +1,10 @@
 # Edge Cases Examples
 
-This directory contains examples demonstrating how doc-lint handles complex and edge-case scenarios.
+This directory contains examples demonstrating how mdite handles complex and edge-case scenarios.
 
 ## Overview
 
-These examples test doc-lint's robustness with:
+These examples test mdite's robustness with:
 - Circular references
 - Deep directory nesting
 - Special characters in filenames
@@ -15,11 +15,11 @@ These examples test doc-lint's robustness with:
 
 Demonstrates handling of circular link references (A→B→C→A).
 
-**Purpose:** Verify doc-lint doesn't infinite loop on cycles
+**Purpose:** Verify mdite doesn't infinite loop on cycles
 **Expected:** Tool completes successfully, detects all files in cycle
 
 ```bash
-cd cycles && doc-lint lint
+cd cycles && mdite lint
 ```
 
 ### deep-nesting/
@@ -30,18 +30,18 @@ Tests deeply nested directory structures.
 **Expected:** Tool handles deep paths correctly
 
 ```bash
-cd deep-nesting && doc-lint lint
+cd deep-nesting && mdite lint
 ```
 
 ### special-chars/
 
 Tests files with special characters in names.
 
-**Purpose:** Verify doc-lint handles various filename characters
+**Purpose:** Verify mdite handles various filename characters
 **Expected:** Tool processes all filenames correctly
 
 ```bash
-cd special-chars && doc-lint lint
+cd special-chars && mdite lint
 ```
 
 ## Why Test Edge Cases?
@@ -63,13 +63,13 @@ All edge case examples should:
 
 ```bash
 # Test cycles
-cd cycles && doc-lint lint
+cd cycles && mdite lint
 
 # Test deep nesting
-cd deep-nesting && doc-lint lint
+cd deep-nesting && mdite lint
 
 # Test special characters
-cd special-chars && doc-lint lint
+cd special-chars && mdite lint
 ```
 
 ## Related

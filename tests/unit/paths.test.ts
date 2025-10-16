@@ -12,7 +12,7 @@ describe('Path Utilities', () => {
   describe('getUserConfigDir', () => {
     it('should return user config directory path', () => {
       const result = getUserConfigDir();
-      const expected = join(homedir(), '.config', 'doc-lint');
+      const expected = join(homedir(), '.config', 'mdite');
 
       expect(result).toBe(expected);
     });
@@ -27,7 +27,7 @@ describe('Path Utilities', () => {
   describe('getUserConfigPath', () => {
     it('should return user config file path', () => {
       const result = getUserConfigPath();
-      const expected = join(homedir(), '.config', 'doc-lint', 'config.json');
+      const expected = join(homedir(), '.config', 'mdite', 'config.json');
 
       expect(result).toBe(expected);
     });
@@ -42,7 +42,7 @@ describe('Path Utilities', () => {
   describe('getProjectConfigPath', () => {
     it('should return project config path in current directory', () => {
       const result = getProjectConfigPath();
-      const expected = resolve(process.cwd(), '.doclintrc');
+      const expected = resolve(process.cwd(), '.mditerc');
 
       expect(result).toBe(expected);
     });

@@ -1,6 +1,6 @@
 # Broken Anchors Example
 
-This example demonstrates anchor/fragment link validation in doc-lint.
+This example demonstrates anchor/fragment link validation in mdite.
 
 ## What is a Dead Anchor?
 
@@ -30,10 +30,10 @@ Invalid cross-file anchor:
 
 ## Expected Output
 
-When you run `doc-lint lint` on this directory:
+When you run `mdite lint` on this directory:
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 You should see errors like:
@@ -50,9 +50,9 @@ README.md
 
 ## Try It Yourself
 
-1. Run `doc-lint lint` to see the broken anchors detected
+1. Run `mdite lint` to see the broken anchors detected
 2. Add headings with those names to fix the errors
-3. Run `doc-lint lint` again to verify they're fixed
+3. Run `mdite lint` again to verify they're fixed
 
 ## How Anchor Slugs Work
 
@@ -73,9 +73,9 @@ Broken anchors cause problems:
 - **User Experience** - Clicking a broken anchor is frustrating
 - **Maintenance** - Headings may be renamed without updating links
 
-## How doc-lint Validates Anchors
+## How mdite Validates Anchors
 
-For each anchor link, doc-lint:
+For each anchor link, mdite:
 1. Identifies the target file (same file or different file)
 2. Extracts all headings from the target file
 3. Converts headings to GitHub-style slugs

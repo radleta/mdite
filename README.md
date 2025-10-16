@@ -1,246 +1,585 @@
-# doc-lint
+# mdite
 
-A project-level linter for validating the structural integrity and consistency of Markdown documentation repositories.
+**Markdown documentation toolkit** - Work with your documentation as a connected system, not scattered files.
 
-## Features
+mdite treats your markdown documentation as a cohesive whole. Map dependencies, validate structure, search across files, and pipe content—all while understanding how your docs connect together.
 
-- **🔍 Graph Traversal** - Builds a dependency graph from an entrypoint and validates all reachable files
-- **🚨 Orphan Detection** - Identifies markdown files not reachable from the documentation root
-- **🔗 Link Validation** - Validates relative file links and anchor/fragment links
-- **📝 Content Linting** - Integrates remark-lint for style and formatting checks
-- **⚙️ Configurable** - Uses cosmiconfig for flexible configuration management
-- **📊 Multiple Output Formats** - Supports both human-readable text and machine-readable JSON output
+---
 
-## Installation
+## The Vision
 
+Most tools treat markdown files as isolated documents. mdite treats them as a **connected system**.
+
+### Current Reality
+- 📄 Edit files one at a time
+- 🔍 grep individual files, hope you find everything
+- 🤷 No idea what's connected to what
+- 💥 Break things when refactoring
+- 🗑️ Afraid to delete anything
+
+### With mdite
+- 🕸️ **See the whole system** - Your docs are a graph, visualize it
+- 🔍 **Search the system** - Query across all connected docs
+- 📊 **Understand dependencies** - Know what links to what
+- ✅ **Validate structure** - Catch broken links and orphans
+- 🎯 **Work confidently** - Refactor and clean up without fear
+
+---
+
+## What mdite Does
+
+mdite is a toolkit for working with markdown documentation as a unified system:
+
+### 📊 Map & Analyze (`deps`)
 ```bash
-npm install -g doc-lint
+# See what connects to what
+mdite deps docs/api.md --incoming
+
+# Understand your doc structure
+mdite deps README.md --format tree
 ```
+
+### ✅ Validate & Lint (`lint`)
+```bash
+# Catch broken links and orphans
+mdite lint
+
+# CI/CD integration
+mdite lint --format json
+```
+
+### 🔍 Query & Search (coming soon)
+```bash
+# Search across your doc system
+mdite query "authentication" --files
+
+# Find docs by name pattern
+mdite query "api-*" --names
+```
+
+### 📤 Export & Pipe (coming soon)
+```bash
+# Output entire doc system
+mdite cat | less
+
+# Pipe to shell tools
+mdite cat docs/api/*.md | grep "function"
+
+# Combine with other tools
+mdite cat --order deps | pandoc -o book.pdf
+```
+
+**The key:** mdite understands how your docs connect, so it can treat them as a unified system.
+
+---
 
 ## Quick Start
 
-```bash
-# Initialize configuration
-doc-lint init
+### Installation
 
-# Lint your documentation
-doc-lint lint
+```bash
+npm install -g mdite
+```
+
+### Three Core Workflows
+
+#### 1. Understand Your Docs (Graph Analysis)
+```bash
+# Map the structure
+mdite deps README.md
+
+# What references this file?
+mdite deps docs/api.md --incoming
+
+# What does this file reference?
+mdite deps docs/guide.md --outgoing
+```
+
+**Use case:** Before changing anything, understand the impact.
+
+#### 2. Validate Your Docs (Linting)
+```bash
+# Check for issues
+mdite lint
+
+# Find orphaned files
+mdite lint --verbose
+
+# CI/CD integration
+mdite lint --format json
+```
+
+**Use case:** Catch broken links and structural issues.
+
+#### 3. Configure (Optional)
+```bash
+# Create custom config
+mdite init
+
+# See merged config
+mdite config
+```
+
+**Use case:** Customize for your project's needs.
+
+---
+
+## Core Features
+
+### 🕸️ Documentation as a Graph
+
+mdite builds a complete dependency graph of your documentation starting from an entrypoint (usually `README.md`), following all internal links.
+
+**Why this matters:** You can see exactly how your docs connect. No more guessing about structure or dependencies.
+
+```bash
+mdite deps README.md
+# Output:
+# README.md
+# ├── docs/getting-started.md
+# │   ├── docs/installation.md
+# │   └── docs/configuration.md
+# ├── docs/api-reference.md
+# └── docs/guides/
+```
+
+**This graph is the foundation** for everything mdite does - validation, analysis, search, export.
+
+### 📊 Dependency Analysis
+
+Understand what connects to what before making changes:
+
+```bash
+# Impact analysis: What will break if I change this?
+mdite deps docs/api.md --incoming
+# Shows: README.md, guide.md, tutorial.md all reference it
+
+# Scope analysis: What does this file depend on?
+mdite deps docs/guide.md --outgoing
+# Shows: Links to setup.md, api.md, troubleshooting.md
+```
+
+**Real-world use cases:**
+- 🔧 **Refactoring:** Know the impact before renaming/moving files
+- 🧹 **Cleanup:** Find files that nothing depends on (safe to delete)
+- 📖 **Documentation:** Understand your doc structure
+- 🎯 **Navigation:** Find central hub documents
+
+### ✅ Structure Validation
+
+Catch issues before they reach users:
+
+**Orphan Detection:**
+Find markdown files that aren't linked from anywhere—dead weight in your repo.
+
+```bash
+mdite lint
+# ✗ Found 3 orphaned files:
+#   - old-guide.md
+#   - deprecated-api.md
+#   - scratch-notes.md
+```
+
+**Link Validation:**
+Validates three types of links:
+- **File links:** `[guide](./setup.md)` → validates file exists
+- **Anchor links:** `[intro](#getting-started)` → validates heading exists
+- **Cross-file anchors:** `[api](./api.md#methods)` → validates both
+
+**Benefit:** Zero 404s in your documentation.
+
+### 🔍 System-Wide Operations (Coming Soon)
+
+Because mdite understands your docs as a system, it can do things other tools can't:
+
+**Search across the system:**
+```bash
+# Find all docs mentioning "authentication"
+mdite query "authentication" --content
+
+# Find docs matching name pattern
+mdite query "api-*" --names
+
+# Search in a specific section of the graph
+mdite query "config" --from docs/reference/
+```
+
+**Export the system:**
+```bash
+# Output entire doc system in dependency order
+mdite cat --order deps
+
+# Output specific subsection
+mdite cat docs/guides/*.md
+
+# Pipe to shell tools
+mdite cat | grep -n "TODO"
+mdite cat | wc -l  # Total lines in doc system
+```
+
+**Transform the system:**
+```bash
+# Generate table of contents from graph
+mdite toc --depth 2
+
+# Export as single file
+mdite cat --order deps | pandoc -o documentation.pdf
+
+# Validate external links (HTTP/HTTPS)
+mdite lint --external
+```
+
+---
+
+## Why mdite?
+
+### The Problem: Documentation is a System, But Tools Treat It Like Files
+
+You have 50 markdown files that form a cohesive documentation site, but:
+- ❌ You edit them one at a time (disconnected)
+- ❌ You search them one at a time (`grep file1.md`, `grep file2.md`...)
+- ❌ You have no idea how they connect
+- ❌ Refactoring is terrifying (what will break?)
+- ❌ You don't know what's safe to delete
+
+**mdite solves this by treating your docs as a connected graph.**
+
+### What Makes mdite Different?
+
+| Capability | Traditional Tools | mdite |
+|------------|------------------|-------|
+| **Link validation** | ❌ Can't detect broken links | ✅ Validates all internal links |
+| **Orphan detection** | ❌ No concept of reachability | ✅ Finds unreachable files |
+| **Dependency analysis** | ❌ No understanding of structure | ✅ Maps entire graph |
+| **System-wide search** | ❌ Search files individually | ✅ Query the whole system |
+| **Structural operations** | ❌ File-by-file only | ✅ Operates on connected docs |
+
+### vs. Traditional Markdown Linters
+
+**markdownlint / remark-lint:**
+- ✅ Check style (formatting, syntax)
+- ❌ Don't understand document relationships
+- ❌ Can't detect orphaned files
+- ❌ Miss structural issues
+- ❌ File-centric, not system-centric
+
+**mdite:**
+- ✅ Validates structure and relationships
+- ✅ Detects orphaned files
+- ✅ Maps dependencies
+- ✅ System-centric operations
+- ✅ Understands your docs as a connected whole
+
+**Use both:** Traditional linters for style, mdite for structure and system operations.
+
+---
+
+## Real-World Workflows
+
+### 1. Safe Refactoring
+
+```bash
+# Step 1: Understand the impact
+mdite deps docs/old-api.md --incoming
+# Shows: README.md, tutorial.md, guide.md reference it
+
+# Step 2: Rename the file
+mv docs/old-api.md docs/api-reference.md
+
+# Step 3: Update the 3 files that link to it
+
+# Step 4: Validate
+mdite lint
+# ✅ All links valid
+```
+
+**Benefit:** Refactor with confidence, not fear.
+
+### 2. Documentation Spring Cleaning
+
+```bash
+# Find orphaned files
+mdite lint
+# ✗ Found 5 orphaned files
+
+# Review each one
+mdite deps old-guide.md --incoming
+# Shows: nothing links to it
+
+# Safe to delete!
+rm old-guide.md deprecated-api.md scratch-notes.md
+
+# Verify
+mdite lint
+# ✅ All clean, only connected docs remain
+```
+
+**Benefit:** Clean repos, confident deletions.
+
+### 3. Pre-Release Documentation Check
+
+```bash
+# Validate structure
+mdite lint
+
+# Check for orphans (incomplete docs)
+mdite lint --verbose | grep "orphan"
+
+# Verify all API docs are reachable
+mdite deps README.md --format list | grep "api"
+
+# Green light to release
+mdite lint --format json
+# Exit code 0 = ship it
+```
+
+**Benefit:** Never ship broken documentation.
+
+### 4. Understanding a New Codebase
+
+```bash
+# Start at the entry point
+mdite deps README.md --depth 1
+# Shows: Top-level structure
+
+# Explore a section
+mdite deps docs/architecture.md
+# Shows: What it connects to
+
+# Find all API docs
+mdite deps README.md --format list | grep api
+# Lists all API documentation files
+```
+
+**Benefit:** Quickly understand documentation structure.
+
+### 5. CI/CD Quality Gate
+
+```yaml
+# .github/workflows/docs.yml
+name: Documentation Quality
+
+on: [pull_request]
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm install -g mdite
+      - run: mdite lint --format json
+      # Fails if broken links or orphans detected
+```
+
+**Benefit:** Documentation quality is enforced, not hoped for.
+
+---
+
+## Commands
+
+### `mdite deps <file>` - Analyze Dependencies
+
+Visualize and analyze documentation structure.
+
+```bash
+# Tree view of dependencies
+mdite deps README.md
+
+# What references this file? (incoming)
+mdite deps docs/api.md --incoming
+
+# What does this file reference? (outgoing)
+mdite deps docs/guide.md --outgoing
+
+# Limit depth
+mdite deps README.md --depth 2
+
+# JSON output for tooling
+mdite deps docs/api.md --format json
+
+# List format
+mdite deps README.md --format list
+```
+
+**Options:**
+- `--incoming` - Show what references this file
+- `--outgoing` - Show what this file references
+- `--depth <n>` - Limit traversal depth
+- `--format <type>` - Output: `tree` (default), `list`, or `json`
+
+**Use cases:**
+- 🔍 Impact analysis before refactoring
+- 🧹 Finding safe-to-delete files
+- 📊 Understanding documentation structure
+- 🎯 Identifying central hub documents
+
+### `mdite lint [path]` - Validate Structure
+
+Check documentation for structural issues.
+
+```bash
+# Lint from current directory
+mdite lint
 
 # Lint specific directory
-doc-lint lint ./docs
+mdite lint ./docs
 
-# Output as JSON
-doc-lint lint --format json
+# JSON output for CI/CD
+mdite lint --format json
+
+# Verbose output
+mdite lint --verbose
 ```
 
-## Examples
+**Options:**
+- `--format <type>` - Output: `text` (default) or `json`
+- `--config <path>` - Custom config file
+- `--no-colors` - Disable colored output
+- `--verbose` - Detailed output
 
-The `examples/` directory contains 12 runnable demonstrations of doc-lint features (68 files total).
+**What it validates:**
+- ✅ All files reachable from entrypoint
+- ✅ No orphaned files
+- ✅ All file links are valid
+- ✅ All anchor references exist
+- ✅ No broken cross-file anchor links
 
-### Try the Examples
+### `mdite init` - Initialize Configuration
+
+Create a configuration file.
 
 ```bash
-# Explore a valid documentation structure
-cd examples/01-valid-docs
-doc-lint lint
-
-# See orphan file detection in action
-cd examples/02-orphan-files
-doc-lint lint
-
-# Experiment with different config formats
-cd examples/06-config-variations/strict
-doc-lint lint
+mdite init
+# Creates mdite.config.js
 ```
 
-### Run All Examples (Smoke Test)
+### `mdite config` - Show Configuration
+
+Display merged configuration from all sources.
 
 ```bash
-cd examples
-chmod +x run-all-examples.sh
-./run-all-examples.sh
+mdite config
 ```
 
-This runs doc-lint against all 12 example sets, verifying both passing and failing scenarios.
+### Future Commands
 
-**Available examples:**
-- **Phase 1:** Core features (valid docs, orphans, broken links, broken anchors)
-- **Phase 2:** Real-world site + config variations (5 examples showing different config formats)
-- **Phase 3:** Edge cases (cycles, deep nesting, special characters)
+Coming soon as mdite expands beyond linting:
 
-See [examples/README.md](./examples/README.md) for complete documentation.
+#### `mdite query <pattern>` - Search Documentation System
+```bash
+# Search content across all docs
+mdite query "authentication"
+
+# Search filenames
+mdite query "api-*" --names
+
+# Search in specific subsection
+mdite query "config" --from docs/reference/
+```
+
+#### `mdite cat [files]` - Output Documentation
+```bash
+# Output entire system
+mdite cat
+
+# Output in dependency order
+mdite cat --order deps
+
+# Output specific files
+mdite cat docs/guides/*.md
+
+# Pipe to tools
+mdite cat | grep "TODO"
+```
+
+#### `mdite toc` - Generate Table of Contents
+```bash
+# Generate TOC from graph
+mdite toc --depth 2
+```
+
+---
 
 ## Configuration
 
-Create a `doclint.config.js` file in your project root:
+### Zero Config
+
+mdite works out of the box:
+
+```bash
+mdite lint  # Just works
+mdite deps README.md  # Just works
+```
+
+**Defaults:**
+- Entrypoint: `README.md`
+- All rules: `error`
+- Output: colored text
+
+### Custom Configuration
+
+Create `mdite.config.js` for project-specific settings:
 
 ```javascript
 module.exports = {
-  entrypoint: 'README.md',
+  // Start traversal from a different file
+  entrypoint: 'docs/index.md',
+
+  // Customize rule severity
   rules: {
-    'orphan-files': 'error',
-    'dead-link': 'error',
-    'dead-anchor': 'error',
+    'orphan-files': 'error',  // Block build on orphans
+    'dead-link': 'error',      // Block build on broken links
+    'dead-anchor': 'warn',     // Warn but don't block
   },
 };
 ```
 
-### Configuration Options
+### Configuration Formats
 
-- **`entrypoint`** (string): The root file to start graph traversal from (default: `'README.md'`)
-- **`rules`** (object): Rule configuration with severity levels (`'error'`, `'warn'`, `'off'`)
-- **`frontmatterSchema`** (object, optional): JSON Schema for validating YAML frontmatter
-- **`extends`** (array, optional): Inherit configuration from other packages
+| Format | File | Use Case |
+|--------|------|----------|
+| JavaScript | `mdite.config.js` | Comments, computed values |
+| JSON | `.mditerc` | Simple, no comments |
+| YAML | `.mditerc.yaml` | Human-readable, comments |
+| package.json | `"mdite": {}` | Keep config in one place |
 
-### Supported Configuration Formats
+**Priority:** CLI flags > Project config > Defaults
 
-- `doclint.config.js` / `doclint.config.cjs`
-- `.doclintrc`
-- `.doclintrc.json`
-- `.doclintrc.yaml`
-- `.doclintrc.yml`
-- `doclint` field in `package.json`
+See [examples/06-config-variations](./examples/06-config-variations/) for working examples.
 
-**See examples:** Check out [examples/06-config-variations](./examples/06-config-variations/) for working examples of all configuration formats.
+### Rules
 
-## Rules
+| Rule | What It Detects | Default |
+|------|----------------|---------|
+| `orphan-files` | Files unreachable from entrypoint | `error` |
+| `dead-link` | Broken relative file links | `error` |
+| `dead-anchor` | Broken `#heading` references | `error` |
 
-### Built-in Rules
+**Severity levels:**
+- `error` - Fail (exit code 1)
+- `warn` - Show warning, don't fail
+- `off` - Disable rule
 
-| Rule | Description | Default |
-|------|-------------|---------|
-| `orphan-files` | Detects files not reachable from entrypoint | `error` |
-| `dead-link` | Detects broken relative file links | `error` |
-| `dead-anchor` | Detects broken anchor/fragment links | `error` |
-
-### Remark Integration
-
-doc-lint integrates with the remark-lint ecosystem, supporting:
-- **remark-gfm** - GitHub Flavored Markdown support
-- **remark-frontmatter** - YAML frontmatter parsing
-- **remark-lint** - Comprehensive style and formatting rules
-
-## CLI Commands
-
-### `doc-lint lint [path]`
-
-Lint documentation files.
-
-**Options:**
-- `--format <type>` - Output format (`text` or `json`, default: `text`)
-- `--fix` - Auto-fix issues (not implemented in v1)
-- `--config <path>` - Path to configuration file
-- `--no-colors` - Disable colored output
-- `--verbose` - Verbose output
-
-**Examples:**
-```bash
-# Lint current directory
-doc-lint lint
-
-# Lint specific directory
-doc-lint lint ./docs
-
-# Output as JSON for CI/CD
-doc-lint lint --format json
-
-# Use custom config
-doc-lint lint --config custom-config.js
-```
-
-### `doc-lint init`
-
-Initialize a configuration file.
-
-**Options:**
-- `--config <path>` - Configuration file path (default: `doclint.config.js`)
-
-### `doc-lint config`
-
-Display current configuration (merged from all sources).
-
-### `doc-lint deps <file>`
-
-Show dependencies for a specific file in the documentation graph.
-
-**Options:**
-- `--incoming` - Show only incoming dependencies (what references this file)
-- `--outgoing` - Show only outgoing dependencies (what this file references)
-- `--depth <n>` - Maximum depth of traversal (default: unlimited)
-- `--format <type>` - Output format: `tree`, `list`, or `json` (default: `tree`)
-
-**Examples:**
-```bash
-# Show all dependencies (both incoming and outgoing)
-doc-lint deps README.md
-
-# Show only what references this file
-doc-lint deps docs/api.md --incoming
-
-# Show only what this file references
-doc-lint deps docs/guide.md --outgoing
-
-# Limit to direct dependencies only
-doc-lint deps README.md --depth 1
-
-# Get JSON output for scripting
-doc-lint deps docs/guide.md --format json
-
-# Show as flat list instead of tree
-doc-lint deps README.md --format list
-```
-
-## How It Works
-
-### 1. Graph Building
-
-doc-lint starts from the configured `entrypoint` (default: `README.md`) and recursively follows all relative markdown links to build a complete dependency graph of your documentation.
-
-**See it in action:** Check [examples/01-valid-docs](./examples/01-valid-docs) for a working example, or [examples/02-orphan-files](./examples/02-orphan-files) to see orphan detection.
-
-### 2. Orphan Detection
-
-After building the graph, doc-lint scans the filesystem for all `.md` files and compares them against the graph. Any files not reachable from the entrypoint are reported as orphans.
-
-### 3. Link Validation
-
-For each file in the graph, doc-lint:
-- Validates that relative file links point to existing files
-- Validates that anchor links (`#heading`) resolve to actual headings
-- Validates cross-file anchor links (`file.md#heading`)
-
-### 4. Content Linting
-
-Each file is processed through the remark engine with configured lint rules to check for:
-- Heading structure and formatting
-- List formatting
-- Code block syntax
-- Frontmatter validation
-- And many more via remark-lint plugins
-
-## Exit Codes
-
-- `0` - No errors found
-- `1` - Errors found or execution failed
+---
 
 ## Example Output
 
-### Text Format (Default)
+### `mdite lint` - Validation
 
 ```
-doc-lint
+mdite
 ──────────────────────────────────────────────────
 ℹ Linting: ./docs
 ℹ Entrypoint: README.md
 
 ℹ Building dependency graph...
-✓ Found 15 reachable files
+✓ Found 24 reachable files
+
 ℹ Checking for orphaned files...
-✗ Found 2 orphaned file(s)
+✗ Found 3 orphaned files
+
 ℹ Validating links...
-✗ Found 3 link error(s)
-ℹ Running remark linter...
-✓ No style errors
+✗ Found 2 link errors
 
 
 Found 5 issue(s)
@@ -251,156 +590,229 @@ docs/old-guide.md
 
 docs/setup.md
   7:3 error Dead link: installation.md [dead-link]
-  12:5 error Dead anchor: #prerequisites in setup.md [dead-anchor]
 
 ✗ 5 error(s), 0 warning(s)
 ```
 
-### JSON Format
-
-```json
-[
-  {
-    "rule": "orphan-files",
-    "severity": "error",
-    "file": "docs/old-guide.md",
-    "line": 0,
-    "column": 0,
-    "message": "Orphaned file: not reachable from entrypoint"
-  },
-  {
-    "rule": "dead-link",
-    "severity": "error",
-    "file": "docs/setup.md",
-    "line": 7,
-    "column": 3,
-    "message": "Dead link: installation.md"
-  }
-]
-```
-
-## Use Cases
-
-### Pre-commit Hook
+### `mdite deps` - Dependency Analysis
 
 ```bash
-#!/bin/sh
-npm run build && doc-lint lint || exit 1
+$ mdite deps README.md --depth 2
+
+Dependencies for README.md
+──────────────────────────────────────────────────
+
+Outgoing (what this file references):
+├── docs/getting-started.md
+│   ├── docs/installation.md
+│   └── docs/configuration.md
+├── docs/api-reference.md
+│   ├── docs/api/methods.md
+│   └── docs/api/types.md
+└── CONTRIBUTING.md
+
+Incoming (what references this file):
+(none - this is the entrypoint)
+
+Cycles detected: 0
 ```
 
-### CI/CD Integration
+---
 
-```yaml
-# GitHub Actions
-- name: Lint Documentation
-  run: |
-    npm install -g doc-lint
-    doc-lint lint --format json > lint-results.json
-```
+## Examples
 
-### Documentation Site Build
+The `examples/` directory contains 12 runnable demonstrations (68 files) showing mdite in action:
 
 ```bash
-# Ensure documentation is valid before building
-doc-lint lint && npm run build-docs
+# Valid documentation
+cd examples/01-valid-docs && mdite lint
+
+# Orphan detection
+cd examples/02-orphan-files && mdite lint
+
+# Broken links
+cd examples/03-broken-links && mdite lint
+
+# Dependency analysis
+cd examples/01-valid-docs && mdite deps README.md
 ```
 
-### Smoke Testing
-
-Quick verification of doc-lint functionality:
-
+**Run all examples:**
 ```bash
-# Run all 12 example tests
 cd examples && ./run-all-examples.sh
 ```
 
-See [examples/](./examples/) for 12 ready-to-use test cases covering all features.
+See [examples/README.md](./examples/README.md) for complete documentation.
 
-## Development
+---
 
-```bash
-# Clone repository
-git clone https://github.com/yourusername/doc-lint.git
-cd doc-lint
+## How It Works
 
-# Install dependencies
-npm install
+### The Graph Model
 
-# Build
-npm run build
+mdite treats your documentation as a directed graph:
+- **Nodes:** Markdown files
+- **Edges:** Links between files
+- **Root:** Entrypoint file (default: `README.md`)
 
-# Run tests
-npm test
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
-
-# Type check
-npm run typecheck
-
-# Run all quality checks
-npm run validate
-
-# Test against examples
-cd examples
-./run-all-examples.sh
-
-# Or test individual examples
-cd examples/01-valid-docs
-doc-lint lint
+```
+README.md (root)
+├─→ docs/guide.md
+│   ├─→ docs/setup.md
+│   └─→ docs/api.md
+└─→ CONTRIBUTING.md
+    └─→ docs/development.md
 ```
 
-## Architecture
+### Graph Building Algorithm
 
-doc-lint is built as an orchestrator that coordinates multiple subsystems:
+1. **Start** at entrypoint (`README.md`)
+2. **Parse** markdown to extract links
+3. **Follow** each relative `.md` link
+4. **Recursively** build graph (with cycle detection)
+5. **Result:** Complete map of connected documentation
 
-- **CLI Layer** - Commander.js-based interface
-- **Configuration Manager** - Cosmiconfig-based config loading
-- **Graph Analyzer** - Builds and analyzes document dependency graph
-- **Link Validator** - Validates file and anchor links
-- **Remark Engine** - Integrates remark-lint for content validation
-- **Reporter** - Formats and outputs results
+**What gets included:**
+- ✅ Relative links: `[guide](./setup.md)`
+- ✅ Links with anchors: `[api](./api.md#methods)`
+- ✅ Anchor-only: `[intro](#getting-started)`
 
-See [implementation plan](./scratch/first-version/plan/) for detailed architecture documentation.
+**What gets skipped:**
+- ❌ External URLs: `https://example.com`
+- ❌ Absolute paths outside project
+- ❌ Non-markdown files
+
+### Validation Using the Graph
+
+Once the graph is built, mdite can:
+- **Detect orphans:** Files NOT in the graph
+- **Validate links:** Check edges point to existing nodes
+- **Analyze dependencies:** Traverse graph in any direction
+- **Future:** Query, search, export the graph
+
+**This graph foundation** enables all current and future mdite features.
+
+---
+
+## Roadmap
+
+mdite is evolving from a linter into a complete **documentation toolkit**.
+
+### ✅ Current
+- Graph-based dependency analysis (`deps`)
+- Structural validation (`lint`)
+- Orphan detection
+- Link validation (file + anchor)
+- Configuration system
+
+### 🚧 Future Features
+- **`mdite query`** - Search across documentation system
+  - Content search
+  - Filename pattern matching
+  - Scope to graph sections
+- **`mdite cat`** - Output documentation content
+  - Dependency-order output
+  - Pipe to shell tools
+  - Combine with other utilities
+- **`mdite toc`** - Generate table of contents from graph
+- **`mdite stats`** - Documentation metrics and analysis
+- **External link validation** - Check HTTP/HTTPS URLs
+- **Watch mode** - Auto-validate on file changes
+- **LSP server** - Editor integration
+- **Custom rule API** - Write your own validation rules
+- **Export formats** - PDF, HTML, etc. with graph awareness
+
+**The vision:** A complete toolkit for working with markdown documentation as a unified, connected system.
+
+---
+
+## Integration
+
+### Pre-Commit Hook (Husky)
+
+```json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "mdite lint"
+    }
+  }
+}
+```
+
+### GitHub Actions
+
+```yaml
+name: Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm install -g mdite
+      - run: mdite lint --format json
+```
+
+### Package.json Scripts
+
+```json
+{
+  "scripts": {
+    "docs:lint": "mdite lint",
+    "docs:deps": "mdite deps README.md",
+    "docs:check": "mdite lint && echo '✓ Documentation valid'",
+    "predeploy": "mdite lint"
+  }
+}
+```
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+mdite is evolving rapidly. Contributions welcome!
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development setup
+- Testing guidelines
+- Pull request process
+- Roadmap and feature ideas
+
+---
 
 ## License
 
 MIT © 2025 Richard Adleta
 
-## Disclaimer
+---
 
-**This is a developer tool - use at your own risk.**
+## About
 
-This software is provided "as is", without warranty of any kind. The tool performs static analysis of local markdown files and does not execute code or transmit data externally.
+**mdite** (markdown documentation toolkit) is built for developers and teams who work with interconnected markdown documentation.
 
-**Issues and bugs:** Please report all issues (including security-related ones) via [GitHub Issues](https://github.com/radleta/doc-lint/issues). We make no guarantees about response times or fixes.
+Born from the frustration of broken docs and the realization that documentation is a **system**, not a collection of files, mdite provides the tools to work with that system effectively.
 
-## Acknowledgments
+**Built with:**
+- [TypeScript](https://www.typescriptlang.org/)
+- [Commander.js](https://github.com/tj/commander.js)
+- [unified/remark](https://unifiedjs.com/)
+- [Zod](https://github.com/colinhacks/zod)
 
-Built with:
-- [TypeScript](https://www.typescriptlang.org/) - Type-safe development
-- [Commander.js](https://github.com/tj/commander.js) - CLI framework
-- [unified/remark](https://unifiedjs.com/) - Markdown processing
-- [Zod](https://github.com/colinhacks/zod) - Schema validation
-- [cosmiconfig](https://github.com/davidtheclark/cosmiconfig) - Configuration management
-- [Vitest](https://vitest.dev/) - Testing framework
+**Issues & Ideas:** [GitHub Issues](https://github.com/radleta/mdite/issues)
 
-## Roadmap
+---
 
-See [implementation-phases.md](./scratch/first-version/plan/implementation-phases.md) for the complete development roadmap.
+**Work with your documentation as a system, not scattered files.**
 
-### Future Enhancements
-
-- Auto-fix support (`--fix` flag)
-- External link validation (HTTP/HTTPS)
-- Caching for improved performance
-- Custom rule authoring API
-- Watch mode
-- LSP server for editor integration
+```bash
+npm install -g mdite
+mdite deps README.md    # Understand structure
+mdite lint              # Validate integrity
+```

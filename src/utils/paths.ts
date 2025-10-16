@@ -5,7 +5,7 @@ import { join, resolve } from 'path';
  * Get user config directory path
  */
 export function getUserConfigDir(): string {
-  return join(homedir(), '.config', 'doc-lint');
+  return join(homedir(), '.config', 'mdite');
 }
 
 /**
@@ -19,7 +19,7 @@ export function getUserConfigPath(): string {
  * Get project config file path (use cosmiconfig instead)
  */
 export function getProjectConfigPath(): string {
-  return resolve(process.cwd(), '.doclintrc');
+  return resolve(process.cwd(), '.mditerc');
 }
 
 /**

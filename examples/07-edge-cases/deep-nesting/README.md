@@ -1,6 +1,6 @@
 # Deep Nesting Example
 
-This example demonstrates how doc-lint handles deeply nested directory structures.
+This example demonstrates how mdite handles deeply nested directory structures.
 
 ## Directory Structure
 
@@ -31,7 +31,7 @@ The challenge with deep nesting is relative path resolution:
 - From README → detail.md: `./docs/guides/advanced/topics/specific/detail.md`
 - From detail.md → README: `../../../../../README.md`
 
-doc-lint must correctly resolve these relative paths.
+mdite must correctly resolve these relative paths.
 
 ## Navigation
 
@@ -53,7 +53,7 @@ Deep nesting tests:
 
 ## Expected Behavior
 
-When running `doc-lint lint`:
+When running `mdite lint`:
 - ✅ Should find all files regardless of depth
 - ✅ Should correctly resolve relative paths
 - ✅ Should validate links across directory levels
@@ -62,7 +62,7 @@ When running `doc-lint lint`:
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Should output:

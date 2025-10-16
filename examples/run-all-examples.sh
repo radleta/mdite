@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Smoke test runner for doc-lint examples
+# Smoke test runner for mdite examples
 #
-# This script runs doc-lint against all example directories and verifies
+# This script runs mdite against all example directories and verifies
 # expected behavior (both passing and failing cases).
 #
 
@@ -42,18 +42,18 @@ print_warning() {
     echo -e "${YELLOW}⚠${NC} $1"
 }
 
-# Check if doc-lint is available
-check_doclint() {
-    if ! command -v doc-lint &> /dev/null; then
-        print_error "doc-lint command not found"
-        print_info "Please install doc-lint first:"
-        echo "  npm install -g doc-lint"
+# Check if mdite is available
+check_mdite() {
+    if ! command -v mdite &> /dev/null; then
+        print_error "mdite command not found"
+        print_info "Please install mdite first:"
+        echo "  npm install -g mdite"
         echo "  OR"
-        echo "  npm link (from the doc-lint project root)"
+        echo "  npm link (from the mdite project root)"
         exit 1
     fi
 
-    print_success "doc-lint is available: $(doc-lint --version 2>&1 || echo 'version unknown')"
+    print_success "mdite is available: $(mdite --version 2>&1 || echo 'version unknown')"
 }
 
 # Run a single example test
@@ -80,10 +80,10 @@ run_example() {
         return 1
     }
 
-    # Run doc-lint and capture output and exit code
+    # Run mdite and capture output and exit code
     local output
     local exit_code
-    output=$(doc-lint lint 2>&1) || exit_code=$?
+    output=$(mdite lint 2>&1) || exit_code=$?
     exit_code=${exit_code:-0}
 
     echo "$output"
@@ -121,12 +121,12 @@ run_example() {
 # Main execution
 main() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "           doc-lint Examples Smoke Test"
+    echo "           mdite Examples Smoke Test"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
     # Check prerequisites
-    check_doclint
+    check_mdite
     echo ""
 
     # Run tests

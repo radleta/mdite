@@ -1,4 +1,4 @@
-# doc-lint configuration with warnings
+# mdite configuration with warnings
 #
 # This configuration uses YAML format and sets some rules to 'warn'
 # instead of 'error' for more flexible, non-blocking checks.

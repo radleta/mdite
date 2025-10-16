@@ -28,7 +28,7 @@ Page A is part of a circular reference:
 
 ## Content
 
-This is example content for Page A. The cycle is intentional to test doc-lint's ability to handle circular references without infinite looping.
+This is example content for Page A. The cycle is intentional to test mdite's ability to handle circular references without infinite looping.
 
 ## Next
 

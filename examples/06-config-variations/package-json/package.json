@@ -1,12 +1,12 @@
 {
-  "name": "doclint-config-example",
+  "name": "mdite-config-example",
   "version": "1.0.0",
-  "description": "Example of doc-lint configuration in package.json",
+  "description": "Example of mdite configuration in package.json",
   "private": true,
   "scripts": {
-    "docs:lint": "doc-lint lint"
+    "docs:lint": "mdite lint"
   },
-  "doclint": {
+  "mdite": {
     "entrypoint": "README.md",
     "rules": {
       "orphan-files": "error",

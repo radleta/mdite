@@ -4,7 +4,7 @@ Welcome to the example project! This is a valid documentation structure with no 
 
 ## Overview
 
-This documentation demonstrates a well-structured documentation set that passes all doc-lint checks:
+This documentation demonstrates a well-structured documentation set that passes all mdite checks:
 - ✅ All files are reachable from this entrypoint
 - ✅ All links are valid
 - ✅ All anchor references are correct

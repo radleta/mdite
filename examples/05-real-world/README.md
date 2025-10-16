@@ -4,7 +4,7 @@ A realistic example project demonstrating comprehensive documentation structure.
 
 ## Overview
 
-MyProject is a library for building amazing applications. This documentation demonstrates a real-world documentation structure that passes all doc-lint checks.
+MyProject is a library for building amazing applications. This documentation demonstrates a real-world documentation structure that passes all mdite checks.
 
 ## Quick Links
 

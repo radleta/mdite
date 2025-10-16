@@ -1,10 +1,10 @@
 # Strict Configuration Example
 
-This example demonstrates a strict doc-lint configuration with all rules explicitly set to `error`.
+This example demonstrates a strict mdite configuration with all rules explicitly set to `error`.
 
 ## Configuration
 
-The `doclint.config.cjs` file uses CommonJS format with comments:
+The `mdite.config.cjs` file uses CommonJS format with comments:
 
 ```javascript
 module.exports = {
@@ -37,7 +37,7 @@ All files are properly linked with no violations.
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Should pass with zero errors under strict rules.

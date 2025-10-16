@@ -166,18 +166,6 @@ describe('DocLinter', () => {
       const results2 = await linter.lint(testDir, false);
       expect(results2).toBeDefined();
     });
-
-    it('should process remark engine on all files', async () => {
-      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Guide](./guide.md)');
-      await writeTestFile(join(testDir, 'guide.md'), '# Guide');
-
-      const linter = new DocLinter(DEFAULT_CONFIG, logger);
-      const results = await linter.lint(testDir, true);
-
-      // Remark errors should be included in results (even if none found)
-      expect(results.remarkErrors).toBeDefined();
-      expect(Array.isArray(results.remarkErrors)).toBe(true);
-    });
   });
 
   describe('configuration handling', () => {

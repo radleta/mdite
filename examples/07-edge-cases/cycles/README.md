@@ -1,6 +1,6 @@
 # Circular References Example
 
-This example demonstrates how doc-lint handles circular link references.
+This example demonstrates how mdite handles circular link references.
 
 ## What is a Circular Reference?
 
@@ -33,9 +33,9 @@ Graph traversal algorithms must handle cycles to avoid:
 - **Stack overflow** - Recursive calls without termination
 - **Hanging** - Tool never completes
 
-## How doc-lint Handles Cycles
+## How mdite Handles Cycles
 
-doc-lint uses cycle detection:
+mdite uses cycle detection:
 1. Track visited files
 2. Skip files already visited
 3. Continue traversal without re-entering cycle
@@ -43,7 +43,7 @@ doc-lint uses cycle detection:
 
 ## Expected Behavior
 
-When running `doc-lint lint`:
+When running `mdite lint`:
 - ✅ Should complete without hanging
 - ✅ Should find all 4 files (README + 3 pages)
 - ✅ Should not infinite loop
@@ -52,7 +52,7 @@ When running `doc-lint lint`:
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Should output:

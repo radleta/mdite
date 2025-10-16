@@ -1,5 +1,5 @@
 /**
- * Strict doc-lint configuration
+ * Strict mdite configuration
  *
  * This configuration explicitly sets all rules to 'error' for
  * strict documentation standards enforcement.

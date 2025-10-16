@@ -1,15 +1,15 @@
 # package.json Configuration Example
 
-This example demonstrates embedding doc-lint configuration in package.json.
+This example demonstrates embedding mdite configuration in package.json.
 
 ## Configuration
 
-The configuration is in the `doclint` field of package.json:
+The configuration is in the `mdite` field of package.json:
 
 ```json
 {
   "name": "my-project",
-  "doclint": {
+  "mdite": {
     "entrypoint": "README.md",
     "rules": {
       "orphan-files": "error",
@@ -59,9 +59,9 @@ Add scripts to package.json:
 ```json
 {
   "scripts": {
-    "docs:lint": "doc-lint lint",
-    "docs:lint:json": "doc-lint lint --format json",
-    "docs:check": "doc-lint lint || true"
+    "docs:lint": "mdite lint",
+    "docs:lint:json": "mdite lint --format json",
+    "docs:check": "mdite lint || true"
   }
 }
 ```
@@ -80,7 +80,7 @@ This doc set includes:
 ## Try It
 
 ```bash
-doc-lint lint
+mdite lint
 ```
 
 Or using npm script:
@@ -90,6 +90,6 @@ npm run docs:lint
 
 ## See Also
 
-- [Minimal Configuration](../minimal/README.md) - Minimal `.doclintrc`
+- [Minimal Configuration](../minimal/README.md) - Minimal `.mditerc`
 - [Strict Configuration](../strict/README.md) - JavaScript with comments
 - [Warnings Configuration](../warnings/README.md) - YAML format

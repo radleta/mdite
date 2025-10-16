@@ -17,7 +17,7 @@ describe('CLI', () => {
 
   it('shows help', () => {
     const output = execSync(`${CLI} --help`).toString();
-    expect(output).toContain('Project-level documentation linter');
+    expect(output).toContain('Map your markdown documentation structure');
     expect(output).toContain('Commands:');
     expect(output).toContain('lint');
   });

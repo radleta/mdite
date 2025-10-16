@@ -107,10 +107,10 @@ describe('Error System', () => {
 
     describe('ConfigNotFoundError', () => {
       it('should create with path', () => {
-        const error = new ConfigNotFoundError('/path/to/.doclintrc');
-        expect(error.message).toContain('/path/to/.doclintrc');
+        const error = new ConfigNotFoundError('/path/to/.mditerc');
+        expect(error.message).toContain('/path/to/.mditerc');
         expect(error.code).toBe('CONFIG_NOT_FOUND');
-        expect(error.context?.path).toBe('/path/to/.doclintrc');
+        expect(error.context?.path).toBe('/path/to/.mditerc');
       });
     });
   });
