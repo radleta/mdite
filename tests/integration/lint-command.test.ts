@@ -1,23 +1,51 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createTestDir, writeTestFile } from '../setup.js';
 import { join } from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { execSync } from 'child_process';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 // Type for exec errors
 interface ExecError extends Error {
-  stdout: string;
-  stderr: string;
+  stdout?: string;
+  stderr?: string;
+  status?: number;
 }
 
 describe('lint command (integration)', () => {
   let testDir: string;
+  let cliPath: string;
 
   beforeEach(async () => {
     testDir = await createTestDir();
+    cliPath = path.resolve(process.cwd(), 'dist/src/index.js');
   });
+
+  afterEach(async () => {
+    await fs.rm(testDir, { recursive: true, force: true });
+  });
+
+  function runCli(args: string[]): {
+    stdout: string;
+    stderr: string;
+    exitCode: number;
+  } {
+    try {
+      const stdout = execSync(`node "${cliPath}" ${args.join(' ')}`, {
+        cwd: testDir,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      return { stdout, stderr: '', exitCode: 0 };
+    } catch (error: unknown) {
+      const execError = error as ExecError;
+      return {
+        stdout: execError.stdout || '',
+        stderr: execError.stderr || '',
+        exitCode: execError.status || 1,
+      };
+    }
+  }
 
   describe('orphan detection', () => {
     it('should detect orphaned files', async () => {
@@ -25,28 +53,21 @@ describe('lint command (integration)', () => {
       await writeTestFile(join(testDir, 'guide.md'), '# Guide');
       await writeTestFile(join(testDir, 'orphan.md'), '# Orphan');
 
-      try {
-        await execAsync(`node dist/src/index.js lint ${testDir}`, {
-          cwd: '/workspace/repo',
-        });
-        // Should fail
-        expect(true).toBe(false);
-      } catch (error: unknown) {
-        const execError = error as ExecError;
-        expect(execError.stdout).toContain('orphan.md');
-        expect(execError.stdout).toContain('Orphaned file');
-      }
+      const result = runCli(['lint']);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain('orphan.md');
+      expect(result.stdout).toContain('Orphaned file');
     });
 
     it('should not report false orphans', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Guide](./guide.md)');
       await writeTestFile(join(testDir, 'guide.md'), '# Guide');
 
-      const { stdout } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      });
+      const result = runCli(['lint']);
 
-      expect(stdout).toContain('No issues found');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No issues found');
     });
 
     it('should detect multiple orphans', async () => {
@@ -54,15 +75,11 @@ describe('lint command (integration)', () => {
       await writeTestFile(join(testDir, 'orphan1.md'), '# Orphan 1');
       await writeTestFile(join(testDir, 'orphan2.md'), '# Orphan 2');
 
-      try {
-        await execAsync(`node dist/src/index.js lint ${testDir}`, {
-          cwd: '/workspace/repo',
-        });
-      } catch (error: unknown) {
-        const execError = error as ExecError;
-        expect(execError.stdout).toContain('orphan1.md');
-        expect(execError.stdout).toContain('orphan2.md');
-      }
+      const result = runCli(['lint']);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain('orphan1.md');
+      expect(result.stdout).toContain('orphan2.md');
     });
   });
 
@@ -70,15 +87,11 @@ describe('lint command (integration)', () => {
     it('should detect broken links', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Broken](./missing.md)');
 
-      try {
-        await execAsync(`node dist/src/index.js lint ${testDir}`, {
-          cwd: '/workspace/repo',
-        });
-      } catch (error: unknown) {
-        const execError = error as ExecError;
-        expect(execError.stdout).toContain('Dead link');
-        expect(execError.stdout).toContain('missing.md');
-      }
+      const result = runCli(['lint']);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain('Dead link');
+      expect(result.stdout).toContain('missing.md');
     });
 
     it('should validate links across multiple files', async () => {
@@ -86,22 +99,20 @@ describe('lint command (integration)', () => {
       await writeTestFile(join(testDir, 'guide.md'), '# Guide\n\n[API](./api.md)');
       await writeTestFile(join(testDir, 'api.md'), '# API');
 
-      const { stdout } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      });
+      const result = runCli(['lint']);
 
-      expect(stdout).toContain('No issues found');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No issues found');
     });
 
     it('should validate relative paths', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Guide](./docs/guide.md)');
       await writeTestFile(join(testDir, 'docs/guide.md'), '# Guide');
 
-      const { stdout } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      });
+      const result = runCli(['lint']);
 
-      expect(stdout).toContain('No issues found');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No issues found');
     });
   });
 
@@ -109,15 +120,11 @@ describe('lint command (integration)', () => {
     it('should detect broken anchors', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Section](#missing-section)');
 
-      try {
-        await execAsync(`node dist/src/index.js lint ${testDir}`, {
-          cwd: '/workspace/repo',
-        });
-      } catch (error: unknown) {
-        const execError = error as ExecError;
-        expect(execError.stdout).toContain('Dead anchor');
-        expect(execError.stdout).toContain('missing-section');
-      }
+      const result = runCli(['lint']);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout).toContain('Dead anchor');
+      expect(result.stdout).toContain('missing-section');
     });
 
     it('should validate anchors in same file', async () => {
@@ -126,11 +133,10 @@ describe('lint command (integration)', () => {
         '# Main\n\n[Section](#section)\n\n## Section'
       );
 
-      const { stdout } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      });
+      const result = runCli(['lint']);
 
-      expect(stdout).toContain('No issues found');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No issues found');
     });
 
     it('should validate anchors in other files', async () => {
@@ -140,11 +146,10 @@ describe('lint command (integration)', () => {
       );
       await writeTestFile(join(testDir, 'guide.md'), '# Guide\n\n## Installation');
 
-      const { stdout } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      });
+      const result = runCli(['lint']);
 
-      expect(stdout).toContain('No issues found');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No issues found');
     });
   });
 
@@ -153,28 +158,23 @@ describe('lint command (integration)', () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main');
       await writeTestFile(join(testDir, 'orphan.md'), '# Orphan');
 
-      try {
-        await execAsync(`node dist/src/index.js lint ${testDir} --format json`, {
-          cwd: '/workspace/repo',
-        });
-      } catch (error: unknown) {
-        const execError = error as ExecError;
-        const results = JSON.parse(execError.stdout);
-        expect(Array.isArray(results)).toBe(true);
-        expect(results[0]).toHaveProperty('rule');
-        expect(results[0]).toHaveProperty('severity');
-        expect(results[0]).toHaveProperty('file');
-      }
+      const result = runCli(['lint', '--format', 'json']);
+
+      expect(result.exitCode).toBe(1);
+      const results = JSON.parse(result.stdout);
+      expect(Array.isArray(results)).toBe(true);
+      expect(results[0]).toHaveProperty('rule');
+      expect(results[0]).toHaveProperty('severity');
+      expect(results[0]).toHaveProperty('file');
     });
 
     it('should output text format by default', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main');
 
-      const { stdout } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      });
+      const result = runCli(['lint']);
 
-      expect(stdout).toContain('No issues found');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No issues found');
     });
   });
 
@@ -185,27 +185,17 @@ describe('lint command (integration)', () => {
     it('should exit with 0 for no errors', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main');
 
-      const { code } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      }).then(
-        () => ({ code: 0 }),
-        () => ({ code: 1 })
-      );
+      const result = runCli(['lint']);
 
-      expect(code).toBe(0);
+      expect(result.exitCode).toBe(0);
     });
 
     it('should exit with 1 for errors', async () => {
       await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Broken](./missing.md)');
 
-      const { code } = await execAsync(`node dist/src/index.js lint ${testDir}`, {
-        cwd: '/workspace/repo',
-      }).then(
-        () => ({ code: 0 }),
-        () => ({ code: 1 })
-      );
+      const result = runCli(['lint']);
 
-      expect(code).toBe(1);
+      expect(result.exitCode).toBe(1);
     });
   });
 });
