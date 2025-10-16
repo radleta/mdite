@@ -197,8 +197,8 @@ Setup: `git config core.hooksPath .githooks` (auto-run via `npm postinstall`)
 
 ## Key Metadata
 
-- **Repo:** github.com/yourusername/mdite (update after publishing)
-- **Author:** Your Name (update in package.json)
+- **Repo:** github.com/radleta/mdite
+- **Author:** Richard Adleta
 - **Package:** `mdite` (not yet published to npm)
 - **License:** MIT
 - **Engines:** Node 18+

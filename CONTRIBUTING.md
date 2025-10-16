@@ -20,7 +20,7 @@ Be respectful, inclusive, and constructive. We're all here to build something gr
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mdite.git
+git clone https://github.com/radleta/mdite.git
 cd mdite
 
 # Install dependencies
@@ -150,7 +150,7 @@ Fork the repository on GitHub, then clone your fork:
 ```bash
 git clone https://github.com/YOUR_USERNAME/mdite.git
 cd mdite
-git remote add upstream https://github.com/original/mdite.git
+git remote add upstream https://github.com/radleta/mdite.git
 ```
 
 ### 2. Create a Branch
@@ -487,7 +487,7 @@ After the GitHub Action completes:
 open https://www.npmjs.com/package/mdite
 
 # Check GitHub release
-open https://github.com/yourusername/mdite/releases
+open https://github.com/radleta/mdite/releases
 
 # Test installation
 npm install -g mdite@latest
@@ -523,7 +523,7 @@ npm version 1.0.0-beta.1
 
 #### GitHub Actions Workflow Fails
 
-- Check [Actions tab](https://github.com/yourusername/mdite/actions) for logs
+- Check [Actions tab](https://github.com/radleta/mdite/actions) for logs
 - Verify `NPM_TOKEN` secret is valid and not expired
 - Ensure all tests pass locally: `npm run validate`
 - Check that build succeeds: `npm run build`
