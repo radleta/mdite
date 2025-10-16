@@ -1,0 +1,24 @@
+# doc-lint configuration with warnings
+#
+# This configuration uses YAML format and sets some rules to 'warn'
+# instead of 'error' for more flexible, non-blocking checks.
+#
+# Use this for:
+# - Gradual adoption of documentation standards
+# - Non-blocking CI checks (warnings don't fail the build)
+# - Projects transitioning to stricter standards
+
+entrypoint: README.md
+
+rules:
+  # Warn about orphaned files but don't fail
+  # Useful during documentation reorganization
+  orphan-files: warn
+
+  # Warn about broken links but don't fail
+  # Useful when documentation is being actively edited
+  dead-link: warn
+
+  # Error on broken anchors
+  # These are easy to fix and should be caught immediately
+  dead-anchor: error

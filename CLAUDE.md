@@ -32,10 +32,17 @@ CLI tool for validating the structural integrity and consistency of Markdown doc
 ## Architecture Quick Reference
 
 **Core modules** (see `src/` for implementation):
-- `commands/` - CLI command handlers (lint, init, config)
+- `commands/` - CLI command handlers (lint, init, config, deps)
 - `core/` - Business logic (doc-linter orchestrator, graph-analyzer, link-validator, config-manager, remark-engine, reporter)
 - `types/` - Zod schemas (config, graph, results, errors)
 - `utils/` - Shared utilities (logger, errors, error-handler, fs, paths, slug)
+
+**Key directories:**
+- `src/` - Source code
+- `tests/` - Automated tests (unit, integration, fixtures)
+- `examples/` - Runnable examples and smoke tests (12 sets, 68 files)
+- `scripts/` - Build and release scripts
+- `.githooks/` - Pre-commit hooks
 
 **Key files:**
 - `src/index.ts` - CLI entry point (shebang for bin)
@@ -81,7 +88,7 @@ All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18
 
 **Setup:** `git clone → npm install → npm run build → npm link` (test globally)
 
-**Change cycle:** Edit `src/` → `npm test` → `npm run typecheck` → `npm run lint` → `npm run build` → `npm link` to test CLI
+**Change cycle:** Edit `src/` → `npm test` → `npm run typecheck` → `npm run lint` → `npm run build` → `npm link` → `cd examples && ./run-all-examples.sh` (smoke test)
 
 **Add command:** Create `src/commands/X.ts` → register in `src/cli.ts` → add tests → update README.md → add to CHANGELOG [Unreleased]
 
@@ -93,13 +100,56 @@ All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18
 
 **Unit tests** (`tests/unit/`) - 15 files, isolated module testing, fast
 **Integration tests** (`tests/integration/`) - Full CLI workflows, real filesystem operations
+**Smoke tests** (`examples/`) - 12 example sets for manual verification and regression testing
 **Test infrastructure** (`tests/setup.ts`, `tests/utils.ts`, `tests/mocks/`, `tests/fixtures/`)
 
 **Coverage:** 80%+ maintained, run `npm run test:coverage`
 
+## Examples Directory (Smoke Tests)
+
+**Location:** `examples/` (68 files across 12 example sets)
+
+**Purpose:** Manual testing, user documentation, regression verification
+
+**Quick Reference:**
+```bash
+# Run full smoke test suite (12 tests)
+cd examples && ./run-all-examples.sh
+
+# Test individual example
+cd examples/01-valid-docs && doc-lint lint
+```
+
+**Structure:**
+- **Phase 1 (01-04):** Core features (valid docs, orphans, broken links, broken anchors)
+- **Phase 2 (05-06):** Real-world site + config variations (5 examples)
+- **Phase 3 (07):** Edge cases (cycles, deep nesting, special chars)
+
+**When to Use:**
+
+Use `examples/` when:
+- Testing changes manually before committing
+- Verifying bug fixes work end-to-end
+- Adding new features (add corresponding example)
+- Preparing for releases (run smoke tests)
+
+Use `tests/fixtures/` when:
+- Writing automated unit tests
+- Testing specific edge cases in isolation
+- Running CI/CD pipelines
+
+**Adding New Examples:**
+1. Choose phase directory (01-04 core, 05-06 real-world, 07 edge cases)
+2. Create files with README.md + config + example docs
+3. Update `examples/run-all-examples.sh`
+4. Update `examples/README.md`
+5. Test: `cd examples/XX && doc-lint lint`
+
+See `examples/README.md` for full documentation.
+
 ## Release Workflow
 
-**Pre-release:** Update CHANGELOG [Unreleased] section → `npm run validate` → `npm run build` → `npm run verify:package` → `npm run size:check`
+**Pre-release:** Update CHANGELOG [Unreleased] section → `npm run validate` → `npm run build` → `npm run verify:package` → `npm run size:check` → `cd examples && ./run-all-examples.sh` (smoke test)
 
 **Release:** `npm version [patch|minor|major]` (auto-updates CHANGELOG via `scripts/update-changelog.js`, creates tag) → `git push && git push --tags` (triggers GitHub Actions CI/CD → npm publish with OIDC)
 
@@ -115,9 +165,11 @@ All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18
 - **TypeScript errors in tests**: Check `tests/setup.ts` imports vitest globals correctly
 - **Tests fail after schema change**: Update test fixtures in `tests/fixtures/` to match Zod schema
 - **npm link broken**: Run `npm run build` first (creates `dist/`)
+- **Examples failing**: Run `npm run build && npm link` then retry smoke tests
 - **Git hook not working**: Run `git config core.hooksPath .githooks` or `npm run hooks:setup`
 - **CLI not executable**: Check shebang in `src/index.ts` and `chmod +x dist/src/index.js` in postbuild
 - **Config not loading**: Verify cosmiconfig search paths in `src/core/config-manager.ts`
+- **New feature not tested**: Add example to `examples/` and update smoke test script
 
 ## Build Scripts
 

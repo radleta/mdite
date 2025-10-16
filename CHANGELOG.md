@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tree, list, and JSON output formats
   - Cycle detection and annotation
   - Configurable depth limiting
+- **Examples directory**: 12 runnable examples demonstrating all features (68 files)
+  - Phase 1: Core examples (valid docs, orphans, broken links, broken anchors)
+  - Phase 2: Real-world site + config variations (5 examples)
+  - Phase 3: Edge cases (cycles, deep nesting, special characters)
+- **Smoke test script**: `examples/run-all-examples.sh` for automated testing of all examples
+- **Example documentation**: Comprehensive README in examples/ directory with usage guide
 
 ### Features
 

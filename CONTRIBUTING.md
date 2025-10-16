@@ -32,6 +32,10 @@ npm link
 
 # Test the CLI
 doc-lint --version
+
+# Run smoke tests against examples
+cd examples
+./run-all-examples.sh
 ```
 
 ## Git Hooks
@@ -103,7 +107,21 @@ npm run test:coverage
 # Run specific test files
 npm run test:unit
 npm run test:integration
+
+# Run smoke tests (examples)
+npm run examples
+# or
+cd examples && ./run-all-examples.sh
+
+# Test specific example
+cd examples/01-valid-docs && doc-lint lint
 ```
+
+### Test Coverage
+
+- **Unit Tests:** Isolated module testing (`tests/unit/`)
+- **Integration Tests:** Full CLI workflows (`tests/integration/`)
+- **Smoke Tests:** Manual verification (`examples/`) ⭐ NEW
 
 ### Code Quality Checks
 
@@ -163,6 +181,9 @@ Use descriptive branch names:
 ```bash
 # Run validation suite
 npm run validate
+
+# Run smoke tests
+npm run examples
 
 # Test the CLI locally
 npm run build
@@ -227,6 +248,13 @@ git push origin feature/my-awesome-feature
 - Ensure all CI checks pass
 - Respond to review feedback promptly
 
+**Before submitting:**
+1. ✅ All automated tests pass (`npm test`)
+2. ✅ Code is linted and formatted (`npm run validate`)
+3. ✅ **Smoke tests pass (`npm run examples`)** ⭐ NEW
+4. ✅ Documentation is updated
+5. ✅ Commit messages follow conventional commits
+
 ## Project Structure
 
 ```
@@ -243,13 +271,15 @@ doc-lint/
 │   ├── integration/      # Integration tests
 │   ├── fixtures/         # Test fixtures
 │   └── setup.ts          # Test configuration
+├── examples/             # Runnable examples & smoke tests
 └── dist/                 # Compiled output (generated)
 ```
 
 **Key files:**
 - `src/cli.ts` - Register new commands here
 - `src/types/*.ts` - Zod schemas for validation
-- `tests/fixtures/` - Sample docs for testing
+- `tests/fixtures/` - Sample docs for automated testing
+- `examples/` - Runnable examples for manual testing & documentation
 
 ## Architecture Patterns
 
@@ -330,6 +360,49 @@ describe('MyFeature', () => {
   });
 });
 ```
+
+## Adding Examples
+
+When adding a new feature, consider adding an example to demonstrate it.
+
+### When to Add an Example
+
+Add an example if:
+- Feature is user-facing
+- Feature demonstrates a common use case
+- Feature is complex and benefits from demonstration
+- Feature adds a new configuration option
+
+### Example Structure
+
+1. **Choose directory** in appropriate phase:
+   - **Phase 1 (`01-04`):** Core features (orphans, links, anchors)
+   - **Phase 2 (`05-06`):** Real-world scenarios, config variations
+   - **Phase 3 (`07`):** Edge cases (cycles, deep nesting, etc.)
+
+2. **Create files:**
+   - `README.md` - Explain the example clearly
+   - Markdown files demonstrating the feature
+   - Config file (`.doclintrc`, `doclint.config.js`, etc.)
+
+3. **Update `examples/run-all-examples.sh`:**
+   ```bash
+   run_example \
+       "example-name" \
+       "path/to/example" \
+       false \  # or true if errors expected
+       "Brief description"
+   ```
+
+4. **Update `examples/README.md`** with the new example
+
+5. **Test:**
+   ```bash
+   cd examples/your-example && doc-lint lint
+   cd .. && ./run-all-examples.sh
+   ```
+
+See [examples/README.md](./examples/README.md) for existing examples and detailed documentation.
 
 ## Documentation
 

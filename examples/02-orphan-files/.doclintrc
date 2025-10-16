@@ -1,0 +1,8 @@
+{
+  "entrypoint": "README.md",
+  "rules": {
+    "orphan-files": "error",
+    "dead-link": "error",
+    "dead-anchor": "error"
+  }
+}

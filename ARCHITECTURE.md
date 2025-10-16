@@ -242,6 +242,51 @@ DocLintError (base)
 - `mocks/` - Mock objects (logger, etc.)
 - `fixtures/` - Sample markdown files for testing
 
+## Examples Directory
+
+**Location:** `examples/`
+
+**Purpose:** Runnable examples and smoke tests
+
+### Structure
+
+```
+examples/
+├── 01-04: Core Examples (Phase 1)
+├── 05-06: Real-World + Config Variations (Phase 2)
+└── 07: Edge Cases (Phase 3)
+```
+
+### Usage
+
+Examples serve three purposes:
+
+1. **User Documentation** - Show how doc-lint works
+2. **Manual Testing** - Quick smoke tests during development
+3. **Regression Testing** - Verify behavior across releases
+
+### Difference from tests/fixtures/
+
+| Aspect | tests/fixtures/ | examples/ |
+|--------|----------------|-----------|
+| Purpose | Automated unit tests | Manual demos + smoke tests |
+| Audience | Developers (internal) | Users + Developers |
+| Execution | Via Vitest | Via CLI |
+| Documentation | Minimal | Comprehensive |
+| Scope | Focused test cases | Realistic scenarios |
+
+### Running Examples
+
+```bash
+# Individual example
+cd examples/01-valid-docs && doc-lint lint
+
+# Full smoke test suite
+cd examples && ./run-all-examples.sh
+```
+
+See [examples/README.md](./examples/README.md) for details.
+
 ## Performance Considerations
 
 ### Graph Building

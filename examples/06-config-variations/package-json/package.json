@@ -1,0 +1,23 @@
+{
+  "name": "doclint-config-example",
+  "version": "1.0.0",
+  "description": "Example of doc-lint configuration in package.json",
+  "private": true,
+  "scripts": {
+    "docs:lint": "doc-lint lint"
+  },
+  "doclint": {
+    "entrypoint": "README.md",
+    "rules": {
+      "orphan-files": "error",
+      "dead-link": "error",
+      "dead-anchor": "error"
+    }
+  },
+  "keywords": [
+    "documentation",
+    "example"
+  ],
+  "author": "Example Team",
+  "license": "MIT"
+}

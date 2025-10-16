@@ -33,6 +33,43 @@ doc-lint lint ./docs
 doc-lint lint --format json
 ```
 
+## Examples
+
+The `examples/` directory contains 12 runnable demonstrations of doc-lint features (68 files total).
+
+### Try the Examples
+
+```bash
+# Explore a valid documentation structure
+cd examples/01-valid-docs
+doc-lint lint
+
+# See orphan file detection in action
+cd examples/02-orphan-files
+doc-lint lint
+
+# Experiment with different config formats
+cd examples/06-config-variations/strict
+doc-lint lint
+```
+
+### Run All Examples (Smoke Test)
+
+```bash
+cd examples
+chmod +x run-all-examples.sh
+./run-all-examples.sh
+```
+
+This runs doc-lint against all 12 example sets, verifying both passing and failing scenarios.
+
+**Available examples:**
+- **Phase 1:** Core features (valid docs, orphans, broken links, broken anchors)
+- **Phase 2:** Real-world site + config variations (5 examples showing different config formats)
+- **Phase 3:** Edge cases (cycles, deep nesting, special characters)
+
+See [examples/README.md](./examples/README.md) for complete documentation.
+
 ## Configuration
 
 Create a `doclint.config.js` file in your project root:
@@ -57,12 +94,14 @@ module.exports = {
 
 ### Supported Configuration Formats
 
-- `doclint.config.js`
+- `doclint.config.js` / `doclint.config.cjs`
 - `.doclintrc`
 - `.doclintrc.json`
 - `.doclintrc.yaml`
 - `.doclintrc.yml`
 - `doclint` field in `package.json`
+
+**See examples:** Check out [examples/06-config-variations](./examples/06-config-variations/) for working examples of all configuration formats.
 
 ## Rules
 
@@ -156,6 +195,8 @@ doc-lint deps README.md --format list
 ### 1. Graph Building
 
 doc-lint starts from the configured `entrypoint` (default: `README.md`) and recursively follows all relative markdown links to build a complete dependency graph of your documentation.
+
+**See it in action:** Check [examples/01-valid-docs](./examples/01-valid-docs) for a working example, or [examples/02-orphan-files](./examples/02-orphan-files) to see orphan detection.
 
 ### 2. Orphan Detection
 
@@ -264,6 +305,17 @@ npm run build && doc-lint lint || exit 1
 doc-lint lint && npm run build-docs
 ```
 
+### Smoke Testing
+
+Quick verification of doc-lint functionality:
+
+```bash
+# Run all 12 example tests
+cd examples && ./run-all-examples.sh
+```
+
+See [examples/](./examples/) for 12 ready-to-use test cases covering all features.
+
 ## Development
 
 ```bash
@@ -291,6 +343,14 @@ npm run typecheck
 
 # Run all quality checks
 npm run validate
+
+# Test against examples
+cd examples
+./run-all-examples.sh
+
+# Or test individual examples
+cd examples/01-valid-docs
+doc-lint lint
 ```
 
 ## Architecture
