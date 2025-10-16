@@ -5,6 +5,7 @@ import { DependencyAnalyzer } from '../core/dependency-analyzer.js';
 import { DependencyReporter, OutputFormat } from '../utils/dependency-reporter.js';
 import { Logger } from '../utils/logger.js';
 import * as path from 'path';
+import * as fs from 'fs/promises';
 import { CliOptions } from '../types/config.js';
 
 export function depsCommand(): Command {
@@ -40,9 +41,10 @@ export function depsCommand(): Command {
         const configManager = await ConfigManager.load(cliOptions);
         const config = configManager.getConfig();
 
-        // Resolve file path
-        const basePath = path.resolve('.');
-        const filePath = path.resolve(basePath, file);
+        // Resolve file path (use realpath to handle symlinks consistently)
+        const basePath = await fs.realpath(path.resolve('.'));
+        const resolvedFile = path.resolve(basePath, file);
+        const filePath = await fs.realpath(resolvedFile).catch(() => resolvedFile);
 
         // Build graph
         if (config.verbose && !isJsonFormat) {
