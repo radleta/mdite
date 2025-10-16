@@ -196,8 +196,12 @@ describe('test infrastructure demonstration', () => {
 
   describe('fixture utilities', () => {
     it('should get fixture paths', () => {
-      const path = getFixturePath('valid-docs', 'README.md');
-      expect(path).toContain('tests/fixtures/valid-docs/README.md');
+      const fixturePath = getFixturePath('valid-docs', 'README.md');
+      // Check for path components instead of exact path separator format
+      expect(fixturePath).toContain('tests');
+      expect(fixturePath).toContain('fixtures');
+      expect(fixturePath).toContain('valid-docs');
+      expect(fixturePath).toContain('README.md');
     });
 
     it('should load fixture files', async () => {

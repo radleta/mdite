@@ -82,7 +82,8 @@ describe('FS Utils', () => {
       const files = await findMarkdownFiles(testDir);
 
       expect(files).toHaveLength(1);
-      expect(files[0]).toContain('a/b/c/d/e/file.md');
+      expect(files[0]).toContain('file.md');
+      expect(files[0]).toMatch(/[/\\]a[/\\]b[/\\]c[/\\]d[/\\]e[/\\]file\.md$/);
     });
 
     it('should return absolute paths', async () => {
@@ -91,7 +92,9 @@ describe('FS Utils', () => {
       const files = await findMarkdownFiles(testDir);
 
       expect(files[0]).toContain(testDir);
-      expect(files[0]!.startsWith('/')).toBe(true);
+      // Use path.isAbsolute for cross-platform absolute path detection
+      const path = await import('path');
+      expect(path.isAbsolute(files[0]!)).toBe(true);
     });
 
     it('should handle multiple files in same directory', async () => {
