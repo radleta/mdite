@@ -49,7 +49,7 @@ export const UserConfigSchema = z.object({
   /** Enable verbose logging */
   verbose: z.boolean().default(false),
   /** Default rule severities */
-  rules: z.record(SeveritySchema).optional(),
+  rules: z.record(z.string(), SeveritySchema).optional(),
 });
 
 export type UserConfig = z.infer<typeof UserConfigSchema>;
@@ -78,7 +78,7 @@ export const ProjectConfigSchema = z.object({
   /** Entry point file for documentation graph traversal */
   entrypoint: z.string().optional(),
   /** Rule configuration with severity levels */
-  rules: z.record(SeveritySchema).optional(),
+  rules: z.record(z.string(), SeveritySchema).optional(),
   /** Configuration files to extend (not yet implemented) */
   extends: z.array(z.string()).optional(),
 });
@@ -122,7 +122,7 @@ export const RuntimeConfigSchema = z.object({
   /** Enable verbose logging */
   verbose: z.boolean(),
   /** Rule configuration with severity levels */
-  rules: z.record(SeveritySchema),
+  rules: z.record(z.string(), SeveritySchema),
 });
 
 export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;
