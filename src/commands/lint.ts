@@ -4,14 +4,16 @@ import { ConfigManager } from '../core/config-manager.js';
 import { Reporter } from '../core/reporter.js';
 import { Logger } from '../utils/logger.js';
 import { CliOptions } from '../types/config.js';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export function lintCommand(): Command {
   return new Command('lint')
     .description('Lint documentation files')
-    .argument('[path]', 'Documentation directory', '.')
+    .argument('[path]', 'Documentation directory or file', '.')
     .option('--format <type>', 'Output format (text|json)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
-    .action(async (path: string, options, command) => {
+    .action(async (pathArg: string, options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
 
@@ -24,9 +26,32 @@ export function lintCommand(): Command {
           logger.header('mdite');
         }
 
+        // Resolve the path argument to determine if it's a file or directory
+        const resolvedPath = path.resolve(path.resolve('.'), pathArg);
+        let basePath: string;
+        let entrypointOverride: string | undefined = options.entrypoint;
+
+        try {
+          const stats = await fs.stat(resolvedPath);
+          if (stats.isFile()) {
+            // If path is a file, use its directory as basePath and filename as entrypoint
+            basePath = path.dirname(resolvedPath);
+            // Only override entrypoint if not explicitly provided via --entrypoint flag
+            if (!options.entrypoint) {
+              entrypointOverride = path.basename(resolvedPath);
+            }
+          } else {
+            // If path is a directory, use it as basePath
+            basePath = resolvedPath;
+          }
+        } catch {
+          // If path doesn't exist, treat it as a directory and let later code handle the error
+          basePath = resolvedPath;
+        }
+
         // Build CLI options for the new layered config system
         const cliOptions: CliOptions = {
-          entrypoint: options.entrypoint,
+          entrypoint: entrypointOverride,
           format: options.format,
           colors,
           verbose: globalOpts.verbose,
@@ -38,7 +63,7 @@ export function lintCommand(): Command {
         const config = configManager.getConfig();
 
         if (!isJsonFormat) {
-          logger.info(`Linting: ${path}`);
+          logger.info(`Linting: ${basePath}`);
           logger.info(`Entrypoint: ${config.entrypoint}`);
           if (config.verbose) {
             logger.info(`Format: ${config.format}`);
@@ -49,7 +74,7 @@ export function lintCommand(): Command {
 
         // Run linter
         const linter = new DocLinter(config, logger);
-        const results = await linter.lint(path, isJsonFormat);
+        const results = await linter.lint(basePath, isJsonFormat);
 
         // Report results
         const reporter = new Reporter(options.format, logger);

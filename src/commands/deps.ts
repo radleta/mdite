@@ -42,9 +42,34 @@ export function depsCommand(): Command {
         const config = configManager.getConfig();
 
         // Resolve file path (use realpath to handle symlinks consistently)
-        const basePath = await fs.realpath(path.resolve('.'));
-        const resolvedFile = path.resolve(basePath, file);
+        const resolvedFile = path.resolve(file);
         const filePath = await fs.realpath(resolvedFile).catch(() => resolvedFile);
+
+        // Determine basePath by walking up from the file's directory to find the entrypoint
+        // This allows running deps from any directory with an absolute or relative path
+        let basePath = path.dirname(filePath);
+        let entrypointPath = path.join(basePath, config.entrypoint);
+
+        // Walk up the directory tree to find where the entrypoint exists
+        while (basePath !== path.dirname(basePath)) {
+          try {
+            await fs.access(entrypointPath);
+            // Found the entrypoint, use this as basePath
+            break;
+          } catch {
+            // Entrypoint not found, try parent directory
+            basePath = path.dirname(basePath);
+            entrypointPath = path.join(basePath, config.entrypoint);
+          }
+        }
+
+        // Last check at root level
+        try {
+          await fs.access(entrypointPath);
+        } catch {
+          // If entrypoint not found anywhere, use the original file's directory
+          basePath = path.dirname(filePath);
+        }
 
         // Build graph
         if (config.verbose && !isJsonFormat) {
