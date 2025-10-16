@@ -382,6 +382,30 @@ jobs:
 
 ## Commands
 
+### Global Options
+
+These options work with all commands:
+
+- `--config <path>` - Path to custom config file
+- `--no-colors` - Disable colored output
+- `--verbose` - Enable verbose output
+- `-V, --version` - Output the version number
+- `-h, --help` - Display help for command
+
+**Usage:**
+```bash
+# Use verbose mode with any command
+mdite lint --verbose
+mdite deps README.md --verbose
+
+# Use custom config with any command
+mdite lint --config custom-config.js
+mdite init --config .mditerc.json
+
+# Disable colors (useful for CI/CD)
+mdite lint --no-colors
+```
+
 ### `mdite deps <file>` - Analyze Dependencies
 
 Visualize and analyze documentation structure.
@@ -438,6 +462,9 @@ mdite lint --verbose
 
 **Options:**
 - `--format <type>` - Output: `text` (default) or `json`
+- `--entrypoint <file>` - Entrypoint file (overrides config)
+
+**Global options** (apply to all commands):
 - `--config <path>` - Custom config file
 - `--no-colors` - Disable colored output
 - `--verbose` - Detailed output
@@ -454,9 +481,15 @@ mdite lint --verbose
 Create a configuration file.
 
 ```bash
+# Create default config file (mdite.config.js)
 mdite init
-# Creates mdite.config.js
+
+# Create config file with custom path
+mdite init --config .mditerc.json
 ```
+
+**Options:**
+- `--config <path>` - Config file path (default: `mdite.config.js`)
 
 ### `mdite config` - Show Configuration
 

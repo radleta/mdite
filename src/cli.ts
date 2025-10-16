@@ -12,7 +12,12 @@ const { version: VERSION } = require('../../package.json');
 export async function cli() {
   const program = new Command();
 
-  program.name('mdite').description('Map your markdown documentation structure').version(VERSION);
+  program
+    .name('mdite')
+    .description(
+      'Markdown documentation toolkit - Work with your documentation as a connected system'
+    )
+    .version(VERSION);
 
   // Global options
   program

@@ -9,7 +9,6 @@ export function lintCommand(): Command {
   return new Command('lint')
     .description('Lint documentation files')
     .argument('[path]', 'Documentation directory', '.')
-    .option('--fix', 'Auto-fix issues (not implemented in v1)')
     .option('--format <type>', 'Output format (text|json)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
     .action(async (path: string, options, command) => {
