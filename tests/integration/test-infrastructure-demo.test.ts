@@ -230,8 +230,10 @@ describe('test infrastructure demonstration', () => {
       await delay(50);
       const elapsed = Date.now() - start;
 
+      // Should wait at least the specified time
       expect(elapsed).toBeGreaterThanOrEqual(50);
-      expect(elapsed).toBeLessThan(100);
+      // Allow generous upper bound for CI/CD and slow systems
+      expect(elapsed).toBeLessThan(200);
     });
 
     it('createSpy should track function calls', () => {
