@@ -17,8 +17,7 @@ const DEFAULT_CONFIG = `module.exports = {
 export function initCommand(): Command {
   return new Command('init')
     .description('Initialize mdite configuration file')
-    .option('--config <path>', 'Config file path', 'mdite.config.js')
-    .action(async (options, command) => {
+    .action(async (_options, command) => {
       const globalOpts = command.optsWithGlobals();
 
       // Determine colors setting
@@ -34,7 +33,7 @@ export function initCommand(): Command {
       });
 
       try {
-        const configPath = path.resolve(options.config);
+        const configPath = path.resolve(globalOpts.config ?? 'mdite.config.js');
 
         // Check if config already exists
         const exists = await fs
