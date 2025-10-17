@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { Logger } from '../utils/logger.js';
+import { Logger, shouldUseColors } from '../utils/logger.js';
+import { ExitCode } from '../types/exit-codes.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -18,7 +19,19 @@ export function initCommand(): Command {
     .description('Initialize mdite configuration file')
     .option('--config <path>', 'Config file path', 'mdite.config.js')
     .action(async (options, command) => {
-      const logger = new Logger(command.optsWithGlobals().colors !== false);
+      const globalOpts = command.optsWithGlobals();
+
+      // Determine colors setting
+      const colors = (() => {
+        if (globalOpts.colors === true) return true; // Forced on
+        if (globalOpts.colors === false) return false; // Forced off
+        return shouldUseColors(); // Auto-detect
+      })();
+
+      const logger = new Logger(colors, {
+        quiet: globalOpts.quiet ?? false,
+        verbose: globalOpts.verbose ?? false,
+      });
 
       try {
         const configPath = path.resolve(options.config);
@@ -31,7 +44,7 @@ export function initCommand(): Command {
 
         if (exists) {
           logger.error(`Configuration file already exists: ${configPath}`);
-          process.exit(1);
+          process.exit(ExitCode.USAGE_ERROR);
         }
 
         // Write config
@@ -40,12 +53,14 @@ export function initCommand(): Command {
         logger.success(`Created configuration file: ${configPath}`);
         logger.line();
         logger.info('Next steps:');
-        logger.log('  1. Edit the configuration to match your project');
-        logger.log('  2. Run: mdite check');
+        logger.info('  1. Edit the configuration to match your project');
+        logger.info('  2. Run: mdite lint');
         logger.line();
+
+        process.exit(ExitCode.SUCCESS);
       } catch (error) {
         logger.error('Failed to create configuration', error as Error);
-        process.exit(1);
+        process.exit(ExitCode.ERROR);
       }
     });
 }

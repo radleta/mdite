@@ -2,14 +2,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { execSync } from 'child_process';
-
-// Type for exec errors
-interface ExecError extends Error {
-  stdout?: string;
-  stderr?: string;
-  status?: number;
-}
 
 describe('deps command (integration)', () => {
   let tempDir: string;
@@ -49,21 +41,17 @@ describe('deps command (integration)', () => {
     stderr: string;
     exitCode: number;
   } {
-    try {
-      const stdout = execSync(`node "${cliPath}" ${args.join(' ')}`, {
-        cwd: tempDir,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-      return { stdout, stderr: '', exitCode: 0 };
-    } catch (error: unknown) {
-      const execError = error as ExecError;
-      return {
-        stdout: execError.stdout || '',
-        stderr: execError.stderr || '',
-        exitCode: execError.status || 1,
-      };
-    }
+    const { spawnSync } = require('child_process');
+    const result = spawnSync('node', [cliPath, ...args], {
+      cwd: tempDir,
+      encoding: 'utf-8',
+    });
+
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      exitCode: result.status || 0,
+    };
   }
 
   describe('Basic functionality', () => {
@@ -210,7 +198,8 @@ describe('deps command (integration)', () => {
 
       const result = runCli(['deps', 'orphan.md']);
 
-      expect(result.exitCode).toBe(1);
+      // File not found in graph is a usage error (exit code 2)
+      expect(result.exitCode).toBe(2);
       expect(result.stdout + result.stderr).toContain('not found');
     });
 
@@ -219,7 +208,8 @@ describe('deps command (integration)', () => {
 
       const result = runCli(['deps', 'guide.md', '--depth', 'abc']);
 
-      expect(result.exitCode).toBe(1);
+      // Usage error should exit with code 2
+      expect(result.exitCode).toBe(2);
       expect(result.stdout + result.stderr).toContain('Invalid depth');
     });
 
@@ -228,7 +218,8 @@ describe('deps command (integration)', () => {
 
       const result = runCli(['deps', 'guide.md', '--format', 'invalid']);
 
-      expect(result.exitCode).toBe(1);
+      // Usage error should exit with code 2
+      expect(result.exitCode).toBe(2);
       expect(result.stdout + result.stderr).toContain('format');
     });
   });
@@ -269,8 +260,8 @@ describe('deps command (integration)', () => {
       const result = runCli(['deps', 'guide.md', '--verbose']);
 
       expect(result.exitCode).toBe(0);
-      // Verbose output should include additional info
-      expect(result.stdout).toContain('Building dependency graph');
+      // Verbose output goes to stderr
+      expect(result.stderr).toContain('Building dependency graph');
     });
   });
 });

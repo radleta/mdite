@@ -38,10 +38,10 @@ export class DependencyReporter {
     showIncoming: boolean,
     showOutgoing: boolean
   ): void {
-    this.logger.line();
+    this.logger.log('');
     this.logger.log(colors ? chalk.bold(report.file) : report.file);
     this.logger.log(colors ? chalk.gray('─'.repeat(50)) : '-'.repeat(50));
-    this.logger.line();
+    this.logger.log('');
 
     // Incoming section
     if (showIncoming) {
@@ -49,11 +49,11 @@ export class DependencyReporter {
         const title = `Incoming (${report.stats.incomingCount} file${report.stats.incomingCount === 1 ? '' : 's'} reference${report.stats.incomingCount === 1 ? 's' : ''} this):`;
         this.logger.log(colors ? chalk.cyan(title) : title);
         this.printTree(report.incoming, '', true, colors);
-        this.logger.line();
+        this.logger.log('');
       } else {
         this.logger.log(colors ? chalk.cyan('Incoming:') : 'Incoming:');
         this.logger.log(colors ? chalk.gray('None') : 'None');
-        this.logger.line();
+        this.logger.log('');
       }
     }
 
@@ -63,11 +63,11 @@ export class DependencyReporter {
         const title = `Outgoing (${report.stats.outgoingCount} file${report.stats.outgoingCount === 1 ? '' : 's'} referenced by this):`;
         this.logger.log(colors ? chalk.magenta(title) : title);
         this.printTree(report.outgoing, '', true, colors);
-        this.logger.line();
+        this.logger.log('');
       } else {
         this.logger.log(colors ? chalk.magenta('Outgoing:') : 'Outgoing:');
         this.logger.log(colors ? chalk.gray('None') : 'None');
-        this.logger.line();
+        this.logger.log('');
       }
     }
 
@@ -125,10 +125,10 @@ export class DependencyReporter {
     showIncoming: boolean,
     showOutgoing: boolean
   ): void {
-    this.logger.line();
+    this.logger.log('');
     this.logger.log(colors ? chalk.bold(report.file) : report.file);
     this.logger.log(colors ? chalk.gray('─'.repeat(50)) : '-'.repeat(50));
-    this.logger.line();
+    this.logger.log('');
 
     // Incoming section
     if (showIncoming) {
@@ -138,11 +138,11 @@ export class DependencyReporter {
         incomingFlat.forEach(path => {
           this.logger.log(`- ${path}`);
         });
-        this.logger.line();
+        this.logger.log('');
       } else {
         this.logger.log(colors ? chalk.cyan('Incoming:') : 'Incoming:');
         this.logger.log(colors ? chalk.gray('None') : 'None');
-        this.logger.line();
+        this.logger.log('');
       }
     }
 
@@ -154,11 +154,11 @@ export class DependencyReporter {
         outgoingFlat.forEach(path => {
           this.logger.log(`- ${path}`);
         });
-        this.logger.line();
+        this.logger.log('');
       } else {
         this.logger.log(colors ? chalk.magenta('Outgoing:') : 'Outgoing:');
         this.logger.log(colors ? chalk.gray('None') : 'None');
-        this.logger.line();
+        this.logger.log('');
       }
     }
 

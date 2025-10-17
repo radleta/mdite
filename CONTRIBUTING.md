@@ -341,6 +341,7 @@ program.addCommand(myCommand());
 - Tests should be deterministic (no flaky tests)
 - Use test fixtures for complex scenarios
 - Mock external dependencies when appropriate
+- **Test stdout/stderr separation** for commands that produce output
 
 **Test structure:**
 
@@ -365,6 +366,92 @@ describe('MyFeature', () => {
 
     // Assert
     expect(result).toBe('expected');
+  });
+});
+```
+
+**Testing Unix CLI Features:**
+
+When testing CLI commands, properly test stdout/stderr separation:
+
+```typescript
+// Integration test pattern
+function runCli(args: string[]): {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+} {
+  const { spawnSync } = require('child_process');
+  const result = spawnSync('node', ['dist/src/index.js', ...args], {
+    cwd: testDir,
+    encoding: 'utf-8',
+  });
+
+  return {
+    stdout: result.stdout || '',
+    stderr: result.stderr || '',
+    exitCode: result.status || 0,
+  };
+}
+
+// Test stdout/stderr separation
+it('should output data to stdout and messages to stderr', () => {
+  const result = runCli(['lint', '--format', 'json']);
+
+  // Data goes to stdout
+  expect(result.stdout).toContain('{');
+  const json = JSON.parse(result.stdout);
+
+  // Messages go to stderr (or are suppressed in quiet mode)
+  expect(result.stderr).toContain('Linting');
+
+  // Exit codes
+  expect(result.exitCode).toBe(1); // validation error
+});
+
+// Test quiet mode
+it('should suppress messages in quiet mode', () => {
+  const result = runCli(['lint', '--quiet']);
+
+  // Stderr should not have info messages in quiet mode
+  expect(result.stderr).not.toContain('Building dependency graph');
+
+  // But errors still appear
+  if (result.exitCode !== 0) {
+    expect(result.stdout).toBeTruthy();
+  }
+});
+```
+
+**Unit test pattern for Logger:**
+
+```typescript
+import { vi, type MockInstance } from 'vitest';
+
+describe('Logger', () => {
+  let consoleLogSpy: MockInstance;
+  let consoleErrorSpy: MockInstance;
+
+  beforeEach(() => {
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should output data to stdout', () => {
+    logger.log('data');
+    expect(consoleLogSpy).toHaveBeenCalledWith('data');
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('should output messages to stderr', () => {
+    logger.info('info message');
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('info message'));
+    expect(consoleLogSpy).not.toHaveBeenCalled();
   });
 });
 ```

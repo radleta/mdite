@@ -378,6 +378,42 @@ jobs:
 
 **Benefit:** Documentation quality is enforced, not hoped for.
 
+### 6. Unix Tool Integration (Piping & Scripting)
+
+```bash
+# Find all files with broken links
+mdite lint | grep "Dead link" | cut -d: -f1 | sort | uniq
+
+# Count errors by type
+mdite lint | grep -o "\\[.*\\]" | sort | uniq -c
+
+# Get JSON summary with jq
+mdite lint --format json | jq '[.[] | .severity] | group_by(.) | map({severity: .[0], count: length})'
+
+# List all orphaned files
+mdite lint --format json | jq -r '.[] | select(.rule=="orphan-files") | .file'
+
+# Check if specific file has errors
+mdite lint | grep "docs/api.md" && echo "API docs need fixing"
+
+# Quiet mode for scripting (no progress messages)
+ERRORS=$(mdite lint --quiet 2>/dev/null)
+if [ -n "$ERRORS" ]; then
+  echo "$ERRORS" | mail -s "Doc errors" team@example.com
+fi
+
+# Analyze dependencies
+mdite deps README.md --format json | jq '.stats.totalFiles'
+
+# Find deeply nested docs
+mdite deps README.md --format json | jq '.outgoing[] | select(.depth > 3) | .file'
+
+# Export dependency graph as CSV
+mdite deps README.md --format json | jq -r '.outgoing[] | [.file, .depth] | @csv'
+```
+
+**Benefit:** Full integration with Unix ecosystem (grep, jq, awk, sed, mail, etc.)
+
 ---
 
 ## Commands
@@ -387,8 +423,10 @@ jobs:
 These options work with all commands:
 
 - `--config <path>` - Path to custom config file
+- `--colors` - Force colored output (even when piped)
 - `--no-colors` - Disable colored output
-- `--verbose` - Enable verbose output
+- `-q, --quiet` - Quiet mode (suppress informational output, show only data/errors)
+- `--verbose` - Enable verbose/debug output
 - `-V, --version` - Output the version number
 - `-h, --help` - Display help for command
 
@@ -398,13 +436,31 @@ These options work with all commands:
 mdite lint --verbose
 mdite deps README.md --verbose
 
+# Quiet mode for scripting (only data/errors, no info messages)
+mdite lint --quiet
+mdite deps README.md --quiet --format json | jq '.stats'
+
 # Use custom config with any command
 mdite lint --config custom-config.js
 mdite init --config .mditerc.json
 
-# Disable colors (useful for CI/CD)
-mdite lint --no-colors
+# Control colors
+mdite lint --no-colors              # Disable colors
+mdite lint --colors | less -R       # Force colors even when piped
 ```
+
+**Color Detection:**
+
+mdite automatically detects whether colors should be used:
+- **Auto-enabled** when output is a terminal (TTY)
+- **Auto-disabled** when piped to other tools
+- **Force with `--colors`** to override detection
+- **Disable with `--no-colors`** or `NO_COLOR=1` env var
+
+**Environment Variables:**
+- `NO_COLOR` - Disable colors (respects [no-color.org](https://no-color.org) standard)
+- `FORCE_COLOR` - Force colors even when not a TTY
+- `CI=true` - Disables colors in CI environments (unless `FORCE_COLOR` is set)
 
 ### `mdite deps <file>` - Analyze Dependencies
 
@@ -453,21 +509,47 @@ mdite lint
 # Lint specific directory
 mdite lint ./docs
 
-# JSON output for CI/CD
+# JSON output for CI/CD (auto-disables colors)
 mdite lint --format json
 
-# Verbose output
+# Pipe JSON to jq for analysis
+mdite lint --format json | jq '.[] | select(.severity=="error")'
+
+# Quiet mode for scripting (only errors shown)
+mdite lint --quiet
+
+# Verbose output (shows debug info to stderr)
 mdite lint --verbose
 ```
 
 **Options:**
 - `--format <type>` - Output: `text` (default) or `json`
 - `--entrypoint <file>` - Entrypoint file (overrides config)
+- `-q, --quiet` - Suppress informational output (only show errors)
 
 **Global options** (apply to all commands):
 - `--config <path>` - Custom config file
 - `--no-colors` - Disable colored output
 - `--verbose` - Detailed output
+
+**Output Streams:**
+- **stdout** - Validation results (errors, warnings)
+- **stderr** - Informational messages (progress, summaries)
+
+This separation makes mdite pipe-friendly:
+```bash
+# Grep for specific errors
+mdite lint | grep "Dead link"
+
+# Count errors
+mdite lint | wc -l
+
+# Process JSON with jq
+mdite lint --format json | jq '.[] | .file' | sort | uniq
+
+# Suppress progress messages, keep only errors
+mdite lint 2>/dev/null
+```
 
 **What it validates:**
 - ✅ All files reachable from entrypoint
@@ -597,6 +679,50 @@ See [examples/06-config-variations](./examples/06-config-variations/) for workin
 - `error` - Fail (exit code 1)
 - `warn` - Show warning, don't fail
 - `off` - Disable rule
+
+### Exit Codes
+
+mdite follows Unix conventions for exit codes:
+
+| Code | Meaning | When |
+|------|---------|------|
+| `0` | Success | No validation errors found |
+| `1` | Validation Error | Orphaned files, broken links, or validation failures |
+| `2` | Usage Error | Invalid arguments, unknown options, or configuration errors |
+| `130` | Interrupted | Process interrupted (Ctrl+C, SIGINT, SIGTERM) |
+
+**Usage in scripts:**
+```bash
+# Check exit code
+if mdite lint; then
+  echo "Documentation is valid"
+else
+  echo "Documentation has errors"
+  exit 1
+fi
+
+# CI/CD pipeline
+mdite lint --format json || exit 1
+
+# Conditional logic
+mdite lint && npm run deploy
+
+# Capture exit code
+mdite lint
+EXIT_CODE=$?
+if [ $EXIT_CODE -eq 1 ]; then
+  echo "Validation errors found"
+elif [ $EXIT_CODE -eq 2 ]; then
+  echo "Usage error - check your command"
+fi
+```
+
+**Signal Handling:**
+
+mdite gracefully handles Unix signals:
+- **SIGINT** (Ctrl+C) - Clean exit with code 130
+- **SIGTERM** - Clean exit with code 130
+- **SIGPIPE** - Gracefully exits when pipe is closed (e.g., `mdite lint | head`)
 
 ---
 

@@ -24,6 +24,7 @@ export class Reporter {
       return;
     }
 
+    // Header to stderr
     this.logger.header(`Found ${errors.length} issue(s)`);
     this.logger.line();
 
@@ -36,21 +37,20 @@ export class Reporter {
       byFile.get(error.file)!.push(error);
     }
 
-    // Report each file
+    // Report each file - data to stdout
     for (const [file, fileErrors] of byFile) {
-      console.log(chalk.underline(file));
+      this.logger.log(chalk.underline(file));
       for (const error of fileErrors) {
         const location = error.line > 0 ? `${error.line}:${error.column}` : '-';
-        const severity =
-          error.severity === 'error' ? chalk.red('error') : chalk.yellow('warn');
+        const severity = error.severity === 'error' ? chalk.red('error') : chalk.yellow('warn');
         const rule = chalk.gray(`[${error.rule}]`);
 
-        console.log(`  ${location} ${severity} ${error.message} ${rule}`);
+        this.logger.log(`  ${location} ${severity} ${error.message} ${rule}`);
       }
-      console.log('');
+      this.logger.log('');
     }
 
-    // Summary
+    // Summary to stderr
     const errorCount = errors.filter(e => e.severity === 'error').length;
     const warnCount = errors.filter(e => e.severity === 'warning').length;
 

@@ -34,8 +34,8 @@ These standards apply to this file and any other CLAUDE*.md files in the reposit
 **Core modules** (see `src/` for implementation):
 - `commands/` - CLI command handlers (lint, init, config, deps; future: query, cat, toc)
 - `core/` - Business logic (doc-linter orchestrator, graph-analyzer, link-validator, config-manager, remark-engine, reporter)
-- `types/` - Zod schemas (config, graph, results, errors)
-- `utils/` - Shared utilities (logger, errors, error-handler, fs, paths, slug)
+- `types/` - Zod schemas (config, graph, results, errors, exit-codes)
+- `utils/` - Shared utilities (Unix-friendly logger with TTY detection, errors, error-handler, fs, paths, slug)
 
 **Key directories:**
 - `src/` - Source code
@@ -46,11 +46,13 @@ These standards apply to this file and any other CLAUDE*.md files in the reposit
 
 **Key files:**
 - `src/index.ts` - CLI entry point (shebang for bin)
-- `src/cli.ts` - Commander setup, register all commands here
+- `src/cli.ts` - Commander setup with signal handlers, register all commands here
 - `src/core/doc-linter.ts` - Main orchestrator coordinating all operations
 - `src/core/graph-analyzer.ts` - **Graph foundation**: Dependency graph building via depth-first traversal (enables all features)
 - `src/core/link-validator.ts` - Validates file links and anchors
 - `src/types/config.ts` - Multi-layer config schema (defaults → user → project → CLI)
+- `src/types/exit-codes.ts` - Standard Unix exit codes (0/1/2/130)
+- `src/utils/logger.ts` - Unix-friendly logging (TTY detection, stdout/stderr separation, quiet/verbose modes)
 - `tests/setup.ts` - Test utilities and fixture helpers
 
 ## Critical Concepts
@@ -93,6 +95,16 @@ See `src/core/config-manager.ts` for implementation.
 ### Error Hierarchy
 All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18 custom error classes for specific scenarios. See `src/utils/errors.ts`.
 
+### Unix CLI Patterns
+mdite is a tier-1 Unix CLI tool:
+- **TTY detection**: Auto-disables colors when piped, respects `NO_COLOR`/`FORCE_COLOR` env vars
+- **Stdout/stderr separation**: Data→stdout (pipeable), messages→stderr (suppressible with `--quiet`)
+- **Exit codes**: 0=success, 1=validation error, 2=usage error, 130=interrupted
+- **Signal handling**: SIGINT/SIGTERM/SIGPIPE handled gracefully
+- **Pipe-friendly**: Works with `grep`, `jq`, `awk`, `less`, etc.
+
+See `@ARCHITECTURE.md` Unix CLI Integration Patterns section for implementation details.
+
 ## Development Workflow
 
 **Setup:** `git clone → npm install → npm run build → npm link` (test globally)
@@ -107,10 +119,15 @@ All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18
 
 ## Testing Strategy
 
-**Unit tests** (`tests/unit/`) - 15 files, isolated module testing, fast
-**Integration tests** (`tests/integration/`) - Full CLI workflows, real filesystem operations
+**Unit tests** (`tests/unit/`) - 17 files, 277 tests, isolated module testing, fast
+**Integration tests** (`tests/integration/`) - 58 tests, full CLI workflows, real filesystem operations
 **Smoke tests** (`examples/`) - 12 example sets for manual verification and regression testing
 **Test infrastructure** (`tests/setup.ts`, `tests/utils.ts`, `tests/mocks/`, `tests/fixtures/`)
+
+**Key test patterns:**
+- Logger tests (`tests/unit/logger.test.ts`) - 40 tests covering TTY detection, stdout/stderr separation, quiet/verbose modes
+- Integration tests use `spawnSync` to properly capture both stdout and stderr streams
+- Reporter tests verify stdout/stderr separation
 
 **Coverage:** 80%+ maintained, run `npm run test:coverage`
 

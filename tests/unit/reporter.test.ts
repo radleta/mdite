@@ -7,18 +7,24 @@ import type { MockInstance } from 'vitest';
 describe('Reporter', () => {
   let logger: Logger;
   let consoleLogSpy: MockInstance;
+  let consoleErrorSpy: MockInstance;
   let originalLog: typeof console.log;
+  let originalError: typeof console.error;
 
   beforeEach(() => {
-    logger = new Logger();
-    // Spy on console.log
+    logger = new Logger(false); // Disable colors for testing
+    // Spy on console.log and console.error
     originalLog = console.log;
+    originalError = console.error;
     consoleLogSpy = vi.fn();
+    consoleErrorSpy = vi.fn();
     console.log = consoleLogSpy as unknown as typeof console.log;
+    console.error = consoleErrorSpy as unknown as typeof console.error;
   });
 
   afterEach(() => {
     console.log = originalLog;
+    console.error = originalError;
   });
 
   describe('text format', () => {
@@ -31,8 +37,10 @@ describe('Reporter', () => {
       const reporter = new Reporter('text', logger);
       reporter.report(results);
 
-      // Should show success message
-      expect(consoleLogSpy).toHaveBeenCalled();
+      // Should show success message to stderr
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const output = String(consoleErrorSpy.mock.calls[0]?.[0]);
+      expect(output).toContain('No issues found!');
     });
 
     it('should report orphan files', () => {

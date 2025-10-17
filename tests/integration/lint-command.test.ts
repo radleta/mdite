@@ -1,16 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createTestDir, writeTestFile } from '../setup.js';
 import { join } from 'path';
-import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-
-// Type for exec errors
-interface ExecError extends Error {
-  stdout?: string;
-  stderr?: string;
-  status?: number;
-}
 
 describe('lint command (integration)', () => {
   let testDir: string;
@@ -30,21 +22,17 @@ describe('lint command (integration)', () => {
     stderr: string;
     exitCode: number;
   } {
-    try {
-      const stdout = execSync(`node "${cliPath}" ${args.join(' ')}`, {
-        cwd: testDir,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-      return { stdout, stderr: '', exitCode: 0 };
-    } catch (error: unknown) {
-      const execError = error as ExecError;
-      return {
-        stdout: execError.stdout || '',
-        stderr: execError.stderr || '',
-        exitCode: execError.status || 1,
-      };
-    }
+    const { spawnSync } = require('child_process');
+    const result = spawnSync('node', [cliPath, ...args], {
+      cwd: testDir,
+      encoding: 'utf-8',
+    });
+
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      exitCode: result.status || 0,
+    };
   }
 
   describe('orphan detection', () => {
@@ -67,7 +55,8 @@ describe('lint command (integration)', () => {
       const result = runCli(['lint']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('No issues found');
+      // Success message now goes to stderr
+      expect(result.stderr).toContain('No issues found');
     });
 
     it('should detect multiple orphans', async () => {
@@ -102,7 +91,8 @@ describe('lint command (integration)', () => {
       const result = runCli(['lint']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('No issues found');
+      // Success message now goes to stderr
+      expect(result.stderr).toContain('No issues found');
     });
 
     it('should validate relative paths', async () => {
@@ -112,7 +102,8 @@ describe('lint command (integration)', () => {
       const result = runCli(['lint']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('No issues found');
+      // Success message now goes to stderr
+      expect(result.stderr).toContain('No issues found');
     });
   });
 
@@ -136,7 +127,8 @@ describe('lint command (integration)', () => {
       const result = runCli(['lint']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('No issues found');
+      // Success message now goes to stderr
+      expect(result.stderr).toContain('No issues found');
     });
 
     it('should validate anchors in other files', async () => {
@@ -149,7 +141,8 @@ describe('lint command (integration)', () => {
       const result = runCli(['lint']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('No issues found');
+      // Success message now goes to stderr
+      expect(result.stderr).toContain('No issues found');
     });
   });
 
@@ -174,7 +167,8 @@ describe('lint command (integration)', () => {
       const result = runCli(['lint']);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('No issues found');
+      // Success message now goes to stderr
+      expect(result.stderr).toContain('No issues found');
     });
   });
 

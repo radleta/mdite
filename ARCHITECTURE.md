@@ -15,7 +15,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 **Location**: `src/cli.ts`, `src/commands/`
 
 **Key files**:
-- `cli.ts` - Main CLI setup with Commander.js, registers all commands
+- `cli.ts` - Main CLI setup with Commander.js, signal handlers, global options
 - `commands/lint.ts` - Validation command (structural integrity)
 - `commands/deps.ts` - Dependency analysis command
 - `commands/config.ts` - Configuration management commands
@@ -23,11 +23,12 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 - **Future**: `commands/query.ts`, `commands/cat.ts`, `commands/toc.ts`
 
 **Responsibilities**:
-- Parse CLI arguments and options
+- Parse CLI arguments and options (including Unix-friendly flags)
 - Load and merge configuration
-- Initialize logger with appropriate verbosity
-- Execute commands and handle errors
-- Format output for user consumption
+- Initialize logger with appropriate verbosity and output modes
+- Handle Unix signals (SIGINT, SIGTERM, SIGPIPE) gracefully
+- Execute commands and handle errors with proper exit codes
+- Format output for user consumption (respecting stdout/stderr separation)
 
 ### Core Layer
 
@@ -64,11 +65,13 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 - `graph.ts` - Dependency graph data structure
 - `results.ts` - Lint results and error types
 - `errors.ts` - Lint error message format
+- `exit-codes.ts` - Standard Unix exit codes enum
 
 **Responsibilities**:
 - Define type-safe configuration schemas
 - Provide runtime validation with Zod
 - Structure lint results and errors
+- Define standard exit codes for Unix compatibility
 - Ensure type safety across the codebase
 
 ### Utility Layer
@@ -78,16 +81,17 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 **Location**: `src/utils/`
 
 **Key files**:
-- `logger.ts` - Colored console logging with verbosity control
+- `logger.ts` - Unix-friendly logging with TTY detection, stdout/stderr separation, quiet/verbose modes
 - `errors.ts` - Custom error classes with exit codes and context
 - `error-handler.ts` - Error handling middleware and utilities
 - `fs.ts` - File system utilities (find markdown files, check existence)
 - `paths.ts` - Path resolution for config files (user/project)
 - `slug.ts` - GitHub-style heading slugification
-- `reporter.ts` - Format lint results for text/JSON output
+- `reporter.ts` - Format lint results for text/JSON output with stream separation
 
 **Responsibilities**:
-- Provide consistent logging across the application
+- Provide Unix-friendly logging (TTY detection, color control, quiet/verbose modes)
+- Separate data (stdout) from messages (stderr) for pipe compatibility
 - Handle errors with proper context and exit codes
 - Manage file system operations
 - Format output for different consumers
@@ -121,8 +125,14 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 6. Results aggregation
    ↓
 7. Reporter formats results (text, JSON, tree, list)
+   ├─ Data to stdout (pipeable)
+   └─ Messages to stderr (suppressible with --quiet)
    ↓
-8. CLI outputs results and sets exit code
+8. CLI sets appropriate exit code:
+   ├─ 0 = Success
+   ├─ 1 = Validation errors
+   ├─ 2 = Usage errors
+   └─ 130 = Interrupted
 ```
 
 ### Future Operations (query, cat, toc)
@@ -176,6 +186,145 @@ Link validation handles three types of links:
 - First validate file exists
 - Then extract headings from target file
 - Check if anchor matches any heading
+
+## Unix CLI Integration Patterns
+
+mdite follows Unix philosophy and conventions for CLI tool design.
+
+### Stdout/Stderr Separation
+
+**Pattern**: Separate data from messages for pipe-friendly operation
+
+```
+stdout (file descriptor 1):
+  - Validation results (errors, warnings)
+  - JSON output
+  - Data intended for further processing
+
+stderr (file descriptor 2):
+  - Informational messages (progress, summaries)
+  - Headers and separators
+  - Success/failure notifications
+```
+
+**Implementation**:
+- `logger.log()` → stdout (always shown)
+- `logger.info()`, `logger.success()`, `logger.header()` → stderr (suppressed in --quiet)
+- `logger.error()` → stderr (always shown)
+
+**Benefits**:
+```bash
+# Pipe data without progress messages
+mdite lint --format json | jq '.'
+
+# Suppress progress, keep only errors
+mdite lint 2>/dev/null
+
+# Grep errors without interference
+mdite lint | grep "Dead link"
+```
+
+### TTY Detection
+
+**Pattern**: Auto-detect terminal capabilities and adjust output
+
+```typescript
+function shouldUseColors(): boolean {
+  if ('NO_COLOR' in process.env) return false;
+  if ('FORCE_COLOR' in process.env) return true;
+  if (process.env.CI === 'true') return false;
+  return process.stdout.isTTY ?? false;
+}
+```
+
+**Environment Variables**:
+- `NO_COLOR` - Disable colors (respects [no-color.org](https://no-color.org))
+- `FORCE_COLOR` - Force colors even when not a TTY
+- `CI=true` - Auto-disable colors in CI environments
+
+**CLI Flags**:
+- `--colors` - Override detection, force colors
+- `--no-colors` - Override detection, disable colors
+
+### Exit Codes
+
+**Pattern**: Use standard Unix exit codes for different scenarios
+
+```typescript
+enum ExitCode {
+  SUCCESS = 0,        // No errors
+  ERROR = 1,          // Validation/operational errors
+  USAGE_ERROR = 2,    // Invalid arguments/options
+  INTERRUPTED = 130,  // SIGINT/SIGTERM (128 + 2)
+}
+```
+
+**Usage**:
+```bash
+# Success check
+mdite lint && echo "Success"
+
+# Failure check
+mdite lint || echo "Failed"
+
+# Capture exit code
+mdite lint
+echo $?  # 0, 1, 2, or 130
+```
+
+### Signal Handling
+
+**Pattern**: Handle Unix signals gracefully
+
+```typescript
+process.on('SIGINT', () => {
+  console.error('\nInterrupted');
+  process.exit(ExitCode.INTERRUPTED);
+});
+
+process.on('SIGTERM', () => {
+  console.error('\nTerminated');
+  process.exit(ExitCode.INTERRUPTED);
+});
+
+process.on('SIGPIPE', () => {
+  process.exit(ExitCode.SUCCESS);
+});
+```
+
+**Benefits**:
+- Clean Ctrl+C handling
+- Proper exit codes for signal termination
+- SIGPIPE handling for broken pipes (e.g., `mdite lint | head`)
+
+### Quiet Mode
+
+**Pattern**: Suppress informational output for scripting
+
+```typescript
+class Logger {
+  private quiet: boolean;
+
+  info(message: string): void {
+    if (this.quiet) return;  // Suppressed
+    console.error(`ℹ ${message}`);
+  }
+
+  error(message: string): void {
+    // Always shown, never suppressed
+    console.error(`✗ ${message}`);
+  }
+}
+```
+
+**Usage**:
+```bash
+# Scripting - only errors
+mdite lint --quiet
+
+# CI/CD - clean output
+mdite lint --quiet --format json
+```
 
 ## Error Handling
 
@@ -354,35 +503,47 @@ See [examples/README.md](./examples/README.md) for details.
 5. **Error Handling**: Rich error context with user-friendly messages
 6. **Configuration**: Flexible multi-layer configuration system
 7. **Performance**: Async operations with minimal file I/O
+8. **Unix Philosophy**: Pipe-friendly, proper exit codes, stdout/stderr separation
+   - Data to stdout, messages to stderr
+   - TTY detection for automatic color control
+   - Standard exit codes (0/1/2/130)
+   - Graceful signal handling (SIGINT, SIGTERM, SIGPIPE)
+   - Quiet mode for scripting
+   - Respects `NO_COLOR` and `FORCE_COLOR` environment variables
 
 ## Code Organization
 
 ```
 src/
-├── cli.ts              # CLI entry point
+├── cli.ts              # CLI entry point with signal handlers
 ├── index.ts            # Main executable
 ├── commands/           # CLI commands
-│   ├── lint.ts
-│   └── config.ts
+│   ├── lint.ts         # Validation command
+│   ├── deps.ts         # Dependency analysis
+│   ├── config.ts       # Config management
+│   └── init.ts         # Config initialization
 ├── core/               # Business logic
-│   ├── mditeer.ts
-│   ├── graph-analyzer.ts
-│   ├── link-validator.ts
-│   ├── config-manager.ts
-│   └── remark-engine.ts
+│   ├── doc-linter.ts   # Main orchestrator
+│   ├── graph-analyzer.ts # Graph foundation
+│   ├── link-validator.ts # Link validation
+│   ├── config-manager.ts # Config loading
+│   ├── remark-engine.ts  # Content linting
+│   └── reporter.ts       # Result formatting
 ├── types/              # Type definitions
-│   ├── config.ts
-│   ├── graph.ts
-│   ├── results.ts
-│   └── errors.ts
+│   ├── config.ts       # Config schemas (Zod)
+│   ├── graph.ts        # Graph structure
+│   ├── results.ts      # Lint results
+│   ├── errors.ts       # Error types
+│   └── exit-codes.ts   # Unix exit codes enum
 └── utils/              # Shared utilities
-    ├── logger.ts
-    ├── errors.ts
-    ├── error-handler.ts
-    ├── fs.ts
-    ├── paths.ts
-    ├── slug.ts
-    └── reporter.ts
+    ├── logger.ts         # Unix-friendly logging
+    ├── errors.ts         # Custom error classes
+    ├── error-handler.ts  # Error handling
+    ├── fs.ts             # File system ops
+    ├── paths.ts          # Path resolution
+    ├── slug.ts           # Heading slugification
+    ├── reporter.ts       # Output formatting
+    └── dependency-reporter.ts  # Dependency formatting
 ```
 
 ## Future Enhancements

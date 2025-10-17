@@ -2,8 +2,9 @@ import { Command } from 'commander';
 import { DocLinter } from '../core/doc-linter.js';
 import { ConfigManager } from '../core/config-manager.js';
 import { Reporter } from '../core/reporter.js';
-import { Logger } from '../utils/logger.js';
+import { Logger, shouldUseColors } from '../utils/logger.js';
 import { CliOptions } from '../types/config.js';
+import { ExitCode } from '../types/exit-codes.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -17,9 +18,18 @@ export function lintCommand(): Command {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
 
-      // Determine colors setting: disabled for JSON format or if explicitly disabled
-      const colors = !isJsonFormat && globalOpts.colors !== false;
-      const logger = new Logger(colors);
+      // Determine colors setting
+      const colors = (() => {
+        if (isJsonFormat) return false; // JSON never uses colors
+        if (globalOpts.colors === true) return true; // Forced on
+        if (globalOpts.colors === false) return false; // Forced off
+        return shouldUseColors(); // Auto-detect
+      })();
+
+      const logger = new Logger(colors, {
+        quiet: globalOpts.quiet ?? false,
+        verbose: globalOpts.verbose ?? false,
+      });
 
       try {
         if (!isJsonFormat) {
@@ -81,10 +91,10 @@ export function lintCommand(): Command {
         reporter.report(results);
 
         // Exit with appropriate code
-        process.exit(results.hasErrors() ? 1 : 0);
+        process.exit(results.hasErrors() ? ExitCode.ERROR : ExitCode.SUCCESS);
       } catch (error) {
         logger.error('Linting failed', error as Error);
-        process.exit(1);
+        process.exit(ExitCode.ERROR);
       }
     });
 }

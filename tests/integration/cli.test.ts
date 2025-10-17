@@ -1,79 +1,70 @@
 import { describe, it, expect } from 'vitest';
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
-const CLI = 'node dist/src/index.js';
+function runCli(args: string[]): {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+} {
+  const result = spawnSync('node', ['dist/src/index.js', ...args], {
+    encoding: 'utf-8',
+  });
 
-// Type guard for exec errors with stdout/status
-interface ExecError extends Error {
-  stdout: Buffer;
-  status: number;
+  return {
+    stdout: result.stdout || '',
+    stderr: result.stderr || '',
+    exitCode: result.status || 0,
+  };
 }
 
 describe('CLI', () => {
   it('shows version', () => {
-    const output = execSync(`${CLI} --version`).toString();
-    expect(output.trim()).toBe('0.1.0');
+    const result = runCli(['--version']);
+    expect(result.stdout.trim()).toBe('0.1.0');
   });
 
   it('shows help', () => {
-    const output = execSync(`${CLI} --help`).toString();
-    expect(output).toContain('Markdown documentation toolkit');
-    expect(output).toContain('Commands:');
-    expect(output).toContain('lint');
+    const result = runCli(['--help']);
+    expect(result.stdout).toContain('Markdown documentation toolkit');
+    expect(result.stdout).toContain('Commands:');
+    expect(result.stdout).toContain('lint');
   });
 
   it('lints valid docs successfully', () => {
-    const output = execSync(`${CLI} lint tests/fixtures/valid-docs`).toString();
-    expect(output).toContain('No issues found!');
+    // Success message now goes to stderr
+    const result = runCli(['lint', 'tests/fixtures/valid-docs']);
+    expect(result.stderr).toContain('No issues found!');
+    expect(result.exitCode).toBe(0);
   });
 
   it('detects orphaned files', () => {
-    try {
-      execSync(`${CLI} lint tests/fixtures/with-orphans`);
-    } catch (error: unknown) {
-      const execError = error as ExecError;
-      const output = execError.stdout.toString();
-      expect(output).toContain('orphan.md');
-      expect(output).toContain('Orphaned file');
-      expect(execError.status).toBe(1);
-    }
+    const result = runCli(['lint', 'tests/fixtures/with-orphans']);
+    expect(result.stdout).toContain('orphan.md');
+    expect(result.stdout).toContain('Orphaned file');
+    expect(result.exitCode).toBe(1);
   });
 
   it('detects broken links', () => {
-    try {
-      execSync(`${CLI} lint tests/fixtures/broken-links`);
-    } catch (error: unknown) {
-      const execError = error as ExecError;
-      const output = execError.stdout.toString();
-      expect(output).toContain('Dead link');
-      expect(output).toContain('nonexistent.md');
-      expect(execError.status).toBe(1);
-    }
+    const result = runCli(['lint', 'tests/fixtures/broken-links']);
+    expect(result.stdout).toContain('Dead link');
+    expect(result.stdout).toContain('nonexistent.md');
+    expect(result.exitCode).toBe(1);
   });
 
   it('detects broken anchors', () => {
-    try {
-      execSync(`${CLI} lint tests/fixtures/broken-anchors`);
-    } catch (error: unknown) {
-      const execError = error as ExecError;
-      const output = execError.stdout.toString();
-      expect(output).toContain('Dead anchor');
-      expect(output).toContain('nonexistent-section');
-      expect(execError.status).toBe(1);
-    }
+    const result = runCli(['lint', 'tests/fixtures/broken-anchors']);
+    expect(result.stdout).toContain('Dead anchor');
+    expect(result.stdout).toContain('nonexistent-section');
+    expect(result.exitCode).toBe(1);
   });
 
   it('supports JSON output format', () => {
-    try {
-      execSync(`${CLI} lint tests/fixtures/with-orphans --format json`);
-    } catch (error: unknown) {
-      const execError = error as ExecError;
-      const output = execError.stdout.toString();
-      const json = JSON.parse(output);
-      expect(Array.isArray(json)).toBe(true);
-      expect(json[0]).toHaveProperty('rule');
-      expect(json[0]).toHaveProperty('severity');
-      expect(json[0]).toHaveProperty('file');
-    }
+    const result = runCli(['lint', 'tests/fixtures/with-orphans', '--format', 'json']);
+    const json = JSON.parse(result.stdout);
+    expect(Array.isArray(json)).toBe(true);
+    expect(json[0]).toHaveProperty('rule');
+    expect(json[0]).toHaveProperty('severity');
+    expect(json[0]).toHaveProperty('file');
+    expect(result.exitCode).toBe(1);
   });
 });

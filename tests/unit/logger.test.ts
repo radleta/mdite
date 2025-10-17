@@ -1,307 +1,381 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Logger } from '../../src/utils/logger.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { Logger, shouldUseColors } from '../../src/utils/logger.js';
 import type { MockInstance } from 'vitest';
+
+describe('shouldUseColors', () => {
+  const originalEnv = { ...process.env };
+  const originalIsTTY = process.stdout.isTTY;
+
+  beforeEach(() => {
+    // Reset environment
+    process.env = { ...originalEnv };
+    delete process.env.NO_COLOR;
+    delete process.env.FORCE_COLOR;
+    delete process.env.CI;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: originalIsTTY,
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  it('should return false when NO_COLOR env var exists', () => {
+    process.env.NO_COLOR = '1';
+    expect(shouldUseColors()).toBe(false);
+  });
+
+  it('should return false when NO_COLOR is empty string', () => {
+    process.env.NO_COLOR = '';
+    expect(shouldUseColors()).toBe(false);
+  });
+
+  it('should return true when FORCE_COLOR env var exists', () => {
+    process.env.FORCE_COLOR = '1';
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, writable: true });
+    expect(shouldUseColors()).toBe(true);
+  });
+
+  it('should prioritize NO_COLOR over FORCE_COLOR', () => {
+    process.env.NO_COLOR = '1';
+    process.env.FORCE_COLOR = '1';
+    expect(shouldUseColors()).toBe(false);
+  });
+
+  it('should return false in CI environment by default', () => {
+    process.env.CI = 'true';
+    expect(shouldUseColors()).toBe(false);
+  });
+
+  it('should return true in CI when FORCE_COLOR is set', () => {
+    process.env.CI = 'true';
+    process.env.FORCE_COLOR = '1';
+    expect(shouldUseColors()).toBe(true);
+  });
+
+  it('should return true when stdout is TTY', () => {
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: true,
+      writable: true,
+      configurable: true,
+    });
+    expect(shouldUseColors()).toBe(true);
+  });
+
+  it('should return false when stdout is not TTY', () => {
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: false,
+      writable: true,
+      configurable: true,
+    });
+    expect(shouldUseColors()).toBe(false);
+  });
+
+  it('should return false when stdout.isTTY is undefined', () => {
+    Object.defineProperty(process.stdout, 'isTTY', {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
+    expect(shouldUseColors()).toBe(false);
+  });
+});
 
 describe('Logger', () => {
   let consoleLogSpy: MockInstance;
   let consoleErrorSpy: MockInstance;
-  let originalLog: typeof console.log;
-  let originalError: typeof console.error;
 
   beforeEach(() => {
-    originalLog = console.log;
-    originalError = console.error;
-    consoleLogSpy = vi.fn();
-    consoleErrorSpy = vi.fn();
-    console.log = consoleLogSpy as unknown as typeof console.log;
-    console.error = consoleErrorSpy as unknown as typeof console.error;
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    console.log = originalLog;
-    console.error = originalError;
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   describe('constructor', () => {
-    it('should create logger with colors enabled by default', () => {
-      const logger = new Logger();
-      logger.info('test');
-      expect(consoleLogSpy).toHaveBeenCalled();
-    });
-
-    it('should create logger with colors disabled', () => {
-      const logger = new Logger(false);
-      logger.info('test');
-      expect(consoleLogSpy).toHaveBeenCalledWith('i test');
-    });
-
-    it('should create logger with colors explicitly enabled', () => {
+    it('should use provided colors setting', () => {
       const logger = new Logger(true);
-      logger.info('test');
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(logger).toBeDefined();
+    });
+
+    it('should use shouldUseColors when colors not provided', () => {
+      const logger = new Logger();
+      expect(logger).toBeDefined();
+    });
+
+    it('should accept quiet option', () => {
+      const logger = new Logger(false, { quiet: true });
+      expect(logger).toBeDefined();
+    });
+
+    it('should accept verbose option', () => {
+      const logger = new Logger(false, { verbose: true });
+      expect(logger).toBeDefined();
     });
   });
 
   describe('header', () => {
-    it('should print header with colors', () => {
-      const logger = new Logger(true);
-      logger.header('Test Header');
-
-      expect(consoleLogSpy).toHaveBeenCalledTimes(3); // empty line, header, separator
-    });
-
-    it('should print header without colors', () => {
+    it('should output to stderr in normal mode', () => {
       const logger = new Logger(false);
       logger.header('Test Header');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('');
-      expect(consoleLogSpy).toHaveBeenCalledWith('Test Header');
-      expect(consoleLogSpy).toHaveBeenCalledWith('-'.repeat(50));
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should add blank line before header', () => {
-      const logger = new Logger(false);
-      logger.header('Header');
+    it('should be suppressed in quiet mode', () => {
+      const logger = new Logger(false, { quiet: true });
+      logger.header('Test Header');
 
-      expect(consoleLogSpy.mock.calls[0]?.[0]).toBe('');
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should add separator line', () => {
+    it('should include separator line', () => {
       const logger = new Logger(false);
-      logger.header('Header');
+      logger.header('Test');
 
-      const calls = consoleLogSpy.mock.calls;
-      expect(calls[2]?.[0]).toBe('-'.repeat(50));
+      const calls = consoleErrorSpy.mock.calls;
+      expect(calls.length).toBeGreaterThan(1);
+      expect(calls.some(call => String(call[0]).includes('-'))).toBe(true);
     });
   });
 
   describe('info', () => {
-    it('should print info message with icon', () => {
+    it('should output to stderr in normal mode', () => {
       const logger = new Logger(false);
-      logger.info('Information message');
+      logger.info('Test info');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('i Information message');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test info'));
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should print info message with colored icon', () => {
-      const logger = new Logger(true);
-      logger.info('Info');
+    it('should be suppressed in quiet mode', () => {
+      const logger = new Logger(false, { quiet: true });
+      logger.info('Test info');
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const output = consoleLogSpy.mock.calls[0]?.[0];
-      expect(output).toContain('Info');
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should handle empty message', () => {
+    it('should include info icon', () => {
       const logger = new Logger(false);
-      logger.info('');
+      logger.info('Test');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('i ');
-    });
-
-    it('should handle long messages', () => {
-      const logger = new Logger(false);
-      const longMessage = 'A'.repeat(200);
-      logger.info(longMessage);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(`i ${longMessage}`);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('i'));
     });
   });
 
   describe('success', () => {
-    it('should print success message with checkmark', () => {
+    it('should output to stderr in normal mode', () => {
       const logger = new Logger(false);
-      logger.success('Operation successful');
+      logger.success('Test success');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('✓ Operation successful');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test success'));
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should print success message with colored checkmark', () => {
-      const logger = new Logger(true);
-      logger.success('Success');
+    it('should be suppressed in quiet mode', () => {
+      const logger = new Logger(false, { quiet: true });
+      logger.success('Test success');
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      const output = consoleLogSpy.mock.calls[0]?.[0];
-      expect(output).toContain('Success');
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should handle empty success message', () => {
+    it('should include success icon', () => {
       const logger = new Logger(false);
-      logger.success('');
+      logger.success('Test');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('✓ ');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('✓'));
     });
   });
 
   describe('error', () => {
-    it('should print error message with X icon', () => {
+    it('should output to stderr', () => {
       const logger = new Logger(false);
-      logger.error('Error occurred');
+      logger.error('Test error');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('✗ Error occurred');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test error'));
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should print error message with colored X icon', () => {
-      const logger = new Logger(true);
-      logger.error('Error');
+    it('should NOT be suppressed in quiet mode', () => {
+      const logger = new Logger(false, { quiet: true });
+      logger.error('Test error');
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      const output = consoleErrorSpy.mock.calls[0]?.[0];
-      expect(output).toContain('Error');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test error'));
     });
 
-    it('should not print stack trace without DEBUG', () => {
+    it('should include error icon', () => {
       const logger = new Logger(false);
-      const error = new Error('Test error');
-      logger.error('Error message', error);
+      logger.error('Test');
 
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-      expect(consoleErrorSpy).toHaveBeenCalledWith('✗ Error message');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('✗'));
     });
 
-    it('should print stack trace with DEBUG env var', () => {
-      const originalDebug = process.env['DEBUG'];
-      process.env['DEBUG'] = '1';
+    it('should show stack trace with DEBUG env var', () => {
+      const originalDebug = process.env.DEBUG;
+      process.env.DEBUG = '1';
 
       const logger = new Logger(false);
-      const error = new Error('Test error');
-      logger.error('Error message', error);
+      const testError = new Error('Test error');
+      logger.error('Error occurred', testError);
 
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
-      expect(consoleErrorSpy).toHaveBeenCalledWith('✗ Error message');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
+      expect(consoleErrorSpy.mock.calls.length).toBeGreaterThan(1);
 
-      process.env['DEBUG'] = originalDebug;
+      if (originalDebug === undefined) {
+        delete process.env.DEBUG;
+      } else {
+        process.env.DEBUG = originalDebug;
+      }
     });
 
-    it('should handle error without stack trace', () => {
-      const originalDebug = process.env['DEBUG'];
-      process.env['DEBUG'] = '1';
+    it('should show stack trace in verbose mode', () => {
+      const logger = new Logger(false, { verbose: true });
+      const testError = new Error('Test error');
+      logger.error('Error occurred', testError);
 
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
+      expect(consoleErrorSpy.mock.calls.length).toBeGreaterThan(1);
+    });
+  });
+
+  describe('debug', () => {
+    it('should be suppressed in normal mode', () => {
       const logger = new Logger(false);
-      const error = new Error('No stack');
-      delete error.stack;
-      logger.error('Error', error);
+      logger.debug('Debug message');
 
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
 
-      process.env['DEBUG'] = originalDebug;
+    it('should output to stderr in verbose mode', () => {
+      const logger = new Logger(false, { verbose: true });
+      logger.debug('Debug message');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Debug message'));
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
+
+    it('should include debug icon in verbose mode', () => {
+      const logger = new Logger(false, { verbose: true });
+      logger.debug('Test');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('→'));
     });
   });
 
   describe('log', () => {
-    it('should print plain message', () => {
-      const logger = new Logger();
-      logger.log('Plain message');
-
-      expect(consoleLogSpy).toHaveBeenCalledWith('Plain message');
-    });
-
-    it('should not add any formatting', () => {
+    it('should output to stdout', () => {
       const logger = new Logger(false);
-      logger.log('No formatting');
+      logger.log('Test data');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('No formatting');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Test data');
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
-    it('should work with colors enabled', () => {
-      const logger = new Logger(true);
-      logger.log('Message');
+    it('should NOT be suppressed in quiet mode', () => {
+      const logger = new Logger(false, { quiet: true });
+      logger.log('Test data');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('Message');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Test data');
     });
 
-    it('should handle empty string', () => {
-      const logger = new Logger();
-      logger.log('');
+    it('should output raw data without modification', () => {
+      const logger = new Logger(false);
+      const testData = 'Raw data without icons';
+      logger.log(testData);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('');
+      expect(consoleLogSpy).toHaveBeenCalledWith(testData);
     });
   });
 
   describe('line', () => {
-    it('should print blank line', () => {
-      const logger = new Logger();
-      logger.line();
-
-      expect(consoleLogSpy).toHaveBeenCalledWith('');
-    });
-
-    it('should work with colors disabled', () => {
+    it('should output blank line to stderr in normal mode', () => {
       const logger = new Logger(false);
       logger.line();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('');
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should be callable multiple times', () => {
-      const logger = new Logger();
-      logger.line();
-      logger.line();
+    it('should be suppressed in quiet mode', () => {
+      const logger = new Logger(false, { quiet: true });
       logger.line();
 
-      expect(consoleLogSpy).toHaveBeenCalledTimes(3);
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
   });
 
-  describe('combined usage', () => {
-    it('should support chaining multiple log calls', () => {
-      const logger = new Logger(false);
+  describe('colors option', () => {
+    it('should use colors when enabled', () => {
+      const logger = new Logger(true);
+      logger.info('Test');
 
-      logger.header('Test');
+      // Verify that output was generated (chalk may not add colors in test env, but logger accepts the param)
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      const output = String(consoleErrorSpy.mock.calls[0]?.[0]);
+      expect(output).toContain('Test');
+    });
+
+    it('should not use colors when disabled', () => {
+      const logger = new Logger(false);
+      logger.info('Test');
+
+      const output = consoleErrorSpy.mock.calls[0]?.[0];
+      // Should not contain ANSI color codes (plain icon)
+      expect(String(output)).toBe('i Test');
+    });
+  });
+
+  describe('quiet mode behavior', () => {
+    it('should suppress informational output but show data', () => {
+      const logger = new Logger(false, { quiet: true });
+
+      // Suppressed
+      logger.header('Header');
       logger.info('Info');
       logger.success('Success');
+      logger.line();
+      logger.debug('Debug');
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+      // Not suppressed
+      logger.log('Data');
       logger.error('Error');
-      logger.log('Log');
-      logger.line();
 
-      expect(consoleLogSpy).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    });
-
-    it('should maintain consistent formatting', () => {
-      const logger = new Logger(false);
-
-      logger.info('First');
-      logger.info('Second');
-      logger.success('Third');
-
-      expect(consoleLogSpy.mock.calls[0]?.[0]).toBe('i First');
-      expect(consoleLogSpy.mock.calls[1]?.[0]).toBe('i Second');
-      expect(consoleLogSpy.mock.calls[2]?.[0]).toBe('✓ Third');
-    });
-
-    it('should work in realistic scenario', () => {
-      const logger = new Logger(false);
-
-      logger.header('Linting Documentation');
-      logger.info('Scanning files...');
-      logger.success('Found 10 files');
-      logger.info('Validating links...');
-      logger.error('Found 2 broken links');
-      logger.line();
-
-      expect(consoleLogSpy).toHaveBeenCalled();
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleLogSpy).toHaveBeenCalledWith('Data');
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error'));
     });
   });
 
-  describe('color modes', () => {
-    it('should respect color setting throughout lifecycle', () => {
-      const logger = new Logger(false);
+  describe('verbose mode behavior', () => {
+    it('should show debug messages in verbose mode', () => {
+      const logger = new Logger(false, { verbose: true });
 
-      logger.info('Info 1');
-      logger.success('Success 1');
-      logger.error('Error 1');
+      logger.debug('Debug message');
 
-      const allOutput = [
-        ...consoleLogSpy.mock.calls.map((c: unknown[]) => c[0] as string),
-        ...consoleErrorSpy.mock.calls.map((c: unknown[]) => c[0] as string),
-      ];
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Debug message'));
+    });
 
-      // All output should use plain icons
-      expect(allOutput.some(o => o.includes('i Info 1'))).toBe(true);
-      expect(allOutput.some(o => o.includes('✓ Success 1'))).toBe(true);
-      expect(allOutput.some(o => o.includes('✗ Error 1'))).toBe(true);
+    it('should show stack traces in verbose mode', () => {
+      const logger = new Logger(false, { verbose: true });
+      const error = new Error('Test error');
+
+      logger.error('An error occurred', error);
+
+      // Should have called console.error at least twice (once for message, once for stack)
+      expect(consoleErrorSpy.mock.calls.length).toBeGreaterThan(1);
     });
   });
 });

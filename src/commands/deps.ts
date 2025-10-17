@@ -3,7 +3,8 @@ import { ConfigManager } from '../core/config-manager.js';
 import { GraphAnalyzer } from '../core/graph-analyzer.js';
 import { DependencyAnalyzer } from '../core/dependency-analyzer.js';
 import { DependencyReporter, OutputFormat } from '../utils/dependency-reporter.js';
-import { Logger } from '../utils/logger.js';
+import { Logger, shouldUseColors } from '../utils/logger.js';
+import { ExitCode } from '../types/exit-codes.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { CliOptions } from '../types/config.js';
@@ -19,15 +20,26 @@ export function depsCommand(): Command {
     .action(async (file: string, options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
-      const colors = !isJsonFormat && globalOpts.colors !== false;
-      const logger = new Logger(colors);
+
+      // Determine colors setting
+      const colors = (() => {
+        if (isJsonFormat) return false; // JSON never uses colors
+        if (globalOpts.colors === true) return true; // Forced on
+        if (globalOpts.colors === false) return false; // Forced off
+        return shouldUseColors(); // Auto-detect
+      })();
+
+      const logger = new Logger(colors, {
+        quiet: globalOpts.quiet ?? false,
+        verbose: globalOpts.verbose ?? false,
+      });
 
       try {
         // Validate format option
         const validFormats: OutputFormat[] = ['tree', 'list', 'json'];
         if (!validFormats.includes(options.format as OutputFormat)) {
           logger.error(`Invalid format: ${options.format}. Must be one of: tree, list, json`);
-          process.exit(1);
+          process.exit(ExitCode.USAGE_ERROR);
         }
 
         // Build CLI options
@@ -83,7 +95,7 @@ export function depsCommand(): Command {
         if (!graph.hasFile(filePath)) {
           logger.error(`File not found in dependency graph: ${file}`);
           logger.info('The file may be orphaned or outside the documentation tree');
-          process.exit(1);
+          process.exit(ExitCode.USAGE_ERROR);
         }
 
         // Parse depth option
@@ -96,7 +108,7 @@ export function depsCommand(): Command {
             logger.error(
               `Invalid depth value: '${options.depth}' (must be a positive integer or 'unlimited')`
             );
-            process.exit(1);
+            process.exit(ExitCode.USAGE_ERROR);
           }
         }
 
@@ -126,10 +138,10 @@ export function depsCommand(): Command {
           showOutgoing: includeOutgoing,
         });
 
-        process.exit(0);
+        process.exit(ExitCode.SUCCESS);
       } catch (error) {
         logger.error('Dependency analysis failed', error as Error);
-        process.exit(1);
+        process.exit(ExitCode.ERROR);
       }
     });
 }
