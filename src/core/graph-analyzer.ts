@@ -108,6 +108,13 @@ export class GraphAnalyzer {
 
     this.graph.addFile(normalized, currentDepth);
 
+    // Performance optimization: Skip link extraction at maxDepth
+    // Links will be extracted during link validation anyway, so we avoid
+    // unnecessary file I/O and parsing for files we won't recurse into
+    if (currentDepth === maxDepth) {
+      return;
+    }
+
     // Extract links
     const content = await fs.readFile(normalized, 'utf-8');
     const links = await this.extractMarkdownLinks(content);
@@ -268,6 +275,12 @@ export class GraphAnalyzer {
 
     // Add to graph
     graph.addFile(normalized, currentDepth);
+
+    // Performance optimization: Skip link extraction at maxDepth
+    // Links will be extracted during link validation anyway
+    if (currentDepth === maxDepth) {
+      return;
+    }
 
     // Extract and follow links
     const content = await fs.readFile(normalized, 'utf-8');

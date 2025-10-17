@@ -190,6 +190,78 @@ describe('GraphAnalyzer', () => {
     });
   });
 
+  describe('depth limiting optimization', () => {
+    it('should add files at maxDepth to graph without extracting links', async () => {
+      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Level1](./level1.md)');
+      await writeTestFile(join(testDir, 'level1.md'), '# Level 1\n\n[Level2](./level2.md)');
+      await writeTestFile(join(testDir, 'level2.md'), '# Level 2');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph(1); // Depth 1
+
+      // Should include README and level1 (both within depth 1)
+      expect(graph.getAllFiles()).toHaveLength(2);
+      expect(graph.hasFile(join(testDir, 'README.md'))).toBe(true);
+      expect(graph.hasFile(join(testDir, 'level1.md'))).toBe(true);
+      // level2 is beyond depth, should not be in graph
+      expect(graph.hasFile(join(testDir, 'level2.md'))).toBe(false);
+    });
+
+    it('should not create edges from files at maxDepth', async () => {
+      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Level1](./level1.md)');
+      await writeTestFile(join(testDir, 'level1.md'), '# Level 1\n\n[Level2](./level2.md)');
+      await writeTestFile(join(testDir, 'level2.md'), '# Level 2');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph(1);
+
+      // README should have outgoing link to level1
+      const readmeLinks = graph.getOutgoingLinks(join(testDir, 'README.md'));
+      expect(readmeLinks.length).toBe(1);
+      expect(readmeLinks.includes(join(testDir, 'level1.md'))).toBe(true);
+
+      // level1 is at maxDepth, should have NO outgoing links (optimization)
+      const level1Links = graph.getOutgoingLinks(join(testDir, 'level1.md'));
+      expect(level1Links.length).toBe(0);
+    });
+
+    it('should work correctly with depth 0', async () => {
+      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Level1](./level1.md)');
+      await writeTestFile(join(testDir, 'level1.md'), '# Level 1');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph(0);
+
+      // Only README should be in graph
+      expect(graph.getAllFiles()).toHaveLength(1);
+      expect(graph.hasFile(join(testDir, 'README.md'))).toBe(true);
+
+      // README is at maxDepth (0), should have no outgoing links
+      const readmeLinks = graph.getOutgoingLinks(join(testDir, 'README.md'));
+      expect(readmeLinks.length).toBe(0);
+    });
+
+    it('should preserve correct depths when skipping link extraction', async () => {
+      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[A](./a.md)\n[B](./b.md)');
+      await writeTestFile(join(testDir, 'a.md'), '# A\n\n[C](./c.md)');
+      await writeTestFile(join(testDir, 'b.md'), '# B\n\n[D](./d.md)');
+      await writeTestFile(join(testDir, 'c.md'), '# C');
+      await writeTestFile(join(testDir, 'd.md'), '# D');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph(1);
+
+      // Check depths are correct
+      expect(graph.getDepth(join(testDir, 'README.md'))).toBe(0);
+      expect(graph.getDepth(join(testDir, 'a.md'))).toBe(1);
+      expect(graph.getDepth(join(testDir, 'b.md'))).toBe(1);
+
+      // Files at depth 1 should have no edges (optimization)
+      expect(graph.getOutgoingLinks(join(testDir, 'a.md')).length).toBe(0);
+      expect(graph.getOutgoingLinks(join(testDir, 'b.md')).length).toBe(0);
+    });
+  });
+
   describe('edge cases', () => {
     it('should handle missing entrypoint gracefully', async () => {
       const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
