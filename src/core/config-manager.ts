@@ -98,6 +98,7 @@ export class ConfigManager {
       format: userConfig.defaultFormat || config.format,
       colors: userConfig.colors ?? config.colors,
       verbose: userConfig.verbose ?? config.verbose,
+      depth: userConfig.defaultDepth ?? config.depth,
       rules: {
         ...config.rules,
         ...(userConfig.rules || {}),
@@ -115,6 +116,7 @@ export class ConfigManager {
     return {
       ...config,
       entrypoint: projectConfig.entrypoint || config.entrypoint,
+      depth: projectConfig.depth ?? config.depth,
       rules: {
         ...config.rules,
         ...(projectConfig.rules || {}),
@@ -139,6 +141,9 @@ export class ConfigManager {
     }
     if (cliOptions.verbose !== undefined) {
       merged.verbose = cliOptions.verbose;
+    }
+    if (cliOptions.depth !== undefined) {
+      merged.depth = cliOptions.depth;
     }
 
     return merged;

@@ -58,6 +58,7 @@ export class GraphAnalyzer {
    * - Anchor-only links (#heading)
    * - Non-markdown files
    *
+   * @param maxDepth - Maximum depth to traverse (Infinity for unlimited)
    * @returns DocGraph containing all reachable files and their relationships
    * @throws {FileNotFoundError} If entrypoint doesn't exist
    * @throws {GraphBuildError} If graph building fails
@@ -69,26 +70,33 @@ export class GraphAnalyzer {
    * const links = graph.getEdges(files[0]);
    * ```
    */
-  async buildGraph(): Promise<DocGraph> {
+  async buildGraph(maxDepth: number = Infinity): Promise<DocGraph> {
     const entrypoint = path.join(this.basePath, this.config.entrypoint);
-    await this.visitFile(entrypoint);
+    await this.visitFile(entrypoint, 0, maxDepth);
     return this.graph;
   }
 
   /**
    * Recursively visit a file and follow its links
    *
-   * This method implements depth-first traversal with cycle detection.
+   * This method implements depth-first traversal with cycle detection and depth limiting.
    * Files are only visited once to prevent infinite loops from circular references.
    *
    * @param filePath - Absolute path to the markdown file
+   * @param currentDepth - Current depth from entrypoint
+   * @param maxDepth - Maximum allowed depth
    * @private
    */
-  private async visitFile(filePath: string): Promise<void> {
+  private async visitFile(filePath: string, currentDepth: number, maxDepth: number): Promise<void> {
     const normalized = path.resolve(filePath);
 
     if (this.graph.hasFile(normalized)) {
       return; // Already visited
+    }
+
+    // Beyond depth limit
+    if (currentDepth > maxDepth) {
+      return;
     }
 
     // Check if file exists
@@ -98,7 +106,7 @@ export class GraphAnalyzer {
       return; // File doesn't exist, skip
     }
 
-    this.graph.addFile(normalized);
+    this.graph.addFile(normalized, currentDepth);
 
     // Extract links
     const content = await fs.readFile(normalized, 'utf-8');
@@ -108,7 +116,11 @@ export class GraphAnalyzer {
     for (const link of links) {
       const targetPath = path.resolve(path.dirname(normalized), link);
       this.graph.addEdge(normalized, targetPath);
-      await this.visitFile(targetPath);
+
+      // Recurse only if next depth is within limit
+      if (currentDepth + 1 <= maxDepth) {
+        await this.visitFile(targetPath, currentDepth + 1, maxDepth);
+      }
     }
   }
 

@@ -216,6 +216,12 @@ main() {
         false \
         "Special characters in filenames"
 
+    run_example \
+        "08-depth-limiting" \
+        "08-depth-limiting" \
+        false \
+        "Depth limiting feature (unlimited depth, no orphans expected)"
+
     # Print summary
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

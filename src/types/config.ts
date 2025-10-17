@@ -48,6 +48,8 @@ export const UserConfigSchema = z.object({
   colors: z.boolean().default(true),
   /** Enable verbose logging */
   verbose: z.boolean().default(false),
+  /** Default depth for graph traversal */
+  defaultDepth: z.union([z.number().int().min(0), z.literal('unlimited')]).optional(),
   /** Default rule severities */
   rules: z.record(z.string(), SeveritySchema).optional(),
 });
@@ -77,6 +79,8 @@ export type UserConfig = z.infer<typeof UserConfigSchema>;
 export const ProjectConfigSchema = z.object({
   /** Entry point file for documentation graph traversal */
   entrypoint: z.string().optional(),
+  /** Maximum depth for graph traversal */
+  depth: z.union([z.number().int().min(0), z.literal('unlimited')]).optional(),
   /** Rule configuration with severity levels */
   rules: z.record(z.string(), SeveritySchema).optional(),
   /** Configuration files to extend (not yet implemented) */
@@ -121,6 +125,8 @@ export const RuntimeConfigSchema = z.object({
   colors: z.boolean(),
   /** Enable verbose logging */
   verbose: z.boolean(),
+  /** Maximum depth for graph traversal */
+  depth: z.union([z.number().int().min(0), z.literal('unlimited')]),
   /** Rule configuration with severity levels */
   rules: z.record(z.string(), SeveritySchema),
 });
@@ -153,6 +159,8 @@ export interface CliOptions {
   colors?: boolean;
   /** Enable verbose logging */
   verbose?: boolean;
+  /** Maximum depth for graph traversal */
+  depth?: number | 'unlimited';
   /** Path to explicit config file */
   config?: string;
 }
@@ -175,6 +183,7 @@ export const DEFAULT_CONFIG: RuntimeConfig = {
   format: 'text',
   colors: true,
   verbose: false,
+  depth: 'unlimited',
   rules: {
     'orphan-files': 'error',
     'dead-link': 'error',

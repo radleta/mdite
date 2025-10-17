@@ -84,11 +84,15 @@ export class DocLinter {
    * ```
    */
   async lint(basePath: string, quiet = false): Promise<LintResults> {
-    if (!quiet) this.logger.info('Building dependency graph...');
+    // Convert 'unlimited' to Infinity for graph analyzer
+    const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
 
-    // 1. Build graph
+    const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
+    if (!quiet) this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
+
+    // 1. Build graph with depth limit
     const graphAnalyzer = new GraphAnalyzer(basePath, this.config);
-    const graph = await graphAnalyzer.buildGraph();
+    const graph = await graphAnalyzer.buildGraph(maxDepth);
 
     if (!quiet) this.logger.success(`Found ${graph.getAllFiles().length} reachable files`);
 

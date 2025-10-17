@@ -14,6 +14,7 @@ export function lintCommand(): Command {
     .argument('[path]', 'Documentation directory or file', '.')
     .option('--format <type>', 'Output format (text|json)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
+    .option('--depth <n>', 'Maximum depth of traversal (default: unlimited)', 'unlimited')
     .action(async (pathArg: string, options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
@@ -32,6 +33,21 @@ export function lintCommand(): Command {
       });
 
       try {
+        // Parse depth option
+        let depthValue: number | 'unlimited';
+        if (options.depth === 'unlimited') {
+          depthValue = 'unlimited';
+        } else {
+          const parsed = parseInt(options.depth, 10);
+          if (isNaN(parsed) || parsed < 0) {
+            logger.error(
+              `Invalid depth value: '${options.depth}' (must be a non-negative integer or 'unlimited')`
+            );
+            process.exit(ExitCode.USAGE_ERROR);
+          }
+          depthValue = parsed;
+        }
+
         if (!isJsonFormat) {
           logger.header('mdite');
         }
@@ -65,6 +81,7 @@ export function lintCommand(): Command {
           format: options.format,
           colors,
           verbose: globalOpts.verbose,
+          depth: depthValue,
           config: globalOpts.config,
         };
 
@@ -78,6 +95,7 @@ export function lintCommand(): Command {
           if (config.verbose) {
             logger.info(`Format: ${config.format}`);
             logger.info(`Colors: ${config.colors}`);
+            logger.info(`Depth: ${config.depth}`);
           }
           logger.line();
         }

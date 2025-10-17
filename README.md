@@ -16,6 +16,7 @@ mdite treats your markdown documentation as a cohesive whole. Map dependencies, 
 Most tools treat markdown files as isolated documents. mdite treats them as a **connected system**.
 
 ### Current Reality
+
 - 📄 Edit files one at a time
 - 🔍 grep individual files, hope you find everything
 - 🤷 No idea what's connected to what
@@ -23,6 +24,7 @@ Most tools treat markdown files as isolated documents. mdite treats them as a **
 - 🗑️ Afraid to delete anything
 
 ### With mdite
+
 - 🕸️ **See the whole system** - Your docs are a graph, visualize it
 - 🔍 **Search the system** - Query across all connected docs
 - 📊 **Understand dependencies** - Know what links to what
@@ -36,6 +38,7 @@ Most tools treat markdown files as isolated documents. mdite treats them as a **
 mdite is a toolkit for working with markdown documentation as a unified system:
 
 ### 📊 Map & Analyze (`deps`)
+
 ```bash
 # See what connects to what
 mdite deps docs/api.md --incoming
@@ -45,6 +48,7 @@ mdite deps README.md --format tree
 ```
 
 ### ✅ Validate & Lint (`lint`)
+
 ```bash
 # Catch broken links and orphans
 mdite lint
@@ -54,6 +58,7 @@ mdite lint --format json
 ```
 
 ### 🔍 Query & Search (coming soon)
+
 ```bash
 # Search across your doc system
 mdite query "authentication" --files
@@ -63,6 +68,7 @@ mdite query "api-*" --names
 ```
 
 ### 📤 Export & Pipe (coming soon)
+
 ```bash
 # Output entire doc system
 mdite cat | less
@@ -89,6 +95,7 @@ npm install -g mdite
 ### Three Core Workflows
 
 #### 1. Understand Your Docs (Graph Analysis)
+
 ```bash
 # Map the structure
 mdite deps README.md
@@ -103,6 +110,7 @@ mdite deps docs/guide.md --outgoing
 **Use case:** Before changing anything, understand the impact.
 
 #### 2. Validate Your Docs (Linting)
+
 ```bash
 # Check for issues
 mdite lint
@@ -117,6 +125,7 @@ mdite lint --format json
 **Use case:** Catch broken links and structural issues.
 
 #### 3. Configure (Optional)
+
 ```bash
 # Create custom config
 mdite init
@@ -165,6 +174,7 @@ mdite deps docs/guide.md --outgoing
 ```
 
 **Real-world use cases:**
+
 - 🔧 **Refactoring:** Know the impact before renaming/moving files
 - 🧹 **Cleanup:** Find files that nothing depends on (safe to delete)
 - 📖 **Documentation:** Understand your doc structure
@@ -187,6 +197,7 @@ mdite lint
 
 **Link Validation:**
 Validates three types of links:
+
 - **File links:** `[guide](./setup.md)` → validates file exists
 - **Anchor links:** `[intro](#getting-started)` → validates heading exists
 - **Cross-file anchors:** `[api](./api.md#methods)` → validates both
@@ -198,6 +209,7 @@ Validates three types of links:
 Because mdite understands your docs as a system, it can do things other tools can't:
 
 **Search across the system:**
+
 ```bash
 # Find all docs mentioning "authentication"
 mdite query "authentication" --content
@@ -210,6 +222,7 @@ mdite query "config" --from docs/reference/
 ```
 
 **Export the system:**
+
 ```bash
 # Output entire doc system in dependency order
 mdite cat --order deps
@@ -223,6 +236,7 @@ mdite cat | wc -l  # Total lines in doc system
 ```
 
 **Transform the system:**
+
 ```bash
 # Generate table of contents from graph
 mdite toc --depth 2
@@ -241,6 +255,7 @@ mdite lint --external
 ### The Problem: Documentation is a System, But Tools Treat It Like Files
 
 You have 50 markdown files that form a cohesive documentation site, but:
+
 - ❌ You edit them one at a time (disconnected)
 - ❌ You search them one at a time (`grep file1.md`, `grep file2.md`...)
 - ❌ You have no idea how they connect
@@ -251,17 +266,18 @@ You have 50 markdown files that form a cohesive documentation site, but:
 
 ### What Makes mdite Different?
 
-| Capability | Traditional Tools | mdite |
-|------------|------------------|-------|
-| **Link validation** | ❌ Can't detect broken links | ✅ Validates all internal links |
-| **Orphan detection** | ❌ No concept of reachability | ✅ Finds unreachable files |
-| **Dependency analysis** | ❌ No understanding of structure | ✅ Maps entire graph |
-| **System-wide search** | ❌ Search files individually | ✅ Query the whole system |
-| **Structural operations** | ❌ File-by-file only | ✅ Operates on connected docs |
+| Capability                | Traditional Tools                | mdite                           |
+| ------------------------- | -------------------------------- | ------------------------------- |
+| **Link validation**       | ❌ Can't detect broken links     | ✅ Validates all internal links |
+| **Orphan detection**      | ❌ No concept of reachability    | ✅ Finds unreachable files      |
+| **Dependency analysis**   | ❌ No understanding of structure | ✅ Maps entire graph            |
+| **System-wide search**    | ❌ Search files individually     | ✅ Query the whole system       |
+| **Structural operations** | ❌ File-by-file only             | ✅ Operates on connected docs   |
 
 ### vs. Traditional Markdown Linters
 
 **markdownlint / remark-lint:**
+
 - ✅ Check style (formatting, syntax)
 - ❌ Don't understand document relationships
 - ❌ Can't detect orphaned files
@@ -269,6 +285,7 @@ You have 50 markdown files that form a cohesive documentation site, but:
 - ❌ File-centric, not system-centric
 
 **mdite:**
+
 - ✅ Validates structure and relationships
 - ✅ Detects orphaned files
 - ✅ Maps dependencies
@@ -414,6 +431,22 @@ mdite deps README.md --format json | jq -r '.outgoing[] | [.file, .depth] | @csv
 
 **Benefit:** Full integration with Unix ecosystem (grep, jq, awk, sed, mail, etc.)
 
+### 7. Progressive Validation
+
+```bash
+# Start with core docs only
+mdite lint --depth 1
+
+# Gradually expand validation
+mdite lint --depth 2
+mdite lint --depth 3
+
+# Finally, full validation
+mdite lint
+```
+
+**Benefit:** Incremental adoption of mdite in large doc repos, validate core docs first.
+
 ---
 
 ## Commands
@@ -431,6 +464,7 @@ These options work with all commands:
 - `-h, --help` - Display help for command
 
 **Usage:**
+
 ```bash
 # Use verbose mode with any command
 mdite lint --verbose
@@ -452,12 +486,14 @@ mdite lint --colors | less -R       # Force colors even when piped
 **Color Detection:**
 
 mdite automatically detects whether colors should be used:
+
 - **Auto-enabled** when output is a terminal (TTY)
 - **Auto-disabled** when piped to other tools
 - **Force with `--colors`** to override detection
 - **Disable with `--no-colors`** or `NO_COLOR=1` env var
 
 **Environment Variables:**
+
 - `NO_COLOR` - Disable colors (respects [no-color.org](https://no-color.org) standard)
 - `FORCE_COLOR` - Force colors even when not a TTY
 - `CI=true` - Disables colors in CI environments (unless `FORCE_COLOR` is set)
@@ -487,12 +523,14 @@ mdite deps README.md --format list
 ```
 
 **Options:**
+
 - `--incoming` - Show what references this file
 - `--outgoing` - Show what this file references
 - `--depth <n>` - Limit traversal depth
 - `--format <type>` - Output: `tree` (default), `list`, or `json`
 
 **Use cases:**
+
 - 🔍 Impact analysis before refactoring
 - 🧹 Finding safe-to-delete files
 - 📊 Understanding documentation structure
@@ -523,20 +561,25 @@ mdite lint --verbose
 ```
 
 **Options:**
+
 - `--format <type>` - Output: `text` (default) or `json`
 - `--entrypoint <file>` - Entrypoint file (overrides config)
+- `--depth <n>` - Maximum depth of traversal (default: unlimited)
 - `-q, --quiet` - Suppress informational output (only show errors)
 
 **Global options** (apply to all commands):
+
 - `--config <path>` - Custom config file
 - `--no-colors` - Disable colored output
 - `--verbose` - Detailed output
 
 **Output Streams:**
+
 - **stdout** - Validation results (errors, warnings)
 - **stderr** - Informational messages (progress, summaries)
 
 This separation makes mdite pipe-friendly:
+
 ```bash
 # Grep for specific errors
 mdite lint | grep "Dead link"
@@ -552,6 +595,7 @@ mdite lint 2>/dev/null
 ```
 
 **What it validates:**
+
 - ✅ All files reachable from entrypoint
 - ✅ No orphaned files
 - ✅ All file links are valid
@@ -571,6 +615,7 @@ mdite init --config .mditerc.json
 ```
 
 **Options:**
+
 - `--config <path>` - Config file path (default: `mdite.config.js`)
 
 ### `mdite config` - Show Configuration
@@ -586,6 +631,7 @@ mdite config
 Coming soon as mdite expands beyond linting:
 
 #### `mdite query <pattern>` - Search Documentation System
+
 ```bash
 # Search content across all docs
 mdite query "authentication"
@@ -598,6 +644,7 @@ mdite query "config" --from docs/reference/
 ```
 
 #### `mdite cat [files]` - Output Documentation
+
 ```bash
 # Output entire system
 mdite cat
@@ -613,6 +660,7 @@ mdite cat | grep "TODO"
 ```
 
 #### `mdite toc` - Generate Table of Contents
+
 ```bash
 # Generate TOC from graph
 mdite toc --depth 2
@@ -632,6 +680,7 @@ mdite deps README.md  # Just works
 ```
 
 **Defaults:**
+
 - Entrypoint: `README.md`
 - All rules: `error`
 - Output: colored text
@@ -647,21 +696,21 @@ module.exports = {
 
   // Customize rule severity
   rules: {
-    'orphan-files': 'error',  // Block build on orphans
-    'dead-link': 'error',      // Block build on broken links
-    'dead-anchor': 'warn',     // Warn but don't block
+    'orphan-files': 'error', // Block build on orphans
+    'dead-link': 'error', // Block build on broken links
+    'dead-anchor': 'warn', // Warn but don't block
   },
 };
 ```
 
 ### Configuration Formats
 
-| Format | File | Use Case |
-|--------|------|----------|
-| JavaScript | `mdite.config.js` | Comments, computed values |
-| JSON | `.mditerc` | Simple, no comments |
-| YAML | `.mditerc.yaml` | Human-readable, comments |
-| package.json | `"mdite": {}` | Keep config in one place |
+| Format       | File              | Use Case                  |
+| ------------ | ----------------- | ------------------------- |
+| JavaScript   | `mdite.config.js` | Comments, computed values |
+| JSON         | `.mditerc`        | Simple, no comments       |
+| YAML         | `.mditerc.yaml`   | Human-readable, comments  |
+| package.json | `"mdite": {}`     | Keep config in one place  |
 
 **Priority:** CLI flags > Project config > Defaults
 
@@ -669,13 +718,14 @@ See [examples/06-config-variations](./examples/06-config-variations/) for workin
 
 ### Rules
 
-| Rule | What It Detects | Default |
-|------|----------------|---------|
+| Rule           | What It Detects                   | Default |
+| -------------- | --------------------------------- | ------- |
 | `orphan-files` | Files unreachable from entrypoint | `error` |
-| `dead-link` | Broken relative file links | `error` |
-| `dead-anchor` | Broken `#heading` references | `error` |
+| `dead-link`    | Broken relative file links        | `error` |
+| `dead-anchor`  | Broken `#heading` references      | `error` |
 
 **Severity levels:**
+
 - `error` - Fail (exit code 1)
 - `warn` - Show warning, don't fail
 - `off` - Disable rule
@@ -684,14 +734,15 @@ See [examples/06-config-variations](./examples/06-config-variations/) for workin
 
 mdite follows Unix conventions for exit codes:
 
-| Code | Meaning | When |
-|------|---------|------|
-| `0` | Success | No validation errors found |
-| `1` | Validation Error | Orphaned files, broken links, or validation failures |
-| `2` | Usage Error | Invalid arguments, unknown options, or configuration errors |
-| `130` | Interrupted | Process interrupted (Ctrl+C, SIGINT, SIGTERM) |
+| Code  | Meaning          | When                                                        |
+| ----- | ---------------- | ----------------------------------------------------------- |
+| `0`   | Success          | No validation errors found                                  |
+| `1`   | Validation Error | Orphaned files, broken links, or validation failures        |
+| `2`   | Usage Error      | Invalid arguments, unknown options, or configuration errors |
+| `130` | Interrupted      | Process interrupted (Ctrl+C, SIGINT, SIGTERM)               |
 
 **Usage in scripts:**
+
 ```bash
 # Check exit code
 if mdite lint; then
@@ -720,6 +771,7 @@ fi
 **Signal Handling:**
 
 mdite gracefully handles Unix signals:
+
 - **SIGINT** (Ctrl+C) - Clean exit with code 130
 - **SIGTERM** - Clean exit with code 130
 - **SIGPIPE** - Gracefully exits when pipe is closed (e.g., `mdite lint | head`)
@@ -802,6 +854,7 @@ cd examples/01-valid-docs && mdite deps README.md
 ```
 
 **Run all examples:**
+
 ```bash
 cd examples && ./run-all-examples.sh
 ```
@@ -815,6 +868,7 @@ See [examples/README.md](./examples/README.md) for complete documentation.
 ### The Graph Model
 
 mdite treats your documentation as a directed graph:
+
 - **Nodes:** Markdown files
 - **Edges:** Links between files
 - **Root:** Entrypoint file (default: `README.md`)
@@ -837,11 +891,13 @@ README.md (root)
 5. **Result:** Complete map of connected documentation
 
 **What gets included:**
+
 - ✅ Relative links: `[guide](./setup.md)`
 - ✅ Links with anchors: `[api](./api.md#methods)`
 - ✅ Anchor-only: `[intro](#getting-started)`
 
 **What gets skipped:**
+
 - ❌ External URLs: `https://example.com`
 - ❌ Absolute paths outside project
 - ❌ Non-markdown files
@@ -849,6 +905,7 @@ README.md (root)
 ### Validation Using the Graph
 
 Once the graph is built, mdite can:
+
 - **Detect orphans:** Files NOT in the graph
 - **Validate links:** Check edges point to existing nodes
 - **Analyze dependencies:** Traverse graph in any direction
@@ -863,6 +920,7 @@ Once the graph is built, mdite can:
 mdite is evolving from a linter into a complete **documentation toolkit**.
 
 ### ✅ Current
+
 - Graph-based dependency analysis (`deps`)
 - Structural validation (`lint`)
 - Orphan detection
@@ -870,6 +928,7 @@ mdite is evolving from a linter into a complete **documentation toolkit**.
 - Configuration system
 
 ### 🚧 Future Features
+
 - **`mdite query`** - Search across documentation system
   - Content search
   - Filename pattern matching
@@ -944,6 +1003,7 @@ jobs:
 mdite is evolving rapidly. Contributions welcome!
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Development setup
 - Testing guidelines
 - Pull request process
@@ -964,6 +1024,7 @@ MIT © 2025 Richard Adleta
 Born from the frustration of broken docs and the realization that documentation is a **system**, not a collection of files, mdite provides the tools to work with that system effectively.
 
 **Built with:**
+
 - [TypeScript](https://www.typescriptlang.org/)
 - [Commander.js](https://github.com/tj/commander.js)
 - [unified/remark](https://unifiedjs.com/)

@@ -26,9 +26,11 @@ mdite lint
 ## Examples
 
 ### 01-valid-docs/ ✅
+
 Perfect documentation structure with no errors. Use this to see what "passing" looks like.
 
 **Try it:**
+
 ```bash
 cd 01-valid-docs
 mdite lint
@@ -37,6 +39,7 @@ mdite lint
 **Expected:** ✅ 0 errors, 0 warnings
 
 **Features demonstrated:**
+
 - Proper documentation structure
 - Valid internal links
 - Connected dependency graph
@@ -45,9 +48,11 @@ mdite lint
 ---
 
 ### 02-orphan-files/ 🔍
+
 Demonstrates orphan file detection - finding files not reachable from the entrypoint.
 
 **Try it:**
+
 ```bash
 cd 02-orphan-files
 mdite lint
@@ -56,6 +61,7 @@ mdite lint
 **Expected:** ❌ 1 error (orphaned file detected)
 
 **Features demonstrated:**
+
 - Orphan file detection
 - Graph traversal from entrypoint
 - Reporting unreachable files
@@ -63,9 +69,11 @@ mdite lint
 ---
 
 ### 03-broken-links/ 🔗
+
 Shows broken link detection for non-existent files.
 
 **Try it:**
+
 ```bash
 cd 03-broken-links
 mdite lint
@@ -74,6 +82,7 @@ mdite lint
 **Expected:** ❌ 2 errors (dead links detected)
 
 **Features demonstrated:**
+
 - Dead link detection
 - File path validation
 - Relative link resolution
@@ -81,9 +90,11 @@ mdite lint
 ---
 
 ### 04-broken-anchors/ ⚓
+
 Demonstrates anchor validation for heading links.
 
 **Try it:**
+
 ```bash
 cd 04-broken-anchors
 mdite lint
@@ -92,6 +103,7 @@ mdite lint
 **Expected:** ❌ 2 errors (broken anchors detected)
 
 **Features demonstrated:**
+
 - Anchor/fragment validation
 - Heading slug generation
 - Cross-file anchor checking
@@ -99,9 +111,11 @@ mdite lint
 ---
 
 ### 05-real-world/ 🌍
+
 Realistic multi-page documentation site with comprehensive structure.
 
 **Try it:**
+
 ```bash
 cd 05-real-world
 mdite lint
@@ -110,6 +124,7 @@ mdite lint
 **Expected:** ✅ 0 errors (complete valid site)
 
 **Features demonstrated:**
+
 - Real-world documentation structure
 - Multiple directories and levels
 - Cross-references between sections
@@ -119,15 +134,18 @@ mdite lint
 ---
 
 ### 06-config-variations/ ⚙️
+
 Different configuration formats and styles.
 
 Demonstrates:
+
 - **minimal/** - Minimal config (defaults)
 - **strict/** - JavaScript config with comments
 - **warnings/** - YAML config with warnings
 - **package-json/** - Config embedded in package.json
 
 **Try it:**
+
 ```bash
 cd 06-config-variations/strict
 mdite lint
@@ -136,6 +154,7 @@ mdite lint
 **Expected:** ✅ 0 errors for all variations
 
 **Features demonstrated:**
+
 - Multiple config formats (.js, .json, .yaml, package.json)
 - Different severity levels (error, warn, off)
 - Config file comparisons
@@ -144,14 +163,17 @@ mdite lint
 ---
 
 ### 07-edge-cases/ 🔄
+
 Complex scenarios testing robustness.
 
 Demonstrates:
+
 - **cycles/** - Circular references (A→B→C→A)
 - **deep-nesting/** - 6-level deep directory structure
 - **special-chars/** - Files with hyphens, underscores, numbers
 
 **Try it:**
+
 ```bash
 cd 07-edge-cases/cycles
 mdite lint
@@ -160,10 +182,39 @@ mdite lint
 **Expected:** ✅ 0 errors (handled gracefully)
 
 **Features demonstrated:**
+
 - Cycle detection (no infinite loops)
 - Deep path resolution
 - Special character handling
 - Robustness testing
+
+---
+
+### 08-depth-limiting/ 📏
+
+Demonstrates depth limiting feature for progressive validation.
+
+**Try it:**
+
+```bash
+cd 08-depth-limiting
+mdite lint --depth 1
+mdite lint --depth 2
+mdite lint  # unlimited
+```
+
+**Expected:**
+
+- Depth 1: 2 reachable files, 2 orphans
+- Depth 2: 3 reachable files, 1 orphan
+- Unlimited: 4 reachable files, 0 orphans
+
+**Features demonstrated:**
+
+- Depth-limited graph traversal
+- Progressive validation workflow
+- Orphan detection with depth constraints
+- Performance optimization for large doc sets
 
 ---
 
@@ -179,23 +230,26 @@ This runs mdite against all examples and verifies expected behavior (both passin
 
 ## Comparison with tests/fixtures/
 
-| Directory | Purpose | Audience | Usage |
-|-----------|---------|----------|-------|
-| `tests/fixtures/` | Automated unit/integration tests | Developers | Via Vitest |
-| `examples/` | Manual testing + documentation | Users + Developers | Via CLI |
+| Directory         | Purpose                          | Audience           | Usage      |
+| ----------------- | -------------------------------- | ------------------ | ---------- |
+| `tests/fixtures/` | Automated unit/integration tests | Developers         | Via Vitest |
+| `examples/`       | Manual testing + documentation   | Users + Developers | Via CLI    |
 
 **Key differences:**
+
 - `tests/fixtures/` - Minimal, focused test cases for automated testing
 - `examples/` - Realistic, documented examples for manual exploration and smoke testing
 
 ## Tips for Using Examples
 
 - Use `--format json` to see machine-readable output:
+
   ```bash
   mdite lint --format json
   ```
 
 - Try the `deps` command to explore the dependency graph:
+
   ```bash
   mdite deps README.md
   ```
@@ -210,6 +264,7 @@ This runs mdite against all examples and verifies expected behavior (both passin
 ## Adding New Examples
 
 When adding examples:
+
 1. Keep them **minimal** but realistic
 2. Include a **.mditerc** or **mdite.config.js**
 3. Add **clear comments** explaining the scenario
@@ -244,19 +299,23 @@ mdite lint
 After running examples, you should see:
 
 **Phase 1: Core Examples**
+
 - ✅ **01-valid-docs/** - Clean run with no errors
 - ❌ **02-orphan-files/** - Detects 1 orphaned file
 - ❌ **03-broken-links/** - Detects 2 broken links
 - ❌ **04-broken-anchors/** - Detects 2 broken anchors
 
 **Phase 2: Real-World + Config Variations**
+
 - ✅ **05-real-world/** - Complete documentation site, no errors
-- ✅ **06-config-variations/*** - All config formats work correctly
+- ✅ **06-config-variations/\*** - All config formats work correctly
 
 **Phase 3: Edge Cases**
+
 - ✅ **07-edge-cases/cycles/** - Handles circular references
 - ✅ **07-edge-cases/deep-nesting/** - Handles deep paths
 - ✅ **07-edge-cases/special-chars/** - Handles special characters
+- ✅ **08-depth-limiting/** - Depth limiting feature (unlimited depth, no orphans)
 
 All examples working correctly = mdite is functioning as expected! 🎉
 
@@ -286,8 +345,16 @@ examples/
 │   ├── warnings/
 │   └── package-json/
 │
-└── 07-edge-cases/                    # 🔄 Phase 3: Edge Cases
-    ├── cycles/
-    ├── deep-nesting/
-    └── special-chars/
+├── 07-edge-cases/                    # 🔄 Phase 3: Edge Cases
+│   ├── cycles/
+│   ├── deep-nesting/
+│   └── special-chars/
+│
+└── 08-depth-limiting/                # 📏 Depth Limiting Feature
+    └── docs/
+        ├── getting-started.md
+        └── level2/
+            ├── setup.md
+            └── level3/
+                └── advanced.md
 ```

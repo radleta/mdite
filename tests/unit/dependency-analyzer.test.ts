@@ -15,9 +15,9 @@ describe('DependencyAnalyzer', () => {
   describe('analyze() - basic functionality', () => {
     it('should analyze both incoming and outgoing by default', () => {
       // Setup: A → B → C
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
 
@@ -31,9 +31,9 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should analyze only incoming when includeOutgoing is false', () => {
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
 
@@ -47,9 +47,9 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should analyze only outgoing when includeIncoming is false', () => {
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
 
@@ -63,7 +63,7 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should return empty arrays when file has no dependencies', () => {
-      graph.addFile('/docs/isolated.md');
+      graph.addFile('/docs/isolated.md', 0);
 
       const report = analyzer.analyze('/docs/isolated.md', {});
 
@@ -77,7 +77,7 @@ describe('DependencyAnalyzer', () => {
   describe('Depth limiting', () => {
     beforeEach(() => {
       // Create chain: A → B → C → D
-      ['a', 'b', 'c', 'd'].forEach(f => graph.addFile(`/docs/${f}.md`));
+      ['a', 'b', 'c', 'd'].forEach(f => graph.addFile(`/docs/${f}.md`, 0));
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
       graph.addEdge('/docs/c.md', '/docs/d.md');
@@ -136,8 +136,8 @@ describe('DependencyAnalyzer', () => {
 
   describe('Cycle detection', () => {
     it('should detect simple 2-node cycle', () => {
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/a.md'); // cycle
 
@@ -152,9 +152,9 @@ describe('DependencyAnalyzer', () => {
 
     it('should detect 3-node cycle', () => {
       // A → B → C → A
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
       graph.addEdge('/docs/c.md', '/docs/a.md'); // cycle back
@@ -169,8 +169,8 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should mark cycle nodes with isCycle flag', () => {
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/a.md');
 
@@ -187,9 +187,9 @@ describe('DependencyAnalyzer', () => {
 
     it('should not traverse beyond cycle point', () => {
       // A → B → C → A (cycle)
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
       graph.addEdge('/docs/c.md', '/docs/a.md');
@@ -207,7 +207,7 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should handle self-referential cycles', () => {
-      graph.addFile('/docs/a.md');
+      graph.addFile('/docs/a.md', 0);
       graph.addEdge('/docs/a.md', '/docs/a.md'); // self-loop
 
       const report = analyzer.analyze('/docs/a.md', {
@@ -223,10 +223,10 @@ describe('DependencyAnalyzer', () => {
     it('should handle diamond pattern (multiple paths to same node)', () => {
       // A → B → D
       // A → C → D
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
-      graph.addFile('/docs/d.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
+      graph.addFile('/docs/d.md', 0);
 
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/a.md', '/docs/c.md');
@@ -246,10 +246,10 @@ describe('DependencyAnalyzer', () => {
 
     it('should handle star pattern (hub with many spokes)', () => {
       // hub → b, c, d, e, f (hub links to 5 files)
-      graph.addFile('/docs/hub.md');
+      graph.addFile('/docs/hub.md', 0);
       ['b', 'c', 'd', 'e', 'f'].forEach(f => {
         const file = `/docs/${f}.md`;
-        graph.addFile(file);
+        graph.addFile(file, 0);
         graph.addEdge('/docs/hub.md', file);
       });
 
@@ -263,10 +263,10 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should handle inverse star pattern (many files link to one)', () => {
-      graph.addFile('/docs/popular.md');
+      graph.addFile('/docs/popular.md', 0);
       ['a', 'b', 'c', 'd', 'e'].forEach(f => {
         const file = `/docs/${f}.md`;
-        graph.addFile(file);
+        graph.addFile(file, 0);
         graph.addEdge(file, '/docs/popular.md');
       });
 
@@ -284,9 +284,9 @@ describe('DependencyAnalyzer', () => {
     it('should count total incoming dependencies (recursive)', () => {
       // A → B, B → C
       // C has 2 incoming (B directly, A transitively)
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
 
@@ -299,9 +299,9 @@ describe('DependencyAnalyzer', () => {
     });
 
     it('should count total outgoing dependencies (recursive)', () => {
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
 

@@ -15,6 +15,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 **Location**: `src/cli.ts`, `src/commands/`
 
 **Key files**:
+
 - `cli.ts` - Main CLI setup with Commander.js, signal handlers, global options
 - `commands/lint.ts` - Validation command (structural integrity)
 - `commands/deps.ts` - Dependency analysis command
@@ -23,6 +24,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 - **Future**: `commands/query.ts`, `commands/cat.ts`, `commands/toc.ts`
 
 **Responsibilities**:
+
 - Parse CLI arguments and options (including Unix-friendly flags)
 - Load and merge configuration
 - Initialize logger with appropriate verbosity and output modes
@@ -37,6 +39,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 **Location**: `src/core/`
 
 **Key files**:
+
 - `doc-linter.ts` - Main orchestrator that coordinates all operations
 - `graph-analyzer.ts` - **Graph foundation**: Dependency graph building and traversal (enables all features)
 - `link-validator.ts` - Link and anchor validation
@@ -46,6 +49,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 - **Future**: Query engine, content output processor, TOC generator
 
 **Responsibilities**:
+
 - Build documentation dependency graph (foundation for all features)
 - Validate links (files and anchors)
 - Detect orphaned files
@@ -61,6 +65,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 **Location**: `src/types/`
 
 **Key files**:
+
 - `config.ts` - Configuration schemas and types (Zod-based)
 - `graph.ts` - Dependency graph data structure
 - `results.ts` - Lint results and error types
@@ -68,6 +73,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 - `exit-codes.ts` - Standard Unix exit codes enum
 
 **Responsibilities**:
+
 - Define type-safe configuration schemas
 - Provide runtime validation with Zod
 - Structure lint results and errors
@@ -81,6 +87,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 **Location**: `src/utils/`
 
 **Key files**:
+
 - `logger.ts` - Unix-friendly logging with TTY detection, stdout/stderr separation, quiet/verbose modes
 - `errors.ts` - Custom error classes with exit codes and context
 - `error-handler.ts` - Error handling middleware and utilities
@@ -90,6 +97,7 @@ mdite is a comprehensive **documentation toolkit** built as a modular system wit
 - `reporter.ts` - Format lint results for text/JSON output with stream separation
 
 **Responsibilities**:
+
 - Provide Unix-friendly logging (TTY detection, color control, quiet/verbose modes)
 - Separate data (stdout) from messages (stderr) for pipe compatibility
 - Handle errors with proper context and exit codes
@@ -144,6 +152,7 @@ All will leverage the same graph foundation built by GraphAnalyzer, with command
 The configuration system uses a layered approach with clear priority:
 
 **Priority (highest to lowest)**:
+
 1. **CLI Options** - Flags passed on command line (`--entrypoint`, `--format`, etc.)
 2. **Project Config** - `.mditerc`, `mdite.config.js`, or `package.json#mdite`
 3. **User Config** - `~/.config/mdite/config.json` (personal defaults)
@@ -156,33 +165,57 @@ Each layer is merged into the next, with higher priority layers overriding lower
 The dependency graph is built using depth-first traversal:
 
 ```
-1. Start with entrypoint file (e.g., README.md)
+1. Start with entrypoint file (e.g., README.md) at depth 0
 2. Parse markdown to extract links
 3. For each relative .md link:
    - Resolve absolute path
    - Skip if already visited (cycle detection)
-   - Add edge to graph
-   - Recursively visit target file
+   - Add edge to graph with current depth
+   - Recursively visit target file at depth + 1 (if within maxDepth)
 4. Return complete graph of reachable files
 ```
 
-**Orphan Detection**: After graph is built, find all markdown files in directory that are NOT in the graph.
+**Depth Tracking**: Each node in the graph tracks its depth from the entrypoint:
+
+- Entrypoint is at depth 0
+- Direct links from entrypoint are at depth 1
+- Links from those files are at depth 2, etc.
+- Files beyond maxDepth are not included in the graph
+
+**Depth Limiting**: The `--depth` parameter (or `depth` config option) controls how far traversal goes:
+
+- `unlimited` (default) - Traverse all reachable files (maxDepth = Infinity)
+- `0` - Only the entrypoint file (no links followed)
+- `1` - Entrypoint + direct links only
+- `2` - Entrypoint + direct links + links from those files
+- etc.
+
+**Use Cases for Depth Limiting**:
+
+- **Progressive validation**: Start with core docs (depth 1-2), expand gradually
+- **Performance**: Limit scope for faster validation on large doc sets
+- **Focused validation**: Validate only immediate dependencies of key files
+
+**Orphan Detection**: After graph is built, find all markdown files in directory that are NOT in the graph. Files beyond maxDepth are considered orphans (not reachable within the specified depth limit).
 
 ## Link Validation
 
 Link validation handles three types of links:
 
 ### 1. Anchor-only links (`#heading`)
+
 - Extract all headings from current file
 - Convert to GitHub-style slugs
 - Check if anchor matches any heading
 
 ### 2. File links (`./other.md`)
+
 - Resolve relative path
 - Check if file exists
 - Report error if not found
 
 ### 3. File + anchor links (`./other.md#section`)
+
 - First validate file exists
 - Then extract headings from target file
 - Check if anchor matches any heading
@@ -208,11 +241,13 @@ stderr (file descriptor 2):
 ```
 
 **Implementation**:
+
 - `logger.log()` → stdout (always shown)
 - `logger.info()`, `logger.success()`, `logger.header()` → stderr (suppressed in --quiet)
 - `logger.error()` → stderr (always shown)
 
 **Benefits**:
+
 ```bash
 # Pipe data without progress messages
 mdite lint --format json | jq '.'
@@ -238,11 +273,13 @@ function shouldUseColors(): boolean {
 ```
 
 **Environment Variables**:
+
 - `NO_COLOR` - Disable colors (respects [no-color.org](https://no-color.org))
 - `FORCE_COLOR` - Force colors even when not a TTY
 - `CI=true` - Auto-disable colors in CI environments
 
 **CLI Flags**:
+
 - `--colors` - Override detection, force colors
 - `--no-colors` - Override detection, disable colors
 
@@ -252,14 +289,15 @@ function shouldUseColors(): boolean {
 
 ```typescript
 enum ExitCode {
-  SUCCESS = 0,        // No errors
-  ERROR = 1,          // Validation/operational errors
-  USAGE_ERROR = 2,    // Invalid arguments/options
-  INTERRUPTED = 130,  // SIGINT/SIGTERM (128 + 2)
+  SUCCESS = 0, // No errors
+  ERROR = 1, // Validation/operational errors
+  USAGE_ERROR = 2, // Invalid arguments/options
+  INTERRUPTED = 130, // SIGINT/SIGTERM (128 + 2)
 }
 ```
 
 **Usage**:
+
 ```bash
 # Success check
 mdite lint && echo "Success"
@@ -293,6 +331,7 @@ process.on('SIGPIPE', () => {
 ```
 
 **Benefits**:
+
 - Clean Ctrl+C handling
 - Proper exit codes for signal termination
 - SIGPIPE handling for broken pipes (e.g., `mdite lint | head`)
@@ -306,7 +345,7 @@ class Logger {
   private quiet: boolean;
 
   info(message: string): void {
-    if (this.quiet) return;  // Suppressed
+    if (this.quiet) return; // Suppressed
     console.error(`ℹ ${message}`);
   }
 
@@ -318,6 +357,7 @@ class Logger {
 ```
 
 **Usage**:
+
 ```bash
 # Scripting - only errors
 mdite lint --quiet
@@ -329,12 +369,14 @@ mdite lint --quiet --format json
 ## Error Handling
 
 All errors extend `DocLintError` base class with:
+
 - `code` - Machine-readable error code
 - `exitCode` - CLI exit code (0 = success, 1+ = failure)
 - `context` - Additional metadata for debugging
 - `cause` - Original error (for error wrapping)
 
 Error hierarchy:
+
 ```
 DocLintError (base)
 ├── ConfigNotFoundError
@@ -397,18 +439,21 @@ DocLintError (base)
 ## Testing Strategy
 
 ### Unit Tests (`tests/unit/`)
+
 - Test individual modules in isolation
 - Mock dependencies
 - Fast execution
 - High coverage
 
 ### Integration Tests (`tests/integration/`)
+
 - Test full workflows (CLI, commands)
 - Use real file system (temp directories)
 - Test error scenarios
 - Slower but more comprehensive
 
 ### Test Infrastructure (`tests/`)
+
 - `setup.ts` - Helper functions for test setup
 - `utils.ts` - Test utilities (fixtures, assertions)
 - `mocks/` - Mock objects (logger, etc.)
@@ -439,13 +484,13 @@ Examples serve three purposes:
 
 ### Difference from tests/fixtures/
 
-| Aspect | tests/fixtures/ | examples/ |
-|--------|----------------|-----------|
-| Purpose | Automated unit tests | Manual demos + smoke tests |
-| Audience | Developers (internal) | Users + Developers |
-| Execution | Via Vitest | Via CLI |
-| Documentation | Minimal | Comprehensive |
-| Scope | Focused test cases | Realistic scenarios |
+| Aspect        | tests/fixtures/       | examples/                  |
+| ------------- | --------------------- | -------------------------- |
+| Purpose       | Automated unit tests  | Manual demos + smoke tests |
+| Audience      | Developers (internal) | Users + Developers         |
+| Execution     | Via Vitest            | Via CLI                    |
+| Documentation | Minimal               | Comprehensive              |
+| Scope         | Focused test cases    | Realistic scenarios        |
 
 ### Running Examples
 
@@ -462,16 +507,19 @@ See [examples/README.md](./examples/README.md) for details.
 ## Performance Considerations
 
 ### Graph Building
+
 - Uses cycle detection to prevent infinite loops
 - Visits each file only once
 - Lazy loading (only parses files when needed)
 
 ### Link Validation
+
 - Async file operations with `Promise.all()` for parallel validation
 - Caches heading extractions per file
 - Skips external links (http/https)
 
 ### File System Operations
+
 - Uses `fs/promises` for async I/O
 - Skips hidden directories and `node_modules`
 - Minimal file reads (only what's needed)
@@ -479,6 +527,7 @@ See [examples/README.md](./examples/README.md) for details.
 ## Dependencies
 
 ### Core Dependencies
+
 - **unified** - Markdown parsing and processing
 - **remark-parse** - Markdown AST parser
 - **remark-lint** - Markdown linting rules
@@ -489,6 +538,7 @@ See [examples/README.md](./examples/README.md) for details.
 - **globby** - File pattern matching
 
 ### Development Dependencies
+
 - **TypeScript** - Type safety
 - **Vitest** - Testing framework
 - **ESLint** - Code linting

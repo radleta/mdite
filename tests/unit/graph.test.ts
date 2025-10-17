@@ -4,7 +4,7 @@ import { DocGraph } from '../../src/types/graph.js';
 describe('DocGraph', () => {
   it('adds files', () => {
     const graph = new DocGraph();
-    graph.addFile('/path/to/file.md');
+    graph.addFile('/path/to/file.md', 0);
 
     expect(graph.hasFile('/path/to/file.md')).toBe(true);
     expect(graph.getAllFiles()).toEqual(['/path/to/file.md']);
@@ -12,8 +12,8 @@ describe('DocGraph', () => {
 
   it('adds edges', () => {
     const graph = new DocGraph();
-    graph.addFile('/path/from.md');
-    graph.addFile('/path/to.md');
+    graph.addFile('/path/from.md', 0);
+    graph.addFile('/path/to.md', 1);
     graph.addEdge('/path/from.md', '/path/to.md');
 
     expect(graph.getOutgoingLinks('/path/from.md')).toEqual(['/path/to.md']);
@@ -21,7 +21,7 @@ describe('DocGraph', () => {
 
   it('returns empty array for file with no outgoing links', () => {
     const graph = new DocGraph();
-    graph.addFile('/path/file.md');
+    graph.addFile('/path/file.md', 0);
 
     expect(graph.getOutgoingLinks('/path/file.md')).toEqual([]);
   });
@@ -34,9 +34,9 @@ describe('DocGraph', () => {
 
   it('handles multiple files and edges', () => {
     const graph = new DocGraph();
-    graph.addFile('/a.md');
-    graph.addFile('/b.md');
-    graph.addFile('/c.md');
+    graph.addFile('/a.md', 0);
+    graph.addFile('/b.md', 0);
+    graph.addFile('/c.md', 0);
     graph.addEdge('/a.md', '/b.md');
     graph.addEdge('/a.md', '/c.md');
 
@@ -47,8 +47,8 @@ describe('DocGraph', () => {
   describe('Reverse Edge Tracking', () => {
     it('should add reverse edge when adding forward edge', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
 
       const incoming = graph.getIncomingLinks('/docs/b.md');
@@ -57,9 +57,9 @@ describe('DocGraph', () => {
 
     it('should handle multiple outgoing edges from same source', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/a.md', '/docs/c.md');
 
@@ -71,9 +71,9 @@ describe('DocGraph', () => {
 
     it('should handle multiple incoming edges to same target', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
       graph.addEdge('/docs/a.md', '/docs/c.md');
       graph.addEdge('/docs/b.md', '/docs/c.md');
 
@@ -85,8 +85,8 @@ describe('DocGraph', () => {
 
     it('should not duplicate edges when added multiple times', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/a.md', '/docs/b.md'); // duplicate
 
@@ -99,7 +99,7 @@ describe('DocGraph', () => {
 
     it('should return empty array for file with no incoming links', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
+      graph.addFile('/docs/a.md', 0);
       const incoming = graph.getIncomingLinks('/docs/a.md');
       expect(incoming).toEqual([]);
     });
@@ -112,7 +112,7 @@ describe('DocGraph', () => {
 
     it('should handle self-referential edges', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
+      graph.addFile('/docs/a.md', 0);
       graph.addEdge('/docs/a.md', '/docs/a.md');
 
       expect(graph.getOutgoingLinks('/docs/a.md')).toContain('/docs/a.md');
@@ -121,8 +121,8 @@ describe('DocGraph', () => {
 
     it('should maintain consistency between forward and reverse edges', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
       graph.addEdge('/docs/a.md', '/docs/b.md');
 
       // A → B means A's outgoing includes B
@@ -136,9 +136,9 @@ describe('DocGraph', () => {
   describe('Backward Compatibility', () => {
     it('should maintain existing getOutgoingLinks() behavior', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
-      graph.addFile('/docs/b.md');
-      graph.addFile('/docs/c.md');
+      graph.addFile('/docs/a.md', 0);
+      graph.addFile('/docs/b.md', 0);
+      graph.addFile('/docs/c.md', 0);
 
       graph.addEdge('/docs/a.md', '/docs/b.md');
       graph.addEdge('/docs/a.md', '/docs/c.md');
@@ -151,7 +151,7 @@ describe('DocGraph', () => {
 
     it('should return empty array for file with no outgoing links', () => {
       const graph = new DocGraph();
-      graph.addFile('/docs/a.md');
+      graph.addFile('/docs/a.md', 0);
       const outgoing = graph.getOutgoingLinks('/docs/a.md');
       expect(outgoing).toEqual([]);
     });

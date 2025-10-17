@@ -1,5 +1,6 @@
 export interface DocNode {
   path: string;
+  depth: number;
 }
 
 export class DocGraph {
@@ -7,8 +8,8 @@ export class DocGraph {
   private edges = new Map<string, Set<string>>();
   private reverseEdges = new Map<string, Set<string>>();
 
-  addFile(filePath: string): void {
-    this.nodes.set(filePath, { path: filePath });
+  addFile(filePath: string, depth: number): void {
+    this.nodes.set(filePath, { path: filePath, depth });
   }
 
   addEdge(from: string, to: string): void {
@@ -39,5 +40,15 @@ export class DocGraph {
 
   getIncomingLinks(filePath: string): string[] {
     return Array.from(this.reverseEdges.get(filePath) || []);
+  }
+
+  getDepth(filePath: string): number | undefined {
+    return this.nodes.get(filePath)?.depth;
+  }
+
+  getFilesUpToDepth(maxDepth: number): string[] {
+    return Array.from(this.nodes.entries())
+      .filter(([_, node]) => node.depth <= maxDepth)
+      .map(([path, _]) => path);
   }
 }

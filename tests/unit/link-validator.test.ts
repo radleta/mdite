@@ -21,8 +21,8 @@ describe('LinkValidator', () => {
       await writeTestFile(readme, '# Main\n\n[Guide](./guide.md)');
       await writeTestFile(guide, '# Guide');
 
-      graph.addFile(readme);
-      graph.addFile(guide);
+      graph.addFile(readme, 0);
+      graph.addFile(guide, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -34,7 +34,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[Missing](./missing.md)');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -48,7 +48,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[Section](#nonexistent)');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -62,7 +62,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[Section](#section)\n\n## Section');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -77,8 +77,8 @@ describe('LinkValidator', () => {
       await writeTestFile(readme, '# Main\n\n[Guide Section](./guide.md#installation)');
       await writeTestFile(guide, '# Guide\n\n## Installation');
 
-      graph.addFile(readme);
-      graph.addFile(guide);
+      graph.addFile(readme, 0);
+      graph.addFile(guide, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -90,7 +90,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[External](https://example.com)');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -105,7 +105,7 @@ describe('LinkValidator', () => {
         readme,
         '# Main\n\n[Missing1](./missing1.md)\n\n[Missing2](./missing2.md)'
       );
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -117,7 +117,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[Missing](./missing.md)');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -132,7 +132,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[Link](#my-section)\n\n## My Section');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -144,7 +144,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\n[Link](#api-v20)\n\n## API v2.0');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -159,7 +159,7 @@ describe('LinkValidator', () => {
         readme,
         '# Main\n\n[Link](#getting-started-guide)\n\n## Getting Started Guide'
       );
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -173,7 +173,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -185,7 +185,7 @@ describe('LinkValidator', () => {
       const readme = join(testDir, 'README.md');
 
       await writeTestFile(readme, '# Main\n\nJust some text.');
-      graph.addFile(readme);
+      graph.addFile(readme, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();
@@ -200,8 +200,8 @@ describe('LinkValidator', () => {
       await writeTestFile(readme, '# Main\n\n[Guide](./guide.md)');
       await writeTestFile(guide, '# Guide\n\n[Missing](./missing.md)');
 
-      graph.addFile(readme);
-      graph.addFile(guide);
+      graph.addFile(readme, 0);
+      graph.addFile(guide, 0);
 
       const validator = new LinkValidator(testDir, graph);
       const errors = await validator.validate();

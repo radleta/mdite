@@ -84,25 +84,27 @@ AI workspace directory:
 
 **mdite treats documentation as a graph:**
 
-- **Nodes**: Markdown files
+- **Nodes**: Markdown files (with depth tracking)
 - **Edges**: Links between files
-- **Root**: Entrypoint file (default: README.md)
+- **Root**: Entrypoint file (default: README.md, depth 0)
 
 This graph model enables ALL current and future features:
 
 - **Current**: Validation (lint), dependency analysis (deps), orphan detection
 - **Future**: Search (query), output (cat), TOC generation (toc), metrics (stats)
 
-**Graph traversal**: Depth-first from entrypoint → follows all relative `.md` links → builds reachable set → orphans = all markdown files NOT in graph. Cycle detection prevents infinite loops.
+**Graph traversal**: Depth-first from entrypoint (depth 0) → follows all relative `.md` links → increments depth per level → builds reachable set within `maxDepth` → orphans = all markdown files NOT in graph. Cycle detection prevents infinite loops.
+
+**Depth limiting**: `--depth <n>` or `depth` config option limits traversal depth. Default is `'unlimited'` (Infinity). Use for progressive validation, performance, or focused analysis. See `@ARCHITECTURE.md` Graph Building Algorithm section.
 
 ### Multi-Layer Configuration
 
 Config loads in priority order (highest first):
 
-1. CLI options (`--entrypoint`, `--format`)
+1. CLI options (`--entrypoint`, `--format`, `--depth`)
 2. Project config (`.mditerc`, `mdite.config.js`, `package.json#mdite`)
-3. User config (`~/.config/mdite/config.json`)
-4. Defaults (in `src/types/config.ts`)
+3. User config (`~/.config/mdite/config.json` with `defaultDepth`)
+4. Defaults (in `src/types/config.ts`: `depth: 'unlimited'`)
 
 See `src/core/config-manager.ts` for implementation.
 
