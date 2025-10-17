@@ -297,12 +297,13 @@ export class GraphAnalyzer {
    * - Files that should be deleted
    *
    * @param graph - The dependency graph built from the entrypoint
-   * @returns Array of absolute paths to orphaned files
+   * @param isDepthLimited - Whether the graph was built with depth limiting
+   * @returns Array of absolute paths to orphaned files (empty if depth limited)
    *
    * @example
    * ```typescript
    * const graph = await analyzer.buildGraph();
-   * const orphans = await analyzer.findOrphans(graph);
+   * const orphans = await analyzer.findOrphans(graph, false);
    *
    * if (orphans.length > 0) {
    *   console.warn('Orphaned files:', orphans);
@@ -310,9 +311,18 @@ export class GraphAnalyzer {
    * ```
    *
    * @remarks
-   * Skips hidden directories (starting with `.`) and `node_modules`
+   * - Skips hidden directories (starting with `.`) and `node_modules`
+   * - When `isDepthLimited` is true, returns empty array because orphan detection
+   *   requires a complete graph. Files beyond the depth limit would incorrectly
+   *   appear as orphans even if they are properly linked.
    */
-  async findOrphans(graph: DocGraph): Promise<string[]> {
+  async findOrphans(graph: DocGraph, isDepthLimited = false): Promise<string[]> {
+    // Orphan detection requires a complete graph
+    // With depth limiting, files beyond the depth would incorrectly appear as orphans
+    if (isDepthLimited) {
+      return [];
+    }
+
     const allFiles = await findMarkdownFiles(this.basePath);
     const reachableFiles = new Set(graph.getAllFiles());
 

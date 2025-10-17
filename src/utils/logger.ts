@@ -70,6 +70,15 @@ export class Logger {
   }
 
   /**
+   * Print warning message (to stderr, suppressed in quiet mode)
+   */
+  warn(message: string): void {
+    if (this.quiet) return;
+    const icon = this.colors ? chalk.yellow('⚠') : '!';
+    console.error(`${icon} ${message}`);
+  }
+
+  /**
    * Print error message (to stderr, always shown even in quiet mode)
    */
   error(message: string, error?: Error): void {

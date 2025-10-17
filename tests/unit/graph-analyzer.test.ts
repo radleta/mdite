@@ -146,6 +146,48 @@ describe('GraphAnalyzer', () => {
 
       expect(orphans).toHaveLength(2);
     });
+
+    it('should return empty array when isDepthLimited is true', async () => {
+      // Files beyond depth limit should not be reported as orphans
+      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Level1](./level1.md)');
+      await writeTestFile(join(testDir, 'level1.md'), '# Level 1\n\n[Level2](./level2.md)');
+      await writeTestFile(join(testDir, 'level2.md'), '# Level 2');
+      await writeTestFile(join(testDir, 'orphan.md'), '# Orphan');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph(1); // Depth 1: only README and level1
+
+      // With isDepthLimited=true, should return empty array (skip orphan detection)
+      const orphans = await analyzer.findOrphans(graph, true);
+      expect(orphans).toHaveLength(0);
+    });
+
+    it('should detect orphans when isDepthLimited is false', async () => {
+      await writeTestFile(join(testDir, 'README.md'), '# Main\n\n[Guide](./guide.md)');
+      await writeTestFile(join(testDir, 'guide.md'), '# Guide');
+      await writeTestFile(join(testDir, 'orphan.md'), '# Orphan');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph();
+
+      // With isDepthLimited=false (default), should detect orphans normally
+      const orphans = await analyzer.findOrphans(graph, false);
+      expect(orphans).toHaveLength(1);
+      expect(orphans[0]).toContain('orphan.md');
+    });
+
+    it('should use default parameter (false) when isDepthLimited not provided', async () => {
+      await writeTestFile(join(testDir, 'README.md'), '# Main');
+      await writeTestFile(join(testDir, 'orphan.md'), '# Orphan');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraph();
+
+      // Without providing isDepthLimited, should default to false (normal orphan detection)
+      const orphans = await analyzer.findOrphans(graph);
+      expect(orphans).toHaveLength(1);
+      expect(orphans[0]).toContain('orphan.md');
+    });
   });
 
   describe('edge cases', () => {

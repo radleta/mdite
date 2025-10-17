@@ -87,6 +87,7 @@ export class DocLinter {
   async lint(basePath: string, quiet = false): Promise<LintResults> {
     // Convert 'unlimited' to Infinity for graph analyzer
     const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
+    const isDepthLimited = this.config.depth !== 'unlimited';
 
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
     if (!quiet) this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
@@ -97,14 +98,21 @@ export class DocLinter {
 
     if (!quiet) this.logger.success(`Found ${graph.getAllFiles().length} reachable files`);
 
-    // 2. Check for orphans
-    if (!quiet) this.logger.info('Checking for orphaned files...');
-    const orphans = await graphAnalyzer.findOrphans(graph);
-    if (!quiet) {
-      if (orphans.length > 0) {
-        this.logger.error(`Found ${orphans.length} orphaned file(s)`);
-      } else {
-        this.logger.success('No orphaned files');
+    // 2. Check for orphans (skip if depth limited)
+    let orphans: string[] = [];
+    if (isDepthLimited) {
+      if (!quiet) {
+        this.logger.warn('Skipping orphan detection (depth-limited graph)');
+      }
+    } else {
+      if (!quiet) this.logger.info('Checking for orphaned files...');
+      orphans = await graphAnalyzer.findOrphans(graph, isDepthLimited);
+      if (!quiet) {
+        if (orphans.length > 0) {
+          this.logger.error(`Found ${orphans.length} orphaned file(s)`);
+        } else {
+          this.logger.success('No orphaned files');
+        }
       }
     }
 
@@ -151,6 +159,7 @@ export class DocLinter {
    */
   async lintMultiple(basePath: string, entrypoints: string[], quiet = false): Promise<LintResults> {
     const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
+    const isDepthLimited = this.config.depth !== 'unlimited';
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
 
     if (!quiet) {
@@ -165,14 +174,21 @@ export class DocLinter {
       this.logger.success(`Found ${mergedGraph.getAllFiles().length} reachable files`);
     }
 
-    // Check for orphans (not reachable from ANY entrypoint)
-    if (!quiet) this.logger.info('Checking for orphaned files...');
-    const orphans = await graphAnalyzer.findOrphans(mergedGraph);
-    if (!quiet) {
-      if (orphans.length > 0) {
-        this.logger.error(`Found ${orphans.length} orphaned file(s)`);
-      } else {
-        this.logger.success('No orphaned files');
+    // Check for orphans (skip if depth limited)
+    let orphans: string[] = [];
+    if (isDepthLimited) {
+      if (!quiet) {
+        this.logger.warn('Skipping orphan detection (depth-limited graph)');
+      }
+    } else {
+      if (!quiet) this.logger.info('Checking for orphaned files...');
+      orphans = await graphAnalyzer.findOrphans(mergedGraph, isDepthLimited);
+      if (!quiet) {
+        if (orphans.length > 0) {
+          this.logger.error(`Found ${orphans.length} orphaned file(s)`);
+        } else {
+          this.logger.success('No orphaned files');
+        }
       }
     }
 

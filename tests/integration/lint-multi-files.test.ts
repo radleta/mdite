@@ -107,10 +107,13 @@ describe('mdite lint [paths...] (multi-file)', () => {
 
       const result = runLint(['A.md', '--depth', '1']);
 
-      // C and D are beyond depth 1, so they're orphans - exit code 1
-      expect(result.exitCode).toBe(1);
+      // With depth limit, orphan detection is skipped - exit code 0
+      expect(result.exitCode).toBe(0);
       expect(result.stderr).toContain('depth: 1');
-      expect(result.stdout).toContain('orphan');
+      expect(result.stderr).toContain('Skipping orphan detection');
+      expect(result.stderr).toContain('depth-limited graph');
+      // C and D are beyond depth 1, but NOT reported as orphans
+      expect(result.stdout).not.toContain('orphan');
     });
 
     it('should apply depth to all entrypoints', async () => {
@@ -123,9 +126,11 @@ describe('mdite lint [paths...] (multi-file)', () => {
 
       const result = runLint(['A.md', 'X.md', '--depth', '1']);
 
-      // C and Z are beyond depth 1, so they're orphans - exit code 1
-      expect(result.exitCode).toBe(1);
-      expect(result.stdout).toContain('orphan');
+      // With depth limit, orphan detection is skipped - exit code 0
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toContain('Skipping orphan detection');
+      // C and Z are beyond depth 1, but NOT reported as orphans
+      expect(result.stdout).not.toContain('orphan');
       // Both entrypoints at depth 0, their direct links (B, Y) at depth 1
     });
   });
