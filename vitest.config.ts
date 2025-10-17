@@ -19,6 +19,10 @@ export default defineConfig({
         '*.config.js',
         'examples/**',
         'scratch/**',
+        // CLI layer - tested via integration tests
+        'src/cli.ts',
+        'src/index.ts',
+        'src/commands/**',
       ],
       thresholds: {
         lines: 70,
