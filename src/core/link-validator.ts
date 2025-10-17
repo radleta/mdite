@@ -6,6 +6,7 @@ import { visit } from 'unist-util-visit';
 import { slugify } from '../utils/slug.js';
 import type { Link } from 'mdast';
 import { MarkdownCache } from './markdown-cache.js';
+import { promisePool } from '../utils/promise-pool.js';
 
 /**
  * Link validator for markdown documentation
@@ -50,27 +51,27 @@ export class LinkValidator {
   /**
    * Validate all links in the dependency graph
    *
-   * Iterates through all files in the graph and validates their links.
-   * Returns a flattened array of all link errors found.
+   * Validates all files in parallel with controlled concurrency for optimal
+   * performance and resource management.
    *
+   * @param maxConcurrency - Maximum number of concurrent file validations (default: 10)
    * @returns Array of lint errors for invalid links
    *
    * @example
    * ```typescript
-   * const errors = await validator.validate();
+   * const errors = await validator.validate(10);
    * const deadLinks = errors.filter(e => e.rule === 'dead-link');
    * const deadAnchors = errors.filter(e => e.rule === 'dead-anchor');
    * ```
    */
-  async validate(): Promise<LintError[]> {
-    const errors: LintError[] = [];
+  async validate(maxConcurrency: number = 10): Promise<LintError[]> {
+    const files = this.graph.getAllFiles();
 
-    for (const file of this.graph.getAllFiles()) {
-      const fileErrors = await this.validateFile(file);
-      errors.push(...fileErrors);
-    }
+    // Validate files with controlled concurrency
+    const results = await promisePool(files, file => this.validateFile(file), maxConcurrency);
 
-    return errors;
+    // Flatten error arrays
+    return results.flat();
   }
 
   /**

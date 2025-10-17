@@ -123,7 +123,7 @@ export class DocLinter {
     // 3. Validate links (using shared cache)
     if (!quiet) this.logger.info('Validating links...');
     const linkValidator = new LinkValidator(basePath, graph, cache);
-    const linkErrors = await linkValidator.validate();
+    const linkErrors = await linkValidator.validate(this.config.maxConcurrency);
     if (!quiet) {
       if (linkErrors.length > 0) {
         this.logger.error(`Found ${linkErrors.length} link error(s)`);
@@ -204,7 +204,7 @@ export class DocLinter {
     // Validate links (using shared cache)
     if (!quiet) this.logger.info('Validating links...');
     const linkValidator = new LinkValidator(basePath, mergedGraph, cache);
-    const linkErrors = await linkValidator.validate();
+    const linkErrors = await linkValidator.validate(this.config.maxConcurrency);
 
     // Deduplicate errors (same file may be validated in multiple graphs)
     const uniqueLinkErrors = this.deduplicateLinkErrors(linkErrors);

@@ -81,6 +81,8 @@ export const ProjectConfigSchema = z.object({
   entrypoint: z.string().optional(),
   /** Maximum depth for graph traversal */
   depth: z.union([z.number().int().min(0), z.literal('unlimited')]).optional(),
+  /** Maximum number of concurrent file validations */
+  maxConcurrency: z.number().int().min(1).max(100).optional(),
   /** Rule configuration with severity levels */
   rules: z.record(z.string(), SeveritySchema).optional(),
   /** Configuration files to extend (not yet implemented) */
@@ -127,6 +129,8 @@ export const RuntimeConfigSchema = z.object({
   verbose: z.boolean(),
   /** Maximum depth for graph traversal */
   depth: z.union([z.number().int().min(0), z.literal('unlimited')]),
+  /** Maximum number of concurrent file validations */
+  maxConcurrency: z.number().int().min(1).max(100),
   /** Rule configuration with severity levels */
   rules: z.record(z.string(), SeveritySchema),
 });
@@ -184,6 +188,7 @@ export const DEFAULT_CONFIG: RuntimeConfig = {
   colors: true,
   verbose: false,
   depth: 'unlimited',
+  maxConcurrency: 10,
   rules: {
     'orphan-files': 'error',
     'dead-link': 'error',
