@@ -162,6 +162,129 @@ export class GraphAnalyzer {
   }
 
   /**
+   * Build a merged dependency graph from multiple entry points
+   *
+   * Each entry point is traversed independently up to maxDepth,
+   * then graphs are merged. Files appearing in multiple subgraphs
+   * use the minimum depth (closest to any entry point).
+   *
+   * @param entrypoints - Array of entry point file names (relative to basePath)
+   * @param maxDepth - Maximum depth to traverse from each entry point
+   * @returns Merged DocGraph containing all reachable files
+   *
+   * @example
+   * ```typescript
+   * const graph = await analyzer.buildGraphFromMultiple(
+   *   ['README.md', 'api.md'],
+   *   1  // depth 1 from each
+   * );
+   * ```
+   */
+  async buildGraphFromMultiple(
+    entrypoints: string[],
+    maxDepth: number = Infinity
+  ): Promise<DocGraph> {
+    const mergedGraph = new DocGraph();
+
+    for (const entrypoint of entrypoints) {
+      const entrypointPath = path.join(this.basePath, entrypoint);
+
+      // Build subgraph for this entrypoint
+      const subgraph = new DocGraph();
+      await this.visitFileForGraph(subgraph, entrypointPath, 0, maxDepth);
+
+      // Merge into main graph (minimum depth wins)
+      this.mergeGraphs(mergedGraph, subgraph);
+    }
+
+    return mergedGraph;
+  }
+
+  /**
+   * Merge source graph into target graph
+   *
+   * For nodes: Use minimum depth if node already exists in target
+   * For edges: Add all edges (Set ensures uniqueness)
+   *
+   * @param target - Graph to merge into
+   * @param source - Graph to merge from
+   * @private
+   */
+  private mergeGraphs(target: DocGraph, source: DocGraph): void {
+    // Merge nodes with minimum depth
+    for (const filePath of source.getAllFiles()) {
+      const sourceDepth = source.getDepth(filePath)!;
+      const targetDepth = target.getDepth(filePath);
+
+      if (targetDepth === undefined || sourceDepth < targetDepth) {
+        target.addFile(filePath, sourceDepth);
+      }
+    }
+
+    // Merge edges
+    for (const from of source.getAllFiles()) {
+      for (const to of source.getOutgoingLinks(from)) {
+        target.addEdge(from, to);
+      }
+    }
+  }
+
+  /**
+   * Visit a file and build its subgraph
+   *
+   * This is like visitFile() but builds into a provided graph instance
+   * instead of this.graph, allowing multiple independent subgraphs.
+   *
+   * @param graph - The graph to build into
+   * @param filePath - Absolute path to the file
+   * @param currentDepth - Current depth from entry point
+   * @param maxDepth - Maximum allowed depth
+   * @private
+   */
+  private async visitFileForGraph(
+    graph: DocGraph,
+    filePath: string,
+    currentDepth: number,
+    maxDepth: number
+  ): Promise<void> {
+    const normalized = path.resolve(filePath);
+
+    // Skip if already visited in this graph
+    if (graph.hasFile(normalized)) {
+      return;
+    }
+
+    // Skip if beyond depth limit
+    if (currentDepth > maxDepth) {
+      return;
+    }
+
+    // Skip if file doesn't exist
+    try {
+      await fs.access(normalized);
+    } catch {
+      return;
+    }
+
+    // Add to graph
+    graph.addFile(normalized, currentDepth);
+
+    // Extract and follow links
+    const content = await fs.readFile(normalized, 'utf-8');
+    const links = await this.extractMarkdownLinks(content);
+
+    for (const link of links) {
+      const targetPath = path.resolve(path.dirname(normalized), link);
+      graph.addEdge(normalized, targetPath);
+
+      // Recurse if next depth is within limit
+      if (currentDepth + 1 <= maxDepth) {
+        await this.visitFileForGraph(graph, targetPath, currentDepth + 1, maxDepth);
+      }
+    }
+  }
+
+  /**
    * Find orphaned files not reachable from the dependency graph
    *
    * Compares all markdown files in the directory tree against the

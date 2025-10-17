@@ -11,11 +11,11 @@ import * as path from 'path';
 export function lintCommand(): Command {
   return new Command('lint')
     .description('Lint documentation files')
-    .argument('[path]', 'Documentation directory or file', '.')
+    .argument('[paths...]', 'Documentation files or directory', ['.'])
     .option('--format <type>', 'Output format (text|json)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
     .option('--depth <n>', 'Maximum depth of traversal (default: unlimited)', 'unlimited')
-    .action(async (pathArg: string, options, command) => {
+    .action(async (pathsArg: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
 
@@ -52,32 +52,74 @@ export function lintCommand(): Command {
           logger.header('mdite');
         }
 
-        // Resolve the path argument to determine if it's a file or directory
-        const resolvedPath = path.resolve(path.resolve('.'), pathArg);
-        let basePath: string;
-        let entrypointOverride: string | undefined = options.entrypoint;
+        // Determine if multi-file mode
+        const isMultiFile = pathsArg.length > 1;
 
-        try {
-          const stats = await fs.stat(resolvedPath);
-          if (stats.isFile()) {
-            // If path is a file, use its directory as basePath and filename as entrypoint
-            basePath = path.dirname(resolvedPath);
-            // Only override entrypoint if not explicitly provided via --entrypoint flag
-            if (!options.entrypoint) {
-              entrypointOverride = path.basename(resolvedPath);
-            }
-          } else {
-            // If path is a directory, use it as basePath
-            basePath = resolvedPath;
-          }
-        } catch {
-          // If path doesn't exist, treat it as a directory and let later code handle the error
-          basePath = resolvedPath;
+        // Validation: Cannot use --entrypoint with multiple files
+        if (isMultiFile && options.entrypoint) {
+          logger.error('Cannot use --entrypoint option with multiple file paths');
+          process.exit(ExitCode.USAGE_ERROR);
         }
 
-        // Build CLI options for the new layered config system
+        let basePath: string;
+        let entrypoints: string[] = []; // Will be set in multi-file or single-file mode
+        let entrypointOverride: string | undefined = options.entrypoint;
+
+        if (isMultiFile) {
+          // Multi-file mode: all paths must be files (not directories)
+          basePath = path.resolve('.');
+
+          for (const p of pathsArg) {
+            const resolvedPath = path.resolve(p);
+            try {
+              const stats = await fs.stat(resolvedPath);
+              if (stats.isDirectory()) {
+                logger.error(`Cannot mix directories and files: ${p}`);
+                logger.error('Use either a single directory or multiple files');
+                process.exit(ExitCode.USAGE_ERROR);
+              }
+            } catch {
+              logger.error(`File not found: ${p}`);
+              process.exit(ExitCode.USAGE_ERROR);
+            }
+          }
+
+          // Resolve to relative paths from basePath
+          entrypoints = pathsArg.map(p => path.relative(basePath, path.resolve(p)));
+
+          if (!isJsonFormat) {
+            logger.info(`Linting ${entrypoints.length} file(s)`);
+            if (globalOpts.verbose) {
+              entrypoints.forEach(ep => logger.info(`  - ${ep}`));
+            }
+          }
+        } else {
+          // Single path mode (existing behavior)
+          const pathArg = pathsArg[0] || '.';
+          const resolvedPath = path.resolve(pathArg);
+
+          try {
+            const stats = await fs.stat(resolvedPath);
+            if (stats.isFile()) {
+              // If path is a file, use its directory as basePath and filename as entrypoint
+              basePath = path.dirname(resolvedPath);
+              // Only override entrypoint if not explicitly provided via --entrypoint flag
+              if (!options.entrypoint) {
+                entrypointOverride = path.basename(resolvedPath);
+              }
+            } else {
+              // If path is a directory, use it as basePath
+              basePath = resolvedPath;
+            }
+          } catch {
+            // If path doesn't exist, treat it as a directory and let later code handle the error
+            basePath = resolvedPath;
+          }
+        }
+
+        // Build CLI options
         const cliOptions: CliOptions = {
-          entrypoint: entrypointOverride,
+          entrypoint: isMultiFile ? undefined : entrypointOverride,
           format: options.format,
           colors,
           verbose: globalOpts.verbose,
@@ -85,24 +127,31 @@ export function lintCommand(): Command {
           config: globalOpts.config,
         };
 
-        // Load configuration with proper layering
+        // Load configuration
         const configManager = await ConfigManager.load(cliOptions);
         const config = configManager.getConfig();
 
-        if (!isJsonFormat) {
-          logger.info(`Linting: ${basePath}`);
-          logger.info(`Entrypoint: ${config.entrypoint}`);
-          if (config.verbose) {
-            logger.info(`Format: ${config.format}`);
-            logger.info(`Colors: ${config.colors}`);
-            logger.info(`Depth: ${config.depth}`);
+        // For single-file mode, use config entrypoint if not set
+        if (!isMultiFile) {
+          entrypoints = [config.entrypoint];
+
+          if (!isJsonFormat) {
+            logger.info(`Linting: ${basePath}`);
+            logger.info(`Entrypoint: ${config.entrypoint}`);
+            if (config.verbose) {
+              logger.info(`Format: ${config.format}`);
+              logger.info(`Colors: ${config.colors}`);
+              logger.info(`Depth: ${config.depth}`);
+            }
+            logger.line();
           }
-          logger.line();
         }
 
         // Run linter
         const linter = new DocLinter(config, logger);
-        const results = await linter.lint(basePath, isJsonFormat);
+        const results = isMultiFile
+          ? await linter.lintMultiple(basePath, entrypoints, isJsonFormat)
+          : await linter.lint(basePath, isJsonFormat);
 
         // Report results
         const reporter = new Reporter(options.format, logger);

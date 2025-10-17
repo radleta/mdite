@@ -558,13 +558,47 @@ mdite lint --quiet
 
 # Verbose output (shows debug info to stderr)
 mdite lint --verbose
+
+# NEW: Lint multiple files as entry points
+mdite lint README.md docs/api.md docs/guide.md --depth 1
+
+# Perfect for pre-commit hooks (lint only changed files)
+CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep '\.md$')
+mdite lint $CHANGED --depth 1
+```
+
+#### Multi-File Validation (NEW)
+
+Lint multiple specific files as independent entry points:
+
+```bash
+# Lint multiple entry points
+mdite lint core/api.md core/cli.md core/config.md
+
+# Each file starts at depth 0
+# Results are merged and deduplicated
+# Orphans = files not reachable from ANY entry point
+```
+
+**Use Cases:**
+
+- **Pre-commit hooks:** Lint only changed markdown files
+- **Selective validation:** Check specific docs without full traversal
+- **CI/CD:** Parallel validation of independent sections
+- **Author workflow:** Work on multiple related docs
+
+**Example:**
+
+```bash
+# Pre-commit: validate changed files and their immediate links
+mdite lint $(git diff --cached --name-only | grep '\.md$') --depth 1
 ```
 
 **Options:**
 
 - `--format <type>` - Output: `text` (default) or `json`
-- `--entrypoint <file>` - Entrypoint file (overrides config)
-- `--depth <n>` - Maximum depth of traversal (default: unlimited)
+- `--entrypoint <file>` - Entrypoint file (overrides config, cannot be used with multiple files)
+- `--depth <n>` - Maximum depth of traversal (default: unlimited, applies to all files)
 - `-q, --quiet` - Suppress informational output (only show errors)
 
 **Global options** (apply to all commands):

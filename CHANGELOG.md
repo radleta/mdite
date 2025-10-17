@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-file linting**: `mdite lint` now accepts multiple file paths as variadic arguments
+  - Each file acts as an independent entry point for graph traversal (starting at depth 0)
+  - Depth limit applies to all files equally
+  - Results are merged with automatic deduplication of errors
+  - Orphans = files not reachable from ANY specified entry point
+  - Perfect for pre-commit hooks: `mdite lint $(git diff --cached --name-only | grep '\.md$') --depth 1`
+  - Cannot be combined with `--entrypoint` option (files replace entrypoint)
+  - Backward compatible: single file or directory still works as before
+  - Added 22 new tests (6 unit + 16 integration) covering multi-file scenarios
+  - Example: `examples/08-multi-file-validation/` demonstrates feature
+
 ### Fixed
 
 - **`mdite init` command**: Fixed bug where `--config` flag was ignored
@@ -14,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command now properly respects `--config` flag for custom config file paths
   - Aligns with other commands (deps, config, lint) in using global options
 
-### Added
+### Internal
 
 **mdite** is a markdown documentation toolkit that treats documentation as a connected system (graph), not isolated files. This foundational approach enables all current and future features.
 

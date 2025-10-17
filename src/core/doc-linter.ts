@@ -1,5 +1,6 @@
 import { RuntimeConfig } from '../types/config.js';
 import { LintResults } from '../types/results.js';
+import { LintError } from '../types/errors.js';
 import { Logger } from '../utils/logger.js';
 import { GraphAnalyzer } from './graph-analyzer.js';
 import { LinkValidator } from './link-validator.js';
@@ -125,6 +126,94 @@ export class DocLinter {
     return new LintResults({
       orphans,
       linkErrors,
+    });
+  }
+
+  /**
+   * Lint multiple entry points and merge results
+   *
+   * This is equivalent to running lint() multiple times with different
+   * entry points and merging the results. Each entry point starts at depth 0.
+   *
+   * @param basePath - Absolute path to the documentation directory
+   * @param entrypoints - Array of entry point file names (relative to basePath)
+   * @param quiet - Suppress progress output (default: false)
+   * @returns Merged lint results with deduplicated errors
+   *
+   * @example
+   * ```typescript
+   * const results = await linter.lintMultiple(
+   *   '/docs',
+   *   ['README.md', 'api.md', 'guide.md'],
+   *   false
+   * );
+   * ```
+   */
+  async lintMultiple(basePath: string, entrypoints: string[], quiet = false): Promise<LintResults> {
+    const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
+    const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
+
+    if (!quiet) {
+      this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
+    }
+
+    // Build merged graph from all entrypoints
+    const graphAnalyzer = new GraphAnalyzer(basePath, this.config);
+    const mergedGraph = await graphAnalyzer.buildGraphFromMultiple(entrypoints, maxDepth);
+
+    if (!quiet) {
+      this.logger.success(`Found ${mergedGraph.getAllFiles().length} reachable files`);
+    }
+
+    // Check for orphans (not reachable from ANY entrypoint)
+    if (!quiet) this.logger.info('Checking for orphaned files...');
+    const orphans = await graphAnalyzer.findOrphans(mergedGraph);
+    if (!quiet) {
+      if (orphans.length > 0) {
+        this.logger.error(`Found ${orphans.length} orphaned file(s)`);
+      } else {
+        this.logger.success('No orphaned files');
+      }
+    }
+
+    // Validate links
+    if (!quiet) this.logger.info('Validating links...');
+    const linkValidator = new LinkValidator(basePath, mergedGraph);
+    const linkErrors = await linkValidator.validate();
+
+    // Deduplicate errors (same file may be validated in multiple graphs)
+    const uniqueLinkErrors = this.deduplicateLinkErrors(linkErrors);
+
+    if (!quiet) {
+      if (uniqueLinkErrors.length > 0) {
+        this.logger.error(`Found ${uniqueLinkErrors.length} link error(s)`);
+      } else {
+        this.logger.success('All links valid');
+      }
+    }
+
+    if (!quiet) this.logger.line();
+
+    return new LintResults({
+      orphans,
+      linkErrors: uniqueLinkErrors,
+    });
+  }
+
+  /**
+   * Deduplicate link errors by file, line, column, and message
+   *
+   * @param errors - Array of link errors
+   * @returns Deduplicated array of errors
+   * @private
+   */
+  private deduplicateLinkErrors(errors: LintError[]): LintError[] {
+    const seen = new Set<string>();
+    return errors.filter(error => {
+      const key = `${error.file}:${error.line}:${error.column}:${error.message}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
   }
 }

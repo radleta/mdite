@@ -175,4 +175,88 @@ describe('GraphAnalyzer', () => {
       expect(graph.getAllFiles()).toHaveLength(1);
     });
   });
+
+  describe('buildGraphFromMultiple', () => {
+    it('should build graph from multiple entrypoints', async () => {
+      // Setup: A.md -> C.md, B.md -> D.md
+      await writeTestFile(join(testDir, 'A.md'), '# A\n\n[C](./C.md)');
+      await writeTestFile(join(testDir, 'B.md'), '# B\n\n[D](./D.md)');
+      await writeTestFile(join(testDir, 'C.md'), '# C');
+      await writeTestFile(join(testDir, 'D.md'), '# D');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraphFromMultiple(['A.md', 'B.md'], Infinity);
+
+      expect(graph.getAllFiles()).toHaveLength(4);
+      expect(graph.hasFile(join(testDir, 'A.md'))).toBe(true);
+      expect(graph.hasFile(join(testDir, 'B.md'))).toBe(true);
+      expect(graph.hasFile(join(testDir, 'C.md'))).toBe(true);
+      expect(graph.hasFile(join(testDir, 'D.md'))).toBe(true);
+    });
+
+    it('should use minimum depth for files in multiple graphs', async () => {
+      // Setup: A.md -> B.md -> C.md, and C.md as direct entrypoint
+      await writeTestFile(join(testDir, 'A.md'), '# A\n\n[B](./B.md)');
+      await writeTestFile(join(testDir, 'B.md'), '# B\n\n[C](./C.md)');
+      await writeTestFile(join(testDir, 'C.md'), '# C');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraphFromMultiple(['A.md', 'C.md'], Infinity);
+
+      expect(graph.getDepth(join(testDir, 'A.md'))).toBe(0); // entry point
+      expect(graph.getDepth(join(testDir, 'B.md'))).toBe(1); // from A
+      expect(graph.getDepth(join(testDir, 'C.md'))).toBe(0); // entry point (minimum depth)
+    });
+
+    it('should respect depth limit per entrypoint', async () => {
+      // A.md -> B.md -> C.md
+      await writeTestFile(join(testDir, 'A.md'), '# A\n\n[B](./B.md)');
+      await writeTestFile(join(testDir, 'B.md'), '# B\n\n[C](./C.md)');
+      await writeTestFile(join(testDir, 'C.md'), '# C');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraphFromMultiple(['A.md'], 1);
+
+      expect(graph.hasFile(join(testDir, 'A.md'))).toBe(true);
+      expect(graph.hasFile(join(testDir, 'B.md'))).toBe(true);
+      expect(graph.hasFile(join(testDir, 'C.md'))).toBe(false); // beyond depth 1
+    });
+
+    it('should handle overlapping graphs correctly', async () => {
+      // A.md -> shared.md, B.md -> shared.md
+      await writeTestFile(join(testDir, 'A.md'), '# A\n\n[Shared](./shared.md)');
+      await writeTestFile(join(testDir, 'B.md'), '# B\n\n[Shared](./shared.md)');
+      await writeTestFile(join(testDir, 'shared.md'), '# Shared');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraphFromMultiple(['A.md', 'B.md'], Infinity);
+
+      expect(graph.getAllFiles()).toHaveLength(3);
+      expect(graph.getDepth(join(testDir, 'shared.md'))).toBe(1); // depth 1 from both
+    });
+
+    it('should handle circular references in multi-entrypoint graphs', async () => {
+      // A.md <-> B.md (circular)
+      await writeTestFile(join(testDir, 'A.md'), '# A\n\n[B](./B.md)');
+      await writeTestFile(join(testDir, 'B.md'), '# B\n\n[A](./A.md)');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraphFromMultiple(['A.md', 'B.md'], Infinity);
+
+      expect(graph.getAllFiles()).toHaveLength(2);
+      expect(graph.getDepth(join(testDir, 'A.md'))).toBe(0);
+      expect(graph.getDepth(join(testDir, 'B.md'))).toBe(0);
+    });
+
+    it('should handle missing entrypoint files gracefully', async () => {
+      await writeTestFile(join(testDir, 'A.md'), '# A');
+
+      const analyzer = new GraphAnalyzer(testDir, DEFAULT_CONFIG);
+      const graph = await analyzer.buildGraphFromMultiple(['A.md', 'missing.md'], Infinity);
+
+      // Should only include A.md, skip missing
+      expect(graph.getAllFiles()).toHaveLength(1);
+      expect(graph.hasFile(join(testDir, 'A.md'))).toBe(true);
+    });
+  });
 });
