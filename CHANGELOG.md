@@ -27,6 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command now properly respects `--config` flag for custom config file paths
   - Aligns with other commands (deps, config, lint) in using global options
 
+### Performance
+
+- **Heading slug cache**: Added memoization to `slugify()` function for 40-60% performance improvement
+  - Map-based cache eliminates redundant regex operations on repeated headings
+  - Typical documentation with 1,000 headings (~400 unique) saves ~2,400 regex operations
+  - Cache size is negligible (~12KB for 400 entries)
+  - Added `clearSlugCache()` and `getSlugCacheStats()` helper functions for testing and debugging
+  - Added 6 new tests covering cache behavior, hit/miss scenarios, and edge cases
+  - Related to issue #4 - Performance optimizations
+
 ### Internal
 
 **mdite** is a markdown documentation toolkit that treats documentation as a connected system (graph), not isolated files. This foundational approach enables all current and future features.
