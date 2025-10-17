@@ -3,10 +3,7 @@ import * as fs from 'fs/promises';
 import { RuntimeConfig } from '../types/config.js';
 import { DocGraph } from '../types/graph.js';
 import { findMarkdownFiles } from '../utils/fs.js';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import { visit } from 'unist-util-visit';
-import type { Link } from 'mdast';
+import { MarkdownCache } from './markdown-cache.js';
 
 /**
  * Documentation dependency graph analyzer
@@ -41,10 +38,12 @@ export class GraphAnalyzer {
    *
    * @param basePath - Base directory for documentation (absolute path)
    * @param config - Runtime configuration with entrypoint setting
+   * @param cache - Markdown cache for efficient parsing (optional, creates new if not provided)
    */
   constructor(
     private basePath: string,
-    private config: RuntimeConfig
+    private config: RuntimeConfig,
+    private cache: MarkdownCache = new MarkdownCache()
   ) {
     this.graph = new DocGraph();
   }
@@ -115,9 +114,8 @@ export class GraphAnalyzer {
       return;
     }
 
-    // Extract links
-    const content = await fs.readFile(normalized, 'utf-8');
-    const links = await this.extractMarkdownLinks(content);
+    // Extract links using cache
+    const links = await this.cache.getLinks(normalized);
 
     // Follow relative markdown links
     for (const link of links) {
@@ -129,43 +127,6 @@ export class GraphAnalyzer {
         await this.visitFile(targetPath, currentDepth + 1, maxDepth);
       }
     }
-  }
-
-  /**
-   * Extract markdown links from file content
-   *
-   * Parses markdown AST and extracts all relative `.md` links,
-   * filtering out external links and anchor-only references.
-   *
-   * @param content - Markdown file content
-   * @returns Array of relative file paths (may include anchors)
-   * @private
-   *
-   * @example
-   * ```typescript
-   * const content = '[Guide](./guide.md) [API](./api.md#methods)';
-   * const links = await this.extractMarkdownLinks(content);
-   * // Returns: ['./guide.md', './api.md']
-   * ```
-   */
-  private async extractMarkdownLinks(content: string): Promise<string[]> {
-    const links: string[] = [];
-    const processor = unified().use(remarkParse);
-    const ast = processor.parse(content);
-
-    visit(ast, 'link', (node: Link) => {
-      const url = node.url;
-      // Only follow relative .md links
-      if (!url.startsWith('http') && !url.startsWith('#')) {
-        // Remove anchor if present
-        const filePart = url.split('#')[0];
-        if (filePart && filePart.endsWith('.md')) {
-          links.push(filePart);
-        }
-      }
-    });
-
-    return links;
   }
 
   /**
@@ -282,9 +243,8 @@ export class GraphAnalyzer {
       return;
     }
 
-    // Extract and follow links
-    const content = await fs.readFile(normalized, 'utf-8');
-    const links = await this.extractMarkdownLinks(content);
+    // Extract and follow links using cache
+    const links = await this.cache.getLinks(normalized);
 
     for (const link of links) {
       const targetPath = path.resolve(path.dirname(normalized), link);

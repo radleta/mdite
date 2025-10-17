@@ -4,6 +4,7 @@ import { LintError } from '../types/errors.js';
 import { Logger } from '../utils/logger.js';
 import { GraphAnalyzer } from './graph-analyzer.js';
 import { LinkValidator } from './link-validator.js';
+import { MarkdownCache } from './markdown-cache.js';
 
 /**
  * Main documentation structure analyzer
@@ -85,6 +86,9 @@ export class DocLinter {
    * ```
    */
   async lint(basePath: string, quiet = false): Promise<LintResults> {
+    // Create cache instance to share between analyzer and validator
+    const cache = new MarkdownCache();
+
     // Convert 'unlimited' to Infinity for graph analyzer
     const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
     const isDepthLimited = this.config.depth !== 'unlimited';
@@ -92,8 +96,8 @@ export class DocLinter {
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
     if (!quiet) this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
 
-    // 1. Build graph with depth limit
-    const graphAnalyzer = new GraphAnalyzer(basePath, this.config);
+    // 1. Build graph with depth limit (using shared cache)
+    const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache);
     const graph = await graphAnalyzer.buildGraph(maxDepth);
 
     if (!quiet) this.logger.success(`Found ${graph.getAllFiles().length} reachable files`);
@@ -116,9 +120,9 @@ export class DocLinter {
       }
     }
 
-    // 3. Validate links
+    // 3. Validate links (using shared cache)
     if (!quiet) this.logger.info('Validating links...');
-    const linkValidator = new LinkValidator(basePath, graph);
+    const linkValidator = new LinkValidator(basePath, graph, cache);
     const linkErrors = await linkValidator.validate();
     if (!quiet) {
       if (linkErrors.length > 0) {
@@ -130,7 +134,9 @@ export class DocLinter {
 
     if (!quiet) this.logger.line();
 
-    // 4. Return results
+    // 4. Clear cache and return results
+    cache.clear();
+
     return new LintResults({
       orphans,
       linkErrors,
@@ -158,6 +164,9 @@ export class DocLinter {
    * ```
    */
   async lintMultiple(basePath: string, entrypoints: string[], quiet = false): Promise<LintResults> {
+    // Create cache instance to share between analyzer and validator
+    const cache = new MarkdownCache();
+
     const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
     const isDepthLimited = this.config.depth !== 'unlimited';
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
@@ -166,8 +175,8 @@ export class DocLinter {
       this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
     }
 
-    // Build merged graph from all entrypoints
-    const graphAnalyzer = new GraphAnalyzer(basePath, this.config);
+    // Build merged graph from all entrypoints (using shared cache)
+    const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache);
     const mergedGraph = await graphAnalyzer.buildGraphFromMultiple(entrypoints, maxDepth);
 
     if (!quiet) {
@@ -192,9 +201,9 @@ export class DocLinter {
       }
     }
 
-    // Validate links
+    // Validate links (using shared cache)
     if (!quiet) this.logger.info('Validating links...');
-    const linkValidator = new LinkValidator(basePath, mergedGraph);
+    const linkValidator = new LinkValidator(basePath, mergedGraph, cache);
     const linkErrors = await linkValidator.validate();
 
     // Deduplicate errors (same file may be validated in multiple graphs)
@@ -209,6 +218,9 @@ export class DocLinter {
     }
 
     if (!quiet) this.logger.line();
+
+    // Clear cache and return results
+    cache.clear();
 
     return new LintResults({
       orphans,

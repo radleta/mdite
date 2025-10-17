@@ -2,11 +2,10 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { DocGraph } from '../types/graph.js';
 import { LintError } from '../types/errors.js';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
 import { visit } from 'unist-util-visit';
 import { slugify } from '../utils/slug.js';
-import type { Link, Heading, PhrasingContent } from 'mdast';
+import type { Link } from 'mdast';
+import { MarkdownCache } from './markdown-cache.js';
 
 /**
  * Link validator for markdown documentation
@@ -40,10 +39,12 @@ export class LinkValidator {
    *
    * @param basePath - Base directory for documentation (absolute path)
    * @param graph - Dependency graph containing files to validate
+   * @param cache - Markdown cache for efficient parsing (optional, creates new if not provided)
    */
   constructor(
     private basePath: string,
-    private graph: DocGraph
+    private graph: DocGraph,
+    private cache: MarkdownCache = new MarkdownCache()
   ) {}
 
   /**
@@ -86,10 +87,9 @@ export class LinkValidator {
    */
   private async validateFile(filePath: string): Promise<LintError[]> {
     const errors: LintError[] = [];
-    const content = await fs.readFile(filePath, 'utf-8');
 
-    const processor = unified().use(remarkParse);
-    const ast = processor.parse(content);
+    // Use cache to get parsed AST
+    const ast = await this.cache.getAST(filePath);
 
     const linkChecks: Promise<LintError | null>[] = [];
 
@@ -189,7 +189,8 @@ export class LinkValidator {
     position: { line: number; column: number }
   ): Promise<LintError | null> {
     try {
-      const headings = await this.extractHeadings(targetFile);
+      // Use cache to get headings
+      const headings = await this.cache.getHeadings(targetFile);
       const anchorSlug = slugify(anchor);
 
       if (!headings.includes(anchorSlug)) {
@@ -207,40 +208,5 @@ export class LinkValidator {
     } catch {
       return null;
     }
-  }
-
-  /**
-   * Extract all heading slugs from a markdown file
-   *
-   * Parses the markdown AST and converts all headings to slugs
-   * using GitHub-style slugification (lowercase, hyphens, etc.)
-   *
-   * @param filePath - Absolute path to markdown file
-   * @returns Array of heading slugs
-   * @private
-   *
-   * @example
-   * ```typescript
-   * // File contains: ## My Heading and ### Another One
-   * const headings = await this.extractHeadings('/path/to/file.md');
-   * // Returns: ['my-heading', 'another-one']
-   * ```
-   */
-  private async extractHeadings(filePath: string): Promise<string[]> {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const processor = unified().use(remarkParse);
-    const ast = processor.parse(content);
-
-    const headings: string[] = [];
-    visit(ast, 'heading', (node: Heading) => {
-      // Extract text from heading
-      const text = node.children
-        .filter((child: PhrasingContent) => child.type === 'text')
-        .map((child: PhrasingContent) => (child.type === 'text' ? child.value : ''))
-        .join('');
-      headings.push(slugify(text));
-    });
-
-    return headings;
   }
 }
