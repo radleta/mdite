@@ -42,29 +42,30 @@ cd examples
 
 ## Git Hooks
 
-This project uses git hooks to maintain code quality.
+This project uses **Husky** and **lint-staged** for automated pre-commit quality checks.
 
 ### Setup
 
-Hooks are automatically configured when you run `npm install`.
+Hooks are automatically configured when you run `npm install` (via the `prepare` script).
 
-To manually configure:
-
-```bash
-npm run hooks:setup
-```
+Husky installs the hooks to `.husky/` directory, and lint-staged runs linting/formatting only on staged files for fast performance.
 
 ### Pre-commit Hook
 
-The pre-commit hook:
-- Prevents committing `scratch/` directory
-- Runs ESLint on staged files
-- Runs Prettier on staged files
-- Prevents committing `coverage/` and `node_modules/`
+The pre-commit hook (`.husky/pre-commit`):
 
-### Commit Message Hook
+- Prevents committing `scratch/`, `claude-iterate/`, `coverage/`, or `node_modules/` directories
+- Runs `lint-staged` which automatically:
+  - Runs ESLint with `--fix` on staged `.ts` files
+  - Runs Prettier with `--write` on staged TypeScript, JSON, Markdown, and YAML files
+  - Re-stages the fixed files
 
-Validates commit messages follow [Conventional Commits](https://conventionalcommits.org/) format:
+**What is lint-staged?**
+lint-staged only runs linters on files you've staged for commit, making pre-commit checks extremely fast. Configuration is in `package.json` under the `lint-staged` key.
+
+### Conventional Commits
+
+While not enforced by a hook, we follow [Conventional Commits](https://conventionalcommits.org/) format:
 
 ```
 type(scope): description
@@ -75,6 +76,7 @@ type(scope): description
 ```
 
 **Valid types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation
@@ -164,6 +166,7 @@ git checkout -b feature/my-awesome-feature
 ```
 
 Use descriptive branch names:
+
 - `feature/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation updates
@@ -210,6 +213,7 @@ Closes #123
 ```
 
 **Types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation changes
@@ -245,12 +249,14 @@ git push origin feature/my-awesome-feature
 ```
 
 **PR Guidelines:**
+
 - Fill out the PR template completely
 - Reference related issues
 - Ensure all CI checks pass
 - Respond to review feedback promptly
 
 **Before submitting:**
+
 1. ✅ All automated tests pass (`npm test`)
 2. ✅ Code is linted and formatted (`npm run validate`)
 3. ✅ **Smoke tests pass (`npm run examples`)** ⭐ NEW
@@ -283,6 +289,7 @@ mdite/
 ```
 
 **Key files:**
+
 - `src/cli.ts` - Register new commands here
 - `src/core/graph-analyzer.ts` - Graph foundation for all features
 - `src/types/*.ts` - Zod schemas for validation
@@ -463,6 +470,7 @@ When adding a new feature, consider adding an example to demonstrate it.
 ### When to Add an Example
 
 Add an example if:
+
 - Feature is user-facing
 - Feature demonstrates a common use case
 - Feature is complex and benefits from demonstration
@@ -481,6 +489,7 @@ Add an example if:
    - Config file (`.mditerc`, `mdite.config.js`, etc.)
 
 3. **Update `examples/run-all-examples.sh`:**
+
    ```bash
    run_example \
        "example-name" \
@@ -529,6 +538,7 @@ npm run validate  # All tests must pass
 #### 2. Update CHANGELOG
 
 Before versioning, ensure CHANGELOG.md is up-to-date:
+
 - Move items from `[Unreleased]` section to the new version section
 - Update version header with release date
 - Review that all notable changes are documented
@@ -549,6 +559,7 @@ npm version major
 ```
 
 This command will:
+
 - Run `npm run validate` to ensure code quality (preversion hook)
 - Update version in package.json
 - Update CHANGELOG.md with the new version (version hook)
@@ -559,6 +570,7 @@ This command will:
 #### 4. Automated Publishing
 
 Once the tag is pushed, GitHub Actions automatically:
+
 1. Detects the tag push
 2. Runs all tests
 3. Builds the project
@@ -590,6 +602,7 @@ Follow [Semantic Versioning](https://semver.org/):
 - **Major** (X.0.0) - Breaking changes, not backward compatible
 
 **Examples:**
+
 - Fix a bug → `npm version patch`
 - Add a new command option → `npm version minor`
 - Remove or change command interface → `npm version major`
@@ -691,6 +704,7 @@ git push origin :refs/tags/v0.0.1-test
 ## Questions?
 
 If something is unclear:
+
 1. Check existing issues and discussions
 2. Review the codebase (it's well-documented!)
 3. Ask in a new discussion or issue

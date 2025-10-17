@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`mdite init` command**: Fixed bug where `--config` flag was ignored
+  - Removed conflicting local `--config` option that shadowed global option
+  - Command now properly respects `--config` flag for custom config file paths
+  - Aligns with other commands (deps, config, lint) in using global options
+
 ### Added
 
 **mdite** is a markdown documentation toolkit that treats documentation as a connected system (graph), not isolated files. This foundational approach enables all current and future features.
 
 #### Core Features
+
 - **Graph-based architecture**: Documentation treated as nodes (files) and edges (links)
 - **Graph traversal**: Depth-first traversal from entrypoint, building complete dependency graph
 - **Orphan file detection**: Identify files not reachable from entrypoint
@@ -22,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multiple output formats**: JSON, text, tree, list
 
 #### Commands (Current)
+
 - **`mdite lint [path]`**: Validate documentation structure and content
 - **`mdite deps <file>`**: Analyze file dependencies in documentation graph
   - Display incoming and outgoing links
@@ -32,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`mdite config`**: Display current configuration
 
 #### Unix CLI Integration
+
 - **TTY Detection**: Automatic color control based on terminal capabilities
   - Auto-detects when output is piped to other tools
   - Respects `NO_COLOR` environment variable ([no-color.org](https://no-color.org) standard)
@@ -62,12 +72,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graph building progress
 
 #### Examples & Testing
+
 - **Examples directory**: 12 runnable examples demonstrating all features (68 files)
   - Phase 1: Core examples (valid docs, orphans, broken links, broken anchors)
   - Phase 2: Real-world site + config variations (5 examples)
   - Phase 3: Edge cases (cycles, deep nesting, special characters)
 - **Smoke test script**: `examples/run-all-examples.sh` for automated testing of all examples
 - **Example documentation**: Comprehensive README in examples/ directory with usage guide
+- **Integration tests**: Added tests for `init` and `config` commands
+- **Test coverage thresholds**: Enforced minimum 70% coverage for lines, functions, branches, statements
+
+### Changed
+
+#### Development & Infrastructure
+
+- **Git Hooks**: Migrated from custom `.githooks/` to industry-standard **Husky + lint-staged**
+  - Automatic setup via `prepare` script
+  - Runs ESLint and Prettier only on staged files for faster commits
+  - Cross-platform compatible (better Windows support)
+  - Configuration in `package.json` `lint-staged` key
+- **TypeScript Configuration**: Updated module settings for modern ESM
+  - Changed `module` from `"ESNext"` to `"NodeNext"`
+  - Changed `moduleResolution` from `"node"` to `"NodeNext"`
+  - Better alignment with Node.js ESM best practices
+- **CI/CD Security**: Added automated security scanning
+  - npm audit check runs on every CI build (fails on high/critical vulnerabilities)
+  - Dependabot configured for weekly npm and GitHub Actions updates
+  - Groups minor/patch updates to reduce PR noise
+- **Code Coverage**: Added Vitest coverage thresholds
+  - Minimum 70% coverage required for lines, functions, branches, statements
+  - Prevents coverage regression
+  - Extended exclusion list (scripts, configs, examples, scratch)
+- **Test Infrastructure**: Increased test timeout for integration tests
+  - Set `testTimeout: 30000` (30s) for integration tests that spawn processes
+  - Prevents timeout failures on slower CI/CD systems
+  - All 350 tests now pass with 0 skipped
 
 ## Version History
 
