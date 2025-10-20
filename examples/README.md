@@ -311,6 +311,69 @@ mdite cat --format json | jq '.[] | .wordCount'  # Extract metadata
 
 ---
 
+### 11-scope-limiting/ 🎯
+
+Demonstrates the scope limiting feature that restricts validation to specific directory trees.
+
+Shows how to:
+
+- Validate only files within the entrypoint's directory (default behavior)
+- Handle external links (links outside scope) with different policies
+- Use `--no-scope-limit` to validate everything
+- Set explicit scope boundaries with `--scope-root`
+- Multi-file mode with automatic scope determination
+
+**Try it:**
+
+```bash
+cd 11-scope-limiting
+
+# Default scoped validation - only validates docs/api/**
+mdite lint docs/api/README.md
+
+# Default scoped validation - only validates docs/guides/**
+mdite lint docs/guides/README.md
+
+# External links policy - warn
+mdite lint docs/guides/README.md --external-links warn
+
+# External links policy - error
+mdite lint docs/guides/README.md --external-links error
+
+# Unlimited traversal (classic mdite behavior)
+mdite lint docs/guides/README.md --no-scope-limit
+
+# Explicit scope root
+mdite lint docs/api/README.md --scope-root docs
+
+# Multi-file mode (common ancestor scope)
+mdite lint docs/api/README.md docs/guides/README.md
+```
+
+**Expected:**
+
+- ✅ Scoped validation limits traversal to directory tree
+- ⚠️ External links can be validated, warned, or errored based on policy
+- ✅ Opt-out available with `--no-scope-limit`
+
+**Features demonstrated:**
+
+- Directory-scoped validation by default
+- External link policies (validate, warn, error, ignore)
+- Scope boundary detection
+- Multi-file mode with common ancestor
+- Orphan detection within scope
+- Explicit scope root setting
+
+**Use cases:**
+
+- Validate documentation sections independently
+- Monorepo with multiple doc sets
+- Pre-commit hooks (validate only changed files)
+- Strict boundary enforcement between doc sections
+
+---
+
 ## Running All Examples (Smoke Test)
 
 ```bash
@@ -414,6 +477,14 @@ After running examples, you should see:
 - ✅ **08-depth-limiting/** - Depth limiting feature (unlimited depth, no orphans)
 - ✅ **09-file-exclusion/\*** - All exclusion methods work correctly
 
+**Phase 5: Content Output**
+
+- ✅ **10-cat-output/** - Content output with different orderings and formats
+
+**Phase 6: Scope Limiting**
+
+- ✅ **11-scope-limiting/** - Scoped validation with external link policies
+
 All examples working correctly = mdite is functioning as expected! 🎉
 
 ## Directory Structure
@@ -455,11 +526,29 @@ examples/
 │           └── level3/
 │               └── advanced.md
 │
-└── 09-file-exclusion/                # 🚫 File Exclusion
-    ├── cli-exclude/
-    ├── config-exclude/
-    ├── mditeignore/
-    ├── gitignore-respect/
-    ├── negation/
-    └── combined/
+├── 09-file-exclusion/                # 🚫 File Exclusion
+│   ├── cli-exclude/
+│   ├── config-exclude/
+│   ├── mditeignore/
+│   ├── gitignore-respect/
+│   ├── negation/
+│   └── combined/
+│
+├── 10-cat-output/                    # 📤 Content Output
+│   └── docs/
+│       ├── README.md
+│       ├── installation.md
+│       └── configuration.md
+│
+└── 11-scope-limiting/                # 🎯 Scope Limiting
+    ├── docs/
+    │   ├── api/
+    │   │   ├── README.md
+    │   │   ├── endpoints.md
+    │   │   └── methods.md
+    │   └── guides/
+    │       ├── README.md
+    │       ├── setup.md
+    │       └── tutorial.md
+    └── root-README.md
 ```

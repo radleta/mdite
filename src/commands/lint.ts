@@ -26,6 +26,13 @@ export function lintCommand(): Command {
       'How to handle links to excluded files (ignore|warn|error)',
       'ignore'
     )
+    .option('--no-scope-limit', 'Disable scope limiting (unlimited traversal)')
+    .option('--scope-root <dir>', 'Explicit scope root directory')
+    .option(
+      '--external-links <policy>',
+      'How to handle external links (validate|warn|error|ignore)',
+      'validate'
+    )
     .action(async (pathsArg: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
@@ -140,6 +147,9 @@ export function lintCommand(): Command {
           respectGitignore: options.respectGitignore,
           excludeHidden: options.excludeHidden,
           validateExcludedLinks: options.validateExcludedLinks,
+          scopeLimit: options.scopeLimit,
+          scopeRoot: options.scopeRoot,
+          externalLinks: options.externalLinks,
         };
 
         // Load configuration

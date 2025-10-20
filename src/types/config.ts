@@ -98,6 +98,12 @@ export const ProjectConfigSchema = z.object({
   excludeHidden: z.boolean().optional(),
   /** How to handle links to excluded files */
   validateExcludedLinks: z.enum(['ignore', 'warn', 'error']).optional(),
+  /** Enable scope limiting (default: true) */
+  scopeLimit: z.boolean().optional(),
+  /** Explicit scope root directory (relative to config file) */
+  scopeRoot: z.string().optional(),
+  /** Policy for handling links outside scope */
+  externalLinks: z.enum(['validate', 'warn', 'error', 'ignore']).optional(),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
@@ -158,6 +164,12 @@ export const RuntimeConfigSchema = z.object({
   validateExcludedLinks: z.enum(['ignore', 'warn', 'error']),
   /** CLI-level exclusion patterns (highest priority) */
   cliExclude: z.array(z.string()).optional(),
+  /** Enable scope limiting */
+  scopeLimit: z.boolean(),
+  /** Explicit scope root directory (absolute path) */
+  scopeRoot: z.string().optional(),
+  /** Policy for handling links outside scope */
+  externalLinks: z.enum(['validate', 'warn', 'error', 'ignore']),
 });
 
 export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;
@@ -202,6 +214,12 @@ export interface CliOptions {
   excludeHidden?: boolean;
   /** How to handle links to excluded files */
   validateExcludedLinks?: 'ignore' | 'warn' | 'error';
+  /** Enable scope limiting */
+  scopeLimit?: boolean;
+  /** Explicit scope root directory */
+  scopeRoot?: string;
+  /** Policy for handling links outside scope */
+  externalLinks?: 'validate' | 'warn' | 'error' | 'ignore';
 }
 
 /**
@@ -233,6 +251,9 @@ export const DEFAULT_CONFIG: RuntimeConfig = {
   respectGitignore: false,
   excludeHidden: true,
   validateExcludedLinks: 'ignore',
+  scopeLimit: true,
+  scopeRoot: undefined,
+  externalLinks: 'validate',
 };
 
 /**

@@ -112,7 +112,7 @@ describe('ContentOutputter', () => {
 
       // Should output JSON
       expect(logger.log).toHaveBeenCalledTimes(1);
-      const jsonOutput = (logger.log as Mock).mock.calls[0][0] as string;
+      const jsonOutput = (logger.log as Mock).mock.calls[0]?.[0] as string;
       const parsed = JSON.parse(jsonOutput);
 
       expect(parsed).toHaveLength(1);
@@ -136,7 +136,7 @@ describe('ContentOutputter', () => {
         basePath: '/',
       });
 
-      const jsonOutput = (logger.log as Mock).mock.calls[0][0] as string;
+      const jsonOutput = (logger.log as Mock).mock.calls[0]?.[0] as string;
       const parsed = JSON.parse(jsonOutput);
 
       expect(parsed[0].wordCount).toBe(5);
@@ -153,7 +153,7 @@ describe('ContentOutputter', () => {
         basePath: '/',
       });
 
-      const jsonOutput = (logger.log as Mock).mock.calls[0][0] as string;
+      const jsonOutput = (logger.log as Mock).mock.calls[0]?.[0] as string;
       const parsed = JSON.parse(jsonOutput);
 
       expect(parsed[0].lineCount).toBe(3);
@@ -170,7 +170,7 @@ describe('ContentOutputter', () => {
         basePath: '/docs',
       });
 
-      const jsonOutput = (logger.log as Mock).mock.calls[0][0] as string;
+      const jsonOutput = (logger.log as Mock).mock.calls[0]?.[0] as string;
       const parsed = JSON.parse(jsonOutput);
 
       expect(parsed[0].file).toBe('guide.md');
@@ -190,7 +190,7 @@ describe('ContentOutputter', () => {
         basePath: '/',
       });
 
-      const jsonOutput = (logger.log as Mock).mock.calls[0][0] as string;
+      const jsonOutput = (logger.log as Mock).mock.calls[0]?.[0] as string;
       const parsed = JSON.parse(jsonOutput);
 
       expect(parsed).toHaveLength(2);

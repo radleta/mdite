@@ -37,6 +37,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added 22 new tests (6 unit + 16 integration) covering multi-file scenarios
   - Example: `examples/08-multi-file-validation/` demonstrates feature
 
+- **Directory-scoped validation by default**: Graph traversal now stays within scope directory by default
+  - Scope is determined from entrypoint path (file's directory or explicit basePath)
+  - Links pointing outside scope are validated but not traversed
+  - New `--no-scope-limit` flag to disable scoping (unlimited traversal)
+  - New `--scope-root <dir>` flag to explicitly set scope boundary
+  - New `--external-links <policy>` flag to control out-of-scope link handling:
+    - `validate` (default): Check file exists but don't traverse
+    - `warn`: Validate + emit warning
+    - `error`: Treat as validation error
+    - `ignore`: Skip validation entirely
+  - Config options: `scopeLimit` (boolean), `scopeRoot` (string), `externalLinks` (policy)
+  - Multi-file mode determines common ancestor scope automatically
+  - Orphan detection limited to scope directory
+  - New `getExternalLinks()` method in GraphAnalyzer to track out-of-scope links
+  - CRITICAL FIX: Orphan detection now uses scopeRoot instead of basePath (prevents false negatives)
+
 ### Fixed
 
 - **`mdite init` command**: Fixed bug where `--config` flag was ignored
@@ -75,28 +91,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Configuration schema**: Added exclusion-related options to config schemas
-  - `ProjectConfigSchema`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks`
+- **Configuration schema**: Added exclusion and scope-related options to config schemas
+  - `ProjectConfigSchema`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks`, `scopeLimit`, `scopeRoot`, `externalLinks`
   - `RuntimeConfigSchema`: Added same fields plus `cliExclude` for CLI-level patterns
-  - `DEFAULT_CONFIG`: Added defaults (`exclude: []`, `respectGitignore: false`, `excludeHidden: true`, `validateExcludedLinks: 'ignore'`)
-  - `CliOptions`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks` fields
+  - `DEFAULT_CONFIG`: Added defaults (`exclude: []`, `respectGitignore: false`, `excludeHidden: true`, `validateExcludedLinks: 'ignore'`, `scopeLimit: true`, `scopeRoot: undefined`, `externalLinks: 'validate'`)
+  - `CliOptions`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks`, `scopeLimit`, `scopeRoot`, `externalLinks` fields
 - **File discovery (`findMarkdownFiles`)**: Now accepts optional `ExclusionManager` parameter for filtering
   - Backward compatible: works without exclusion manager (falls back to hardcoded exclusions)
   - Early directory exclusion optimization for performance
-- **Graph analyzer (`GraphAnalyzer`)**: Now accepts optional `ExclusionManager` in constructor
+- **Graph analyzer (`GraphAnalyzer`)**: Enhanced with scope-aware traversal capabilities
+  - Now accepts optional `ExclusionManager` in constructor
   - Integrated with both `visitFile()` and `visitFileForGraph()` methods
   - Automatic exclusion during graph traversal and orphan detection
-- **Doc linter (`DocLinter`)**: Creates and manages `ExclusionManager` instance
+  - New `isWithinScope()` method for scope boundary checking
+  - New `getExternalLinks()` method to retrieve out-of-scope links
+  - New `findCommonAncestor()` method for multi-file scope determination
+  - Updated `findOrphans()` to use scopeRoot instead of basePath (CRITICAL FIX)
+- **Link validator (`LinkValidator`)**: Enhanced with external link policy support
+  - New constructor parameters: `scopeRoot` and `externalLinkPolicy`
+  - New `isWithinScope()` method for scope boundary checking
+  - Updated `validateFileLink()` to apply external link policies
+  - Supports four policies: `validate`, `warn`, `error`, `ignore`
+- **Doc linter (`DocLinter`)**: Enhanced with scope configuration
+  - Creates and manages `ExclusionManager` instance
   - Conditionally creates manager only when exclusion options are set
   - Passes to all downstream components (GraphAnalyzer, file discovery)
+  - Passes scopeRoot and externalLinkPolicy to LinkValidator
+  - Added verbose logging for scope information
 - **Config manager (`ConfigManager`)**: Updated merge logic for exclusion options
   - Properly merges exclusion settings from project config
   - Handles CLI options with highest priority (stores as `cliExclude`)
-- **CLI commands (`lint`, `deps`)**: Added exclusion flags
+- **CLI commands (`lint`, `deps`)**: Added exclusion and scope flags
   - `--exclude <pattern...>`: Variadic option for multiple patterns
   - `--respect-gitignore`: Boolean flag
   - `--no-exclude-hidden`: Negation flag
   - `--validate-excluded-links <mode>`: For lint command (future use)
+  - `--no-scope-limit`: Disable scope limiting
+  - `--scope-root <dir>`: Explicit scope root directory
+  - `--external-links <policy>`: External link policy (validate|warn|error|ignore)
 
 ### Internal
 

@@ -361,6 +361,59 @@ main() {
         "Custom separator output" \
         --separator "\\n---\\n"
 
+    # Phase 6: Scope Limiting
+    echo ""
+    print_info "═══ Phase 6: Scope Limiting ═══"
+
+    run_example \
+        "11-scope-api-default" \
+        "11-scope-limiting" \
+        false \
+        "Scoped validation - API docs (default behavior)" \
+        docs/api/README.md
+
+    run_example \
+        "11-scope-guides-default" \
+        "11-scope-limiting" \
+        false \
+        "Scoped validation - Guides docs (default behavior)" \
+        docs/guides/README.md
+
+    run_example \
+        "11-scope-external-warn" \
+        "11-scope-limiting" \
+        false \
+        "External links policy - warn (no errors)" \
+        docs/guides/README.md --external-links warn
+
+    run_example \
+        "11-scope-external-error" \
+        "11-scope-limiting" \
+        true \
+        "External links policy - error (expect errors)" \
+        docs/guides/README.md --external-links error
+
+    run_example \
+        "11-scope-unlimited" \
+        "11-scope-limiting" \
+        false \
+        "Unlimited traversal (--no-scope-limit)" \
+        docs/guides/README.md --no-scope-limit
+
+    run_example \
+        "11-scope-explicit-root" \
+        "11-scope-limiting" \
+        true \
+        "Explicit scope root (finds orphans in broader scope)" \
+        docs/api/README.md --scope-root docs
+
+    run_example \
+        "11-scope-multi-file" \
+        "11-scope-limiting" \
+        false \
+        "Multi-file mode (common ancestor scope)" \
+        docs/api/README.md docs/guides/README.md
+
     # Print summary
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

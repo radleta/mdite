@@ -108,11 +108,33 @@ export class DocLinter {
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
     if (!quiet) this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
 
+    // Show scope info in verbose mode
+    if (!quiet && this.config.verbose) {
+      const scopeRoot = this.config.scopeRoot ?? basePath;
+      if (this.config.scopeLimit) {
+        this.logger.info(`Scope root: ${scopeRoot}`);
+        this.logger.info(`External link policy: ${this.config.externalLinks}`);
+      } else {
+        this.logger.info('Scope limiting: disabled (unlimited traversal)');
+      }
+    }
+
     // 1. Build graph with depth limit (using shared cache and exclusion manager)
     const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache, exclusionManager);
     const graph = await graphAnalyzer.buildGraph(maxDepth);
 
     if (!quiet) this.logger.success(`Found ${graph.getAllFiles().length} reachable files`);
+
+    // Show external links if verbose
+    const externalLinks = graphAnalyzer.getExternalLinks();
+    if (!quiet && this.config.verbose && externalLinks.length > 0) {
+      this.logger.info(`Found ${externalLinks.length} external link(s)`);
+      if (this.config.externalLinks === 'error') {
+        this.logger.warn('External links will be reported as errors');
+      } else if (this.config.externalLinks === 'warn') {
+        this.logger.warn('External links will be reported as warnings');
+      }
+    }
 
     // 2. Check for orphans (skip if depth limited)
     let orphans: string[] = [];
@@ -132,9 +154,16 @@ export class DocLinter {
       }
     }
 
-    // 3. Validate links (using shared cache)
+    // 3. Validate links (using shared cache and scope configuration)
     if (!quiet) this.logger.info('Validating links...');
-    const linkValidator = new LinkValidator(basePath, graph, cache);
+    const scopeRoot = this.config.scopeRoot ?? basePath;
+    const linkValidator = new LinkValidator(
+      basePath,
+      graph,
+      cache,
+      this.config.scopeLimit ? scopeRoot : undefined,
+      this.config.externalLinks
+    );
     const linkErrors = await linkValidator.validate(this.config.maxConcurrency);
     if (!quiet) {
       if (linkErrors.length > 0) {
@@ -198,12 +227,34 @@ export class DocLinter {
       this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
     }
 
+    // Show scope info in verbose mode
+    if (!quiet && this.config.verbose) {
+      const scopeRoot = this.config.scopeRoot ?? basePath;
+      if (this.config.scopeLimit) {
+        this.logger.info(`Scope root: ${scopeRoot}`);
+        this.logger.info(`External link policy: ${this.config.externalLinks}`);
+      } else {
+        this.logger.info('Scope limiting: disabled (unlimited traversal)');
+      }
+    }
+
     // Build merged graph from all entrypoints (using shared cache and exclusion manager)
     const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache, exclusionManager);
     const mergedGraph = await graphAnalyzer.buildGraphFromMultiple(entrypoints, maxDepth);
 
     if (!quiet) {
       this.logger.success(`Found ${mergedGraph.getAllFiles().length} reachable files`);
+    }
+
+    // Show external links if verbose
+    const externalLinks = graphAnalyzer.getExternalLinks();
+    if (!quiet && this.config.verbose && externalLinks.length > 0) {
+      this.logger.info(`Found ${externalLinks.length} external link(s)`);
+      if (this.config.externalLinks === 'error') {
+        this.logger.warn('External links will be reported as errors');
+      } else if (this.config.externalLinks === 'warn') {
+        this.logger.warn('External links will be reported as warnings');
+      }
     }
 
     // Check for orphans (skip if depth limited)
@@ -224,9 +275,16 @@ export class DocLinter {
       }
     }
 
-    // Validate links (using shared cache)
+    // Validate links (using shared cache and scope configuration)
     if (!quiet) this.logger.info('Validating links...');
-    const linkValidator = new LinkValidator(basePath, mergedGraph, cache);
+    const scopeRoot = this.config.scopeRoot ?? basePath;
+    const linkValidator = new LinkValidator(
+      basePath,
+      mergedGraph,
+      cache,
+      this.config.scopeLimit ? scopeRoot : undefined,
+      this.config.externalLinks
+    );
     const linkErrors = await linkValidator.validate(this.config.maxConcurrency);
 
     // Deduplicate errors (same file may be validated in multiple graphs)

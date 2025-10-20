@@ -41,12 +41,36 @@ export class LinkValidator {
    * @param basePath - Base directory for documentation (absolute path)
    * @param graph - Dependency graph containing files to validate
    * @param cache - Markdown cache for efficient parsing (optional, creates new if not provided)
+   * @param scopeRoot - Scope root directory for scope boundary checking (optional)
+   * @param externalLinkPolicy - Policy for handling external links (default: 'validate')
    */
   constructor(
     private basePath: string,
     private graph: DocGraph,
-    private cache: MarkdownCache = new MarkdownCache()
+    private cache: MarkdownCache = new MarkdownCache(),
+    private scopeRoot?: string,
+    private externalLinkPolicy: 'validate' | 'warn' | 'error' | 'ignore' = 'validate'
   ) {}
+
+  /**
+   * Check if a file path is within the scope boundary
+   *
+   * @param filePath - Absolute or relative path to check
+   * @returns true if within scope or no scope is set
+   * @private
+   */
+  private isWithinScope(filePath: string): boolean {
+    if (!this.scopeRoot) {
+      return true;
+    }
+
+    const normalized = path.resolve(filePath);
+    const scope = path.resolve(this.scopeRoot);
+    const relativePath = path.relative(scope, normalized);
+
+    // If relative path starts with '..' or is absolute, it's outside scope
+    return !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+  }
 
   /**
    * Validate all links in the dependency graph
@@ -137,10 +161,13 @@ export class LinkValidator {
   /**
    * Validate that a file link target exists
    *
+   * When scope limiting is enabled, applies the external link policy to links
+   * pointing outside the scope boundary.
+   *
    * @param targetPath - Absolute path to target file
    * @param sourceFile - Source file containing the link
    * @param position - Line/column position of link in source
-   * @returns LintError if file doesn't exist, null if valid
+   * @returns LintError if file doesn't exist or external link policy violated, null if valid
    * @private
    */
   private async validateFileLink(
@@ -148,10 +175,18 @@ export class LinkValidator {
     sourceFile: string,
     position: { line: number; column: number }
   ): Promise<LintError | null> {
+    const targetInScope = this.isWithinScope(targetPath);
+
+    // Check if target exists
+    let exists = false;
     try {
       await fs.access(targetPath);
-      return null;
+      exists = true;
     } catch {
+      // File doesn't exist
+    }
+
+    if (!exists) {
       return {
         rule: 'dead-link',
         severity: 'error',
@@ -161,6 +196,39 @@ export class LinkValidator {
         message: `Dead link: ${path.relative(this.basePath, targetPath)}`,
       };
     }
+
+    // Handle external links according to policy
+    if (!targetInScope) {
+      switch (this.externalLinkPolicy) {
+        case 'ignore':
+          return null; // No error, no warning
+
+        case 'validate':
+          return null; // Already validated existence, no warning
+
+        case 'warn':
+          return {
+            rule: 'external-link',
+            severity: 'warning',
+            file: sourceFile,
+            line: position.line,
+            column: position.column,
+            message: `External link (outside scope): ${path.relative(this.basePath, targetPath)}`,
+          };
+
+        case 'error':
+          return {
+            rule: 'external-link',
+            severity: 'error',
+            file: sourceFile,
+            line: position.line,
+            column: position.column,
+            message: `External link not allowed: ${path.relative(this.basePath, targetPath)}`,
+          };
+      }
+    }
+
+    return null;
   }
 
   /**
