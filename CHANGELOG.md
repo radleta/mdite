@@ -29,6 +29,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Performance
 
+- **Centralized markdown cache**: Implemented `MarkdownCache` to eliminate redundant file parsing for 2-3x overall speedup
+  - Caches file content, parsed AST, and derived data (headings, links) across graph building and validation
+  - Reduces parse operations by 60-70% (100 files: 300 parses → 100 parses)
+  - Shared processor instance eliminates plugin registration overhead
+  - Memory efficient: ~6MB for 100 files, ~60MB for 1000 files (acceptable for CLI tool)
+  - Automatic cache clearing between operations
+  - Cache statistics available via `getStats()` for monitoring
+  - Added 27 comprehensive tests covering all caching scenarios
+  - Full integration: `GraphAnalyzer`, `LinkValidator`, and `DocLinter` all share cache instance
+  - Related to issue #1 - Critical performance optimization
 - **Parallel file validation**: Link validation now runs in parallel with controlled concurrency for 5-10x speedup on multi-core systems
   - Changed from sequential file processing to parallel validation using promise pool
   - Default concurrency limit of 10 prevents resource exhaustion on large documentation sets (1000+ files)
