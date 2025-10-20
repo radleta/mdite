@@ -256,6 +256,61 @@ mdite lint  # Uses .mditeignore file
 
 ---
 
+### 10-cat-output/ 📤
+
+Demonstrates the `mdite cat` command for outputting documentation content.
+
+Shows how to:
+
+- Output files in dependency order (default)
+- Output in alphabetical order
+- Generate JSON format with metadata
+- Use custom separators
+- Pipe to Unix tools
+
+**Try it:**
+
+```bash
+cd 10-cat-output
+
+# Default: dependency order
+mdite cat
+
+# Alphabetical order
+mdite cat --order alpha
+
+# JSON with metadata
+mdite cat --format json
+
+# Custom separator
+mdite cat --separator "\n---\n"
+
+# Pipe to tools
+mdite cat | wc -w  # Count words
+mdite cat | grep "install"  # Search
+mdite cat --format json | jq '.[] | .wordCount'  # Extract metadata
+```
+
+**Expected:** ✅ Content output with correct ordering and format
+
+**Features demonstrated:**
+
+- Content output in dependency order
+- Alphabetical ordering
+- JSON format with metadata (file, depth, content, wordCount, lineCount)
+- Custom separators between files
+- Unix pipe compatibility
+- Stdout/stderr separation
+
+**Use cases:**
+
+- Export documentation as single file
+- Pipe to pandoc for PDF generation
+- Count statistics across documentation
+- Search across all connected docs
+
+---
+
 ## Running All Examples (Smoke Test)
 
 ```bash

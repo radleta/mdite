@@ -4,6 +4,7 @@ import { lintCommand } from './commands/lint.js';
 import { initCommand } from './commands/init.js';
 import { configCommand } from './commands/config.js';
 import { depsCommand } from './commands/deps.js';
+import { catCommand } from './commands/cat.js';
 import { ExitCode } from './types/exit-codes.js';
 
 // Import version from package.json
@@ -73,6 +74,7 @@ export async function cli() {
   program.addCommand(initCommand());
   program.addCommand(configCommand());
   program.addCommand(depsCommand());
+  program.addCommand(catCommand());
 
   await program.parseAsync(process.argv);
 }

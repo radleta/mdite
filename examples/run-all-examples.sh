@@ -123,6 +123,70 @@ run_example() {
     fi
 }
 
+# Run a cat command example
+run_cat_example() {
+    local name=$1
+    local dir=$2
+    local description=$3
+    shift 3  # Remove first 3 args, leaving any CLI flags
+    local cli_args=("$@")
+
+    TOTAL=$((TOTAL + 1))
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    print_info "Test: $name"
+    print_info "Description: $description"
+    print_info "Directory: $dir"
+    if [ ${#cli_args[@]} -gt 0 ]; then
+        print_info "CLI args: mdite cat ${cli_args[*]}"
+    else
+        print_info "CLI args: mdite cat (default)"
+    fi
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    cd "$EXAMPLES_DIR/$dir" || {
+        print_error "Failed to cd to $dir"
+        RESULTS+=("✗ $name - Directory not found")
+        FAILED=$((FAILED + 1))
+        return 1
+    }
+
+    # Run mdite cat and capture output and exit code
+    local output
+    local exit_code
+    output=$(mdite cat "${cli_args[@]}" 2>&1) || exit_code=$?
+    exit_code=${exit_code:-0}
+
+    # Show first 20 lines of output (for readability)
+    echo "$output" | head -20
+    if [ $(echo "$output" | wc -l) -gt 20 ]; then
+        echo "... (output truncated, showing first 20 lines)"
+    fi
+    echo ""
+
+    # Cat command should always succeed
+    if [ $exit_code -eq 0 ]; then
+        # Verify output is not empty
+        if [ -n "$output" ]; then
+            print_success "Test passed: Command succeeded with output"
+            RESULTS+=("✓ $name")
+            PASSED=$((PASSED + 1))
+            return 0
+        else
+            print_error "Test failed: Command succeeded but produced no output"
+            RESULTS+=("✗ $name - No output")
+            FAILED=$((FAILED + 1))
+            return 1
+        fi
+    else
+        print_error "Test failed: Command exited with code $exit_code"
+        RESULTS+=("✗ $name - Exit code $exit_code")
+        FAILED=$((FAILED + 1))
+        return 1
+    fi
+}
+
 # Main execution
 main() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -269,6 +333,33 @@ main() {
         false \
         "Combined exclusion sources with precedence" \
         --exclude "temp/**" --respect-gitignore
+
+    # Phase 5: Content Output (cat command)
+    echo ""
+    print_info "═══ Phase 5: Content Output (cat command) ═══"
+
+    run_cat_example \
+        "10-cat-output-deps" \
+        "10-cat-output" \
+        "Dependency order output (default)"
+
+    run_cat_example \
+        "10-cat-output-alpha" \
+        "10-cat-output" \
+        "Alphabetical order output" \
+        --order alpha
+
+    run_cat_example \
+        "10-cat-output-json" \
+        "10-cat-output" \
+        "JSON format output" \
+        --format json
+
+    run_cat_example \
+        "10-cat-output-separator" \
+        "10-cat-output" \
+        "Custom separator output" \
+        --separator "\\n---\\n"
 
     # Print summary
     echo ""

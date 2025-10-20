@@ -156,4 +156,116 @@ describe('DocGraph', () => {
       expect(outgoing).toEqual([]);
     });
   });
+
+  describe('getFilesInDependencyOrder', () => {
+    it('should return files in dependency order (dependencies before dependents)', () => {
+      const graph = new DocGraph();
+      graph.addFile('/README.md', 0);
+      graph.addFile('/guide.md', 1);
+      graph.addFile('/api.md', 1);
+      graph.addEdge('/README.md', '/guide.md');
+      graph.addEdge('/README.md', '/api.md');
+
+      const ordered = graph.getFilesInDependencyOrder();
+
+      // guide.md and api.md should come before README.md
+      const readmeIndex = ordered.indexOf('/README.md');
+      const guideIndex = ordered.indexOf('/guide.md');
+      const apiIndex = ordered.indexOf('/api.md');
+
+      expect(guideIndex).toBeLessThan(readmeIndex);
+      expect(apiIndex).toBeLessThan(readmeIndex);
+    });
+
+    it('should handle nested dependencies', () => {
+      const graph = new DocGraph();
+      graph.addFile('/README.md', 0);
+      graph.addFile('/guide.md', 1);
+      graph.addFile('/setup.md', 2);
+      graph.addEdge('/README.md', '/guide.md');
+      graph.addEdge('/guide.md', '/setup.md');
+
+      const ordered = graph.getFilesInDependencyOrder();
+
+      // setup.md should be first, guide.md second, README.md last
+      expect(ordered).toEqual(['/setup.md', '/guide.md', '/README.md']);
+    });
+
+    it('should handle multiple entrypoints', () => {
+      const graph = new DocGraph();
+      graph.addFile('/README.md', 0);
+      graph.addFile('/CONTRIBUTING.md', 0);
+      graph.addFile('/guide.md', 1);
+      graph.addEdge('/README.md', '/guide.md');
+
+      const ordered = graph.getFilesInDependencyOrder();
+
+      // guide.md should come before README.md
+      const readmeIndex = ordered.indexOf('/README.md');
+      const guideIndex = ordered.indexOf('/guide.md');
+      expect(guideIndex).toBeLessThan(readmeIndex);
+
+      // CONTRIBUTING.md should be included
+      expect(ordered).toContain('/CONTRIBUTING.md');
+    });
+
+    it('should handle cycles gracefully', () => {
+      const graph = new DocGraph();
+      graph.addFile('/a.md', 0);
+      graph.addFile('/b.md', 1);
+      graph.addFile('/c.md', 2);
+      graph.addEdge('/a.md', '/b.md');
+      graph.addEdge('/b.md', '/c.md');
+      graph.addEdge('/c.md', '/a.md'); // cycle
+
+      const ordered = graph.getFilesInDependencyOrder();
+
+      // Should include all files without infinite loop
+      expect(ordered).toHaveLength(3);
+      expect(ordered).toContain('/a.md');
+      expect(ordered).toContain('/b.md');
+      expect(ordered).toContain('/c.md');
+    });
+
+    it('should handle disconnected components', () => {
+      const graph = new DocGraph();
+      graph.addFile('/README.md', 0);
+      graph.addFile('/guide.md', 1);
+      graph.addFile('/orphan.md', 0);
+      graph.addEdge('/README.md', '/guide.md');
+      // orphan.md is not connected
+
+      const ordered = graph.getFilesInDependencyOrder();
+
+      // Should include all files
+      expect(ordered).toHaveLength(3);
+      expect(ordered).toContain('/README.md');
+      expect(ordered).toContain('/guide.md');
+      expect(ordered).toContain('/orphan.md');
+    });
+
+    it('should handle broken links (edges to non-existent files)', () => {
+      const graph = new DocGraph();
+      graph.addFile('/README.md', 0);
+      graph.addEdge('/README.md', '/missing.md'); // broken link
+
+      const ordered = graph.getFilesInDependencyOrder();
+
+      // Should include only existing files
+      expect(ordered).toEqual(['/README.md']);
+    });
+
+    it('should return empty array for empty graph', () => {
+      const graph = new DocGraph();
+      const ordered = graph.getFilesInDependencyOrder();
+      expect(ordered).toEqual([]);
+    });
+
+    it('should return single file for graph with one file', () => {
+      const graph = new DocGraph();
+      graph.addFile('/README.md', 0);
+      const ordered = graph.getFilesInDependencyOrder();
+      expect(ordered).toEqual(['/README.md']);
+    });
+  });
 });

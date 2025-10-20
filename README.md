@@ -67,7 +67,7 @@ mdite query "authentication" --files
 mdite query "api-*" --names
 ```
 
-### 📤 Export & Pipe (coming soon)
+### 📤 Export & Pipe (`cat`)
 
 ```bash
 # Output entire doc system
@@ -204,9 +204,31 @@ Validates three types of links:
 
 **Benefit:** Zero 404s in your documentation.
 
-### 🔍 System-Wide Operations (Coming Soon)
+### 🔍 System-Wide Operations
 
 Because mdite understands your docs as a system, it can do things other tools can't:
+
+**Export the system:**
+
+```bash
+# Output entire doc system in dependency order
+mdite cat --order deps
+
+# Output in alphabetical order
+mdite cat --order alpha
+
+# Pipe to shell tools
+mdite cat | grep -n "TODO"
+mdite cat | wc -l  # Total lines in doc system
+
+# Export as single file
+mdite cat --order deps | pandoc -o documentation.pdf
+
+# JSON format with metadata
+mdite cat --format json | jq '.[] | {file, wordCount}'
+```
+
+**Coming Soon:**
 
 **Search across the system:**
 
@@ -221,28 +243,11 @@ mdite query "api-*" --names
 mdite query "config" --from docs/reference/
 ```
 
-**Export the system:**
-
-```bash
-# Output entire doc system in dependency order
-mdite cat --order deps
-
-# Output specific subsection
-mdite cat docs/guides/*.md
-
-# Pipe to shell tools
-mdite cat | grep -n "TODO"
-mdite cat | wc -l  # Total lines in doc system
-```
-
 **Transform the system:**
 
 ```bash
 # Generate table of contents from graph
 mdite toc --depth 2
-
-# Export as single file
-mdite cat --order deps | pandoc -o documentation.pdf
 
 # Validate external links (HTTP/HTTPS)
 mdite lint --external
@@ -636,6 +641,84 @@ mdite lint 2>/dev/null
 - ✅ All anchor references exist
 - ✅ No broken cross-file anchor links
 
+### `mdite cat [files...]` - Output Documentation Content
+
+Output documentation content in various formats and orderings.
+
+```bash
+# Output all files in dependency order (default)
+mdite cat
+
+# Output in alphabetical order
+mdite cat --order alpha
+
+# Use custom separator between files
+mdite cat --separator "\\n---\\n"
+
+# Output as JSON with metadata
+mdite cat --format json
+
+# Pipe to other tools
+mdite cat | grep "TODO"
+mdite cat | wc -l
+
+# Export as single file
+mdite cat --order deps | pandoc -o docs.pdf
+
+# Combine with jq for analysis
+mdite cat --format json | jq '.[] | {file, wordCount}'
+```
+
+**Options:**
+
+- `[files...]` - Specific files to output (optional, defaults to all files in graph)
+- `--order <type>` - Output order: `deps` (dependency order, default) or `alpha` (alphabetical)
+- `--separator <text>` - Text between files (default: `\n\n`). Supports escape sequences like `\n`, `\t`
+- `--format <type>` - Output format: `markdown` (default) or `json`
+- `--exclude <pattern...>` - Exclude file patterns (gitignore-style)
+- `--respect-gitignore` - Respect .gitignore patterns
+- `--no-exclude-hidden` - Don't exclude hidden directories
+
+**Output Formats:**
+
+**Markdown (default):**
+
+- Outputs raw file content concatenated with separators
+- Perfect for piping to other tools
+- Streams to stdout for efficiency
+
+**JSON:**
+
+- Structured output with metadata for each file
+- Includes: file path, depth, content, word count, line count
+- Ideal for programmatic processing
+
+**Use cases:**
+
+- 📤 **Export:** Create single-file documentation artifacts
+- 🔄 **Transform:** Pipe to pandoc, markdown processors, or custom tools
+- 📊 **Analyze:** Extract statistics, search patterns, or validate content
+- 🎯 **Integration:** Build documentation pipelines and workflows
+
+**Examples:**
+
+````bash
+# Generate PDF documentation
+mdite cat --order deps | pandoc --toc -o documentation.pdf
+
+# Count total words in documentation
+mdite cat | wc -w
+
+# Find all TODOs across documentation
+mdite cat | grep -n "TODO"
+
+# Get statistics from JSON
+mdite cat --format json | jq '[.[] | .wordCount] | add'
+
+# Extract code blocks
+mdite cat | awk '/```/,/```/'
+````
+
 ### `mdite init` - Initialize Configuration
 
 Create a configuration file.
@@ -662,7 +745,7 @@ mdite config
 
 ### Future Commands
 
-Coming soon as mdite expands beyond linting:
+Coming soon as mdite expands:
 
 #### `mdite query <pattern>` - Search Documentation System
 
@@ -675,22 +758,6 @@ mdite query "api-*" --names
 
 # Search in specific subsection
 mdite query "config" --from docs/reference/
-```
-
-#### `mdite cat [files]` - Output Documentation
-
-```bash
-# Output entire system
-mdite cat
-
-# Output in dependency order
-mdite cat --order deps
-
-# Output specific files
-mdite cat docs/guides/*.md
-
-# Pipe to tools
-mdite cat | grep "TODO"
 ```
 
 #### `mdite toc` - Generate Table of Contents
@@ -960,6 +1027,10 @@ mdite is evolving from a linter into a complete **documentation toolkit**.
 - Orphan detection
 - Link validation (file + anchor)
 - Configuration system
+- **Content output (`cat`)** - Export documentation content
+  - Dependency-order and alphabetical output
+  - JSON format with metadata
+  - Pipe-friendly for Unix workflows
 
 ### 🚧 Future Features
 
@@ -967,10 +1038,6 @@ mdite is evolving from a linter into a complete **documentation toolkit**.
   - Content search
   - Filename pattern matching
   - Scope to graph sections
-- **`mdite cat`** - Output documentation content
-  - Dependency-order output
-  - Pipe to shell tools
-  - Combine with other utilities
 - **`mdite toc`** - Generate table of contents from graph
 - **`mdite stats`** - Documentation metrics and analysis
 - **External link validation** - Check HTTP/HTTPS URLs

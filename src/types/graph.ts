@@ -51,4 +51,70 @@ export class DocGraph {
       .filter(([_, node]) => node.depth <= maxDepth)
       .map(([path, _]) => path);
   }
+
+  /**
+   * Get all files in dependency order (depth-first traversal)
+   *
+   * Files are returned in an order where dependencies come before dependents.
+   * For example, if A links to B, B will appear before A in the result.
+   *
+   * This is useful for operations that need to process files in dependency order,
+   * such as concatenating documentation where referenced files should appear first.
+   *
+   * @returns Array of file paths in dependency order
+   *
+   * @example
+   * ```typescript
+   * const graph = new DocGraph();
+   * graph.addFile('README.md', 0);
+   * graph.addFile('guide.md', 1);
+   * graph.addEdge('README.md', 'guide.md');
+   *
+   * const ordered = graph.getFilesInDependencyOrder();
+   * // Returns: ['guide.md', 'README.md']
+   * ```
+   */
+  getFilesInDependencyOrder(): string[] {
+    const result: string[] = [];
+    const visited = new Set<string>();
+
+    const visit = (file: string) => {
+      if (visited.has(file)) {
+        return; // Already visited (cycle or multiple paths)
+      }
+      visited.add(file);
+
+      // Visit dependencies first (depth-first)
+      const links = this.getOutgoingLinks(file);
+      for (const link of links) {
+        // Only visit if the link is in the graph (it might not be if it's broken)
+        if (this.hasFile(link)) {
+          visit(link);
+        }
+      }
+
+      // Add this file after its dependencies
+      result.push(file);
+    };
+
+    // Start from files at depth 0 (entrypoints)
+    const entrypoints = Array.from(this.nodes.entries())
+      .filter(([_, node]) => node.depth === 0)
+      .map(([path, _]) => path)
+      .sort(); // Sort for deterministic ordering
+
+    for (const entrypoint of entrypoints) {
+      visit(entrypoint);
+    }
+
+    // Visit any remaining files that weren't reachable from entrypoints
+    // This handles disconnected components in the graph
+    for (const file of this.getAllFiles()) {
+      if (!visited.has(file)) {
+        visit(file);
+      }
+    }
+
+    return result;
+  }
 }
