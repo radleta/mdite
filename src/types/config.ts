@@ -72,7 +72,10 @@ export type UserConfig = z.infer<typeof UserConfigSchema>;
  *     'orphan-files': 'error',
  *     'dead-link': 'error',
  *     'dead-anchor': 'warn'
- *   }
+ *   },
+ *   exclude: ['drafts/**', '*.temp.md'],
+ *   respectGitignore: false,
+ *   excludeHidden: true
  * };
  * ```
  */
@@ -87,6 +90,14 @@ export const ProjectConfigSchema = z.object({
   rules: z.record(z.string(), SeveritySchema).optional(),
   /** Configuration files to extend (not yet implemented) */
   extends: z.array(z.string()).optional(),
+  /** Glob patterns to exclude (gitignore-style) */
+  exclude: z.array(z.string().min(1)).optional(),
+  /** Respect .gitignore patterns */
+  respectGitignore: z.boolean().optional(),
+  /** Exclude hidden directories (default: true) */
+  excludeHidden: z.boolean().optional(),
+  /** How to handle links to excluded files */
+  validateExcludedLinks: z.enum(['ignore', 'warn', 'error']).optional(),
 });
 
 export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
@@ -114,7 +125,11 @@ export type ProjectConfig = z.infer<typeof ProjectConfigSchema>;
  *     'orphan-files': 'error',
  *     'dead-link': 'error',
  *     'dead-anchor': 'error'
- *   }
+ *   },
+ *   exclude: [],
+ *   respectGitignore: false,
+ *   excludeHidden: true,
+ *   validateExcludedLinks: 'ignore'
  * };
  * ```
  */
@@ -133,6 +148,16 @@ export const RuntimeConfigSchema = z.object({
   maxConcurrency: z.number().int().min(1).max(100),
   /** Rule configuration with severity levels */
   rules: z.record(z.string(), SeveritySchema),
+  /** Glob patterns to exclude (gitignore-style) */
+  exclude: z.array(z.string()),
+  /** Respect .gitignore patterns */
+  respectGitignore: z.boolean(),
+  /** Exclude hidden directories */
+  excludeHidden: z.boolean(),
+  /** How to handle links to excluded files */
+  validateExcludedLinks: z.enum(['ignore', 'warn', 'error']),
+  /** CLI-level exclusion patterns (highest priority) */
+  cliExclude: z.array(z.string()).optional(),
 });
 
 export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;
@@ -150,7 +175,9 @@ export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;
  *   format: 'json',
  *   colors: false,
  *   verbose: true,
- *   config: './custom-config.json'
+ *   config: './custom-config.json',
+ *   exclude: ['drafts/**', '*.temp.md'],
+ *   respectGitignore: true
  * };
  * ```
  */
@@ -167,6 +194,14 @@ export interface CliOptions {
   depth?: number | 'unlimited';
   /** Path to explicit config file */
   config?: string;
+  /** Exclusion patterns from CLI */
+  exclude?: string[];
+  /** Respect .gitignore file */
+  respectGitignore?: boolean;
+  /** Exclude hidden directories */
+  excludeHidden?: boolean;
+  /** How to handle links to excluded files */
+  validateExcludedLinks?: 'ignore' | 'warn' | 'error';
 }
 
 /**
@@ -194,6 +229,10 @@ export const DEFAULT_CONFIG: RuntimeConfig = {
     'dead-link': 'error',
     'dead-anchor': 'error',
   },
+  exclude: [],
+  respectGitignore: false,
+  excludeHidden: true,
+  validateExcludedLinks: 'ignore',
 };
 
 /**

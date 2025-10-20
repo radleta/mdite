@@ -15,6 +15,17 @@ export function lintCommand(): Command {
     .option('--format <type>', 'Output format (text|json)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
     .option('--depth <n>', 'Maximum depth of traversal (default: unlimited)', 'unlimited')
+    .option(
+      '--exclude <pattern...>',
+      'Exclude file patterns (gitignore-style, can be used multiple times)'
+    )
+    .option('--respect-gitignore', 'Respect .gitignore patterns')
+    .option('--no-exclude-hidden', "Don't exclude hidden directories")
+    .option(
+      '--validate-excluded-links <mode>',
+      'How to handle links to excluded files (ignore|warn|error)',
+      'ignore'
+    )
     .action(async (pathsArg: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
@@ -125,6 +136,10 @@ export function lintCommand(): Command {
           verbose: globalOpts.verbose,
           depth: depthValue,
           config: globalOpts.config,
+          exclude: options.exclude,
+          respectGitignore: options.respectGitignore,
+          excludeHidden: options.excludeHidden,
+          validateExcludedLinks: options.validateExcludedLinks,
         };
 
         // Load configuration

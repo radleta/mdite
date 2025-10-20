@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **File exclusion support**: Exclude files from validation using gitignore-style patterns
+  - CLI: `--exclude <pattern>` flag for ad-hoc exclusions (can be used multiple times)
+  - Config: `exclude: string[]` array in configuration files
+  - Ignore file: `.mditeignore` with gitignore-compatible patterns (automatic detection)
+  - Gitignore: Optional `.gitignore` respect with `--respect-gitignore` flag
+  - Precedence: CLI > Config > .mditeignore > .gitignore > Built-in defaults
+  - Pattern syntax: Gitignore-compatible (wildcards `*`, `**`, negation `!`, comments `#`)
+  - Built-in defaults: `node_modules/` and hidden directories (configurable via `--no-exclude-hidden`)
+  - New component: `ExclusionManager` in `src/core/exclusion-manager.ts` using `ignore` npm package
+  - Integrated with file discovery, graph building, and orphan detection
+  - Template file: `.mditeignore.example` demonstrates common patterns
+  - Zero breaking changes: existing behavior maintained (hidden dirs + node_modules excluded by default)
+- **Configurable hidden directory exclusion**: New `excludeHidden` config option
+  - Default: `true` (maintains current behavior of excluding `.git`, `.config`, etc.)
+  - Can be disabled: `excludeHidden: false` in config or `--no-exclude-hidden` CLI flag
+  - Allows scanning hidden directories when needed
+
 - **Multi-file linting**: `mdite lint` now accepts multiple file paths as variadic arguments
   - Each file acts as an independent entry point for graph traversal (starting at depth 0)
   - Depth limit applies to all files equally
@@ -55,6 +72,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `clearSlugCache()` and `getSlugCacheStats()` helper functions for testing and debugging
   - Added 6 new tests covering cache behavior, hit/miss scenarios, and edge cases
   - Related to issue #4 - Performance optimizations
+
+### Changed
+
+- **Configuration schema**: Added exclusion-related options to config schemas
+  - `ProjectConfigSchema`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks`
+  - `RuntimeConfigSchema`: Added same fields plus `cliExclude` for CLI-level patterns
+  - `DEFAULT_CONFIG`: Added defaults (`exclude: []`, `respectGitignore: false`, `excludeHidden: true`, `validateExcludedLinks: 'ignore'`)
+  - `CliOptions`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks` fields
+- **File discovery (`findMarkdownFiles`)**: Now accepts optional `ExclusionManager` parameter for filtering
+  - Backward compatible: works without exclusion manager (falls back to hardcoded exclusions)
+  - Early directory exclusion optimization for performance
+- **Graph analyzer (`GraphAnalyzer`)**: Now accepts optional `ExclusionManager` in constructor
+  - Integrated with both `visitFile()` and `visitFileForGraph()` methods
+  - Automatic exclusion during graph traversal and orphan detection
+- **Doc linter (`DocLinter`)**: Creates and manages `ExclusionManager` instance
+  - Conditionally creates manager only when exclusion options are set
+  - Passes to all downstream components (GraphAnalyzer, file discovery)
+- **Config manager (`ConfigManager`)**: Updated merge logic for exclusion options
+  - Properly merges exclusion settings from project config
+  - Handles CLI options with highest priority (stores as `cliExclude`)
+- **CLI commands (`lint`, `deps`)**: Added exclusion flags
+  - `--exclude <pattern...>`: Variadic option for multiple patterns
+  - `--respect-gitignore`: Boolean flag
+  - `--no-exclude-hidden`: Negation flag
+  - `--validate-excluded-links <mode>`: For lint command (future use)
 
 ### Internal
 

@@ -62,6 +62,8 @@ run_example() {
     local dir=$2
     local expect_errors=$3
     local description=$4
+    shift 4  # Remove first 4 args, leaving any CLI flags
+    local cli_args=("$@")
 
     TOTAL=$((TOTAL + 1))
 
@@ -71,6 +73,9 @@ run_example() {
     print_info "Description: $description"
     print_info "Directory: $dir"
     print_info "Expected: $([ "$expect_errors" = "true" ] && echo "Errors detected" || echo "No errors")"
+    if [ ${#cli_args[@]} -gt 0 ]; then
+        print_info "CLI args: ${cli_args[*]}"
+    fi
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     cd "$EXAMPLES_DIR/$dir" || {
@@ -83,7 +88,7 @@ run_example() {
     # Run mdite and capture output and exit code
     local output
     local exit_code
-    output=$(mdite lint 2>&1) || exit_code=$?
+    output=$(mdite lint "${cli_args[@]}" 2>&1) || exit_code=$?
     exit_code=${exit_code:-0}
 
     echo "$output"
@@ -221,6 +226,49 @@ main() {
         "08-depth-limiting" \
         false \
         "Depth limiting feature (unlimited depth, no orphans expected)"
+
+    # Phase 4: Advanced Features
+    echo ""
+    print_info "═══ Phase 4: Advanced Features (File Exclusion) ═══"
+
+    run_example \
+        "09-file-exclusion-cli" \
+        "09-file-exclusion/cli-exclude" \
+        false \
+        "CLI exclusion flags (--exclude)" \
+        --exclude "drafts/**" --exclude "*.temp.md"
+
+    run_example \
+        "09-file-exclusion-config" \
+        "09-file-exclusion/config-exclude" \
+        false \
+        "Config file exclusion (exclude array)"
+
+    run_example \
+        "09-file-exclusion-mditeignore" \
+        "09-file-exclusion/mditeignore" \
+        false \
+        ".mditeignore file exclusion"
+
+    run_example \
+        "09-file-exclusion-gitignore" \
+        "09-file-exclusion/gitignore-respect" \
+        false \
+        "Respecting .gitignore patterns" \
+        --respect-gitignore
+
+    run_example \
+        "09-file-exclusion-negation" \
+        "09-file-exclusion/negation" \
+        false \
+        "Negation patterns (!pattern)"
+
+    run_example \
+        "09-file-exclusion-combined" \
+        "09-file-exclusion/combined" \
+        false \
+        "Combined exclusion sources with precedence" \
+        --exclude "temp/**" --respect-gitignore
 
     # Print summary
     echo ""

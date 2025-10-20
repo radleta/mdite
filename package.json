@@ -90,6 +90,7 @@
     "chalk": "^5.4.1",
     "commander": "^14.0.1",
     "cosmiconfig": "^9.0.0",
+    "ignore": "^7.0.5",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0",

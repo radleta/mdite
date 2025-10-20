@@ -121,6 +121,10 @@ export class ConfigManager {
         ...config.rules,
         ...(projectConfig.rules || {}),
       },
+      exclude: projectConfig.exclude ?? config.exclude,
+      respectGitignore: projectConfig.respectGitignore ?? config.respectGitignore,
+      excludeHidden: projectConfig.excludeHidden ?? config.excludeHidden,
+      validateExcludedLinks: projectConfig.validateExcludedLinks ?? config.validateExcludedLinks,
     };
   }
 
@@ -144,6 +148,19 @@ export class ConfigManager {
     }
     if (cliOptions.depth !== undefined) {
       merged.depth = cliOptions.depth;
+    }
+    if (cliOptions.exclude !== undefined) {
+      // Store CLI patterns separately for highest priority
+      merged.cliExclude = cliOptions.exclude;
+    }
+    if (cliOptions.respectGitignore !== undefined) {
+      merged.respectGitignore = cliOptions.respectGitignore;
+    }
+    if (cliOptions.excludeHidden !== undefined) {
+      merged.excludeHidden = cliOptions.excludeHidden;
+    }
+    if (cliOptions.validateExcludedLinks !== undefined) {
+      merged.validateExcludedLinks = cliOptions.validateExcludedLinks;
     }
 
     return merged;

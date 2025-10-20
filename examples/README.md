@@ -218,6 +218,44 @@ mdite lint  # unlimited
 
 ---
 
+### 09-file-exclusion/ 🚫
+
+Comprehensive demonstration of file exclusion capabilities.
+
+Demonstrates 6 different exclusion methods:
+
+- **cli-exclude/** - CLI `--exclude` flags for runtime exclusion
+- **config-exclude/** - Config file `exclude` array
+- **mditeignore/** - `.mditeignore` file (project-wide patterns)
+- **gitignore-respect/** - `--respect-gitignore` flag
+- **negation/** - Negation patterns (`!pattern`) to re-include files
+- **combined/** - Multiple exclusion sources with precedence
+
+**Try it:**
+
+```bash
+cd 09-file-exclusion/cli-exclude
+mdite lint --exclude "drafts/**" --exclude "*.draft.md"
+
+cd ../mditeignore
+mdite lint  # Uses .mditeignore file
+```
+
+**Expected:** Files matching patterns are excluded from validation, not counted as orphans
+
+**Features demonstrated:**
+
+- Gitignore-style pattern matching
+- CLI exclusion flags (`--exclude`, `--respect-gitignore`)
+- Config file exclusion (`exclude` array)
+- `.mditeignore` file support
+- Negation patterns for re-inclusion
+- Pattern precedence (CLI > Config > .mditeignore > .gitignore)
+- Early directory exclusion optimization
+- Hidden directory exclusion control
+
+---
+
 ## Running All Examples (Smoke Test)
 
 ```bash
@@ -315,7 +353,11 @@ After running examples, you should see:
 - ✅ **07-edge-cases/cycles/** - Handles circular references
 - ✅ **07-edge-cases/deep-nesting/** - Handles deep paths
 - ✅ **07-edge-cases/special-chars/** - Handles special characters
+
+**Phase 4: Advanced Features**
+
 - ✅ **08-depth-limiting/** - Depth limiting feature (unlimited depth, no orphans)
+- ✅ **09-file-exclusion/\*** - All exclusion methods work correctly
 
 All examples working correctly = mdite is functioning as expected! 🎉
 
@@ -350,11 +392,19 @@ examples/
 │   ├── deep-nesting/
 │   └── special-chars/
 │
-└── 08-depth-limiting/                # 📏 Depth Limiting Feature
-    └── docs/
-        ├── getting-started.md
-        └── level2/
-            ├── setup.md
-            └── level3/
-                └── advanced.md
+├── 08-depth-limiting/                # 📏 Depth Limiting Feature
+│   └── docs/
+│       ├── getting-started.md
+│       └── level2/
+│           ├── setup.md
+│           └── level3/
+│               └── advanced.md
+│
+└── 09-file-exclusion/                # 🚫 File Exclusion
+    ├── cli-exclude/
+    ├── config-exclude/
+    ├── mditeignore/
+    ├── gitignore-respect/
+    ├── negation/
+    └── combined/
 ```

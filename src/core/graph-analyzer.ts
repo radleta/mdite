@@ -4,6 +4,7 @@ import { RuntimeConfig } from '../types/config.js';
 import { DocGraph } from '../types/graph.js';
 import { findMarkdownFiles } from '../utils/fs.js';
 import { MarkdownCache } from './markdown-cache.js';
+import type { ExclusionManager } from './exclusion-manager.js';
 
 /**
  * Documentation dependency graph analyzer
@@ -39,11 +40,13 @@ export class GraphAnalyzer {
    * @param basePath - Base directory for documentation (absolute path)
    * @param config - Runtime configuration with entrypoint setting
    * @param cache - Markdown cache for efficient parsing (optional, creates new if not provided)
+   * @param exclusionManager - Optional exclusion manager for filtering files
    */
   constructor(
     private basePath: string,
     private config: RuntimeConfig,
-    private cache: MarkdownCache = new MarkdownCache()
+    private cache: MarkdownCache = new MarkdownCache(),
+    private exclusionManager?: ExclusionManager
   ) {
     this.graph = new DocGraph();
   }
@@ -98,6 +101,11 @@ export class GraphAnalyzer {
       return;
     }
 
+    // Check if file is excluded
+    if (this.exclusionManager?.shouldExclude(normalized)) {
+      return; // Skip excluded files
+    }
+
     // Check if file exists
     try {
       await fs.access(normalized);
@@ -120,6 +128,12 @@ export class GraphAnalyzer {
     // Follow relative markdown links
     for (const link of links) {
       const targetPath = path.resolve(path.dirname(normalized), link);
+
+      // Skip excluded files - don't add edge or recurse
+      if (this.exclusionManager?.shouldExclude(targetPath)) {
+        continue;
+      }
+
       this.graph.addEdge(normalized, targetPath);
 
       // Recurse only if next depth is within limit
@@ -227,6 +241,11 @@ export class GraphAnalyzer {
       return;
     }
 
+    // Skip if file is excluded
+    if (this.exclusionManager?.shouldExclude(normalized)) {
+      return;
+    }
+
     // Skip if file doesn't exist
     try {
       await fs.access(normalized);
@@ -248,6 +267,12 @@ export class GraphAnalyzer {
 
     for (const link of links) {
       const targetPath = path.resolve(path.dirname(normalized), link);
+
+      // Skip excluded files - don't add edge or recurse
+      if (this.exclusionManager?.shouldExclude(targetPath)) {
+        continue;
+      }
+
       graph.addEdge(normalized, targetPath);
 
       // Recurse if next depth is within limit
@@ -296,7 +321,7 @@ export class GraphAnalyzer {
       return [];
     }
 
-    const allFiles = await findMarkdownFiles(this.basePath);
+    const allFiles = await findMarkdownFiles(this.basePath, this.exclusionManager);
     const reachableFiles = new Set(graph.getAllFiles());
 
     return allFiles.filter(file => !reachableFiles.has(path.resolve(file)));

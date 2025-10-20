@@ -5,6 +5,7 @@ import { Logger } from '../utils/logger.js';
 import { GraphAnalyzer } from './graph-analyzer.js';
 import { LinkValidator } from './link-validator.js';
 import { MarkdownCache } from './markdown-cache.js';
+import { ExclusionManager } from './exclusion-manager.js';
 
 /**
  * Main documentation structure analyzer
@@ -89,6 +90,17 @@ export class DocLinter {
     // Create cache instance to share between analyzer and validator
     const cache = new MarkdownCache();
 
+    // Always create exclusion manager to check for .mditeignore and other sources
+    const exclusionManager = new ExclusionManager({
+      basePath,
+      configPatterns: this.config.exclude,
+      cliPatterns: this.config.cliExclude,
+      respectGitignore: this.config.respectGitignore,
+      excludeHidden: this.config.excludeHidden,
+      useBuiltinPatterns: true,
+      logger: this.config.verbose ? this.logger : undefined,
+    });
+
     // Convert 'unlimited' to Infinity for graph analyzer
     const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
     const isDepthLimited = this.config.depth !== 'unlimited';
@@ -96,8 +108,8 @@ export class DocLinter {
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
     if (!quiet) this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
 
-    // 1. Build graph with depth limit (using shared cache)
-    const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache);
+    // 1. Build graph with depth limit (using shared cache and exclusion manager)
+    const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache, exclusionManager);
     const graph = await graphAnalyzer.buildGraph(maxDepth);
 
     if (!quiet) this.logger.success(`Found ${graph.getAllFiles().length} reachable files`);
@@ -167,6 +179,17 @@ export class DocLinter {
     // Create cache instance to share between analyzer and validator
     const cache = new MarkdownCache();
 
+    // Always create exclusion manager to check for .mditeignore and other sources
+    const exclusionManager = new ExclusionManager({
+      basePath,
+      configPatterns: this.config.exclude,
+      cliPatterns: this.config.cliExclude,
+      respectGitignore: this.config.respectGitignore,
+      excludeHidden: this.config.excludeHidden,
+      useBuiltinPatterns: true,
+      logger: this.config.verbose ? this.logger : undefined,
+    });
+
     const maxDepth = this.config.depth === 'unlimited' ? Infinity : this.config.depth;
     const isDepthLimited = this.config.depth !== 'unlimited';
     const depthMsg = this.config.depth === 'unlimited' ? 'unlimited' : `${this.config.depth}`;
@@ -175,8 +198,8 @@ export class DocLinter {
       this.logger.info(`Building dependency graph... (depth: ${depthMsg})`);
     }
 
-    // Build merged graph from all entrypoints (using shared cache)
-    const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache);
+    // Build merged graph from all entrypoints (using shared cache and exclusion manager)
+    const graphAnalyzer = new GraphAnalyzer(basePath, this.config, cache, exclusionManager);
     const mergedGraph = await graphAnalyzer.buildGraphFromMultiple(entrypoints, maxDepth);
 
     if (!quiet) {

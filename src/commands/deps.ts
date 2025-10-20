@@ -5,6 +5,8 @@ import { DependencyAnalyzer } from '../core/dependency-analyzer.js';
 import { DependencyReporter, OutputFormat } from '../utils/dependency-reporter.js';
 import { Logger, shouldUseColors } from '../utils/logger.js';
 import { ExitCode } from '../types/exit-codes.js';
+import { ExclusionManager } from '../core/exclusion-manager.js';
+import { MarkdownCache } from '../core/markdown-cache.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { CliOptions } from '../types/config.js';
@@ -17,6 +19,12 @@ export function depsCommand(): Command {
     .option('--outgoing', 'Show only outgoing dependencies (what this file references)')
     .option('--depth <n>', 'Maximum depth of traversal', 'unlimited')
     .option('--format <type>', 'Output format (tree|list|json)', 'tree')
+    .option(
+      '--exclude <pattern...>',
+      'Exclude file patterns (gitignore-style, can be used multiple times)'
+    )
+    .option('--respect-gitignore', 'Respect .gitignore patterns')
+    .option('--no-exclude-hidden', "Don't exclude hidden directories")
     .action(async (file: string, options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
@@ -47,6 +55,9 @@ export function depsCommand(): Command {
           colors,
           verbose: globalOpts.verbose,
           config: globalOpts.config,
+          exclude: options.exclude,
+          respectGitignore: options.respectGitignore,
+          excludeHidden: options.excludeHidden,
         };
 
         // Load configuration
@@ -88,7 +99,19 @@ export function depsCommand(): Command {
           logger.info(`Building dependency graph from: ${config.entrypoint}`);
         }
 
-        const graphAnalyzer = new GraphAnalyzer(basePath, config);
+        // Create cache and exclusion manager
+        const cache = new MarkdownCache();
+        const exclusionManager = new ExclusionManager({
+          basePath,
+          configPatterns: config.exclude,
+          cliPatterns: config.cliExclude,
+          respectGitignore: config.respectGitignore,
+          excludeHidden: config.excludeHidden,
+          useBuiltinPatterns: true,
+          logger: config.verbose ? logger : undefined,
+        });
+
+        const graphAnalyzer = new GraphAnalyzer(basePath, config, cache, exclusionManager);
         const graph = await graphAnalyzer.buildGraph();
 
         // Check if file exists in graph

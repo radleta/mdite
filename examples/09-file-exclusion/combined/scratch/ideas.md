@@ -1,0 +1,3 @@
+# Ideas
+
+Excluded by config
