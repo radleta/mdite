@@ -29,13 +29,75 @@ These standards apply to this file and any other CLAUDE\*.md files in the reposi
 
 ## Project Purpose
 
-**Markdown documentation toolkit** for working with documentation as a connected system. Treats documentation as a graph (files = nodes, links = edges), enabling system-wide operations: validation, dependency analysis, search, and output. Current focus: structural validation and dependency analysis. Future: query, cat (pipe output), toc generation. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, Vitest (251 tests with 80%+ coverage), Node 18+.
+**Markdown documentation toolkit** for working with documentation as a connected system. Treats documentation as a graph (files = nodes, links = edges), enabling system-wide operations: validation, dependency analysis, file listing, and output. Current focus: structural validation, dependency analysis, graph-filtered file lists (`files`), and content output (`cat`). Future: toc generation, stats. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, JMESPath, Vitest (513 tests with 80%+ coverage), Node 18+.
+
+## Unix Philosophy & Tool Composition
+
+**Core Principle:** Do one thing well, compose with the Unix ecosystem.
+
+### What mdite Does
+
+mdite focuses exclusively on **graph operations** - things that require understanding the documentation dependency graph:
+
+- ✅ **Graph building & traversal** - Build dependency graphs from markdown files
+- ✅ **Graph-aware file filtering** - List files by depth, reachability, orphan status
+- ✅ **Frontmatter + graph filtering** - JMESPath queries on metadata combined with graph operations
+- ✅ **Link validation** - Validate file links and anchors (requires graph)
+- ✅ **Dependency analysis** - Show incoming/outgoing links (requires graph)
+- ✅ **Orphan detection** - Find unreachable files (requires graph)
+
+### What mdite Does NOT Do
+
+mdite intentionally does NOT reimplement existing Unix tools. Instead, it composes with them:
+
+- ❌ **Content search** - Use ripgrep (`mdite files | xargs rg "pattern"`)
+- ❌ **Text transformation** - Use sed/awk (`mdite files | xargs sed -i 's/old/new/'`)
+- ❌ **File operations** - Use find/fd for file discovery
+- ❌ **JSON processing** - Use jq for JSON manipulation
+
+### The Pattern: File List Provider
+
+```bash
+# mdite provides graph-filtered file lists
+mdite files --depth 2 --frontmatter "status=='published'"
+
+# Unix tools process them
+| xargs rg "pattern"        # ripgrep for search
+| xargs sed -i 's/old/new/' # sed for replacement
+| xargs prettier --write    # prettier for formatting
+| xargs ./custom.sh         # custom scripts
+```
+
+**Why this approach?**
+
+1. **Leverages existing tools** - ripgrep is better at search than anything we could build
+2. **Infinite flexibility** - Users can pipe to ANY tool, not locked into mdite's features
+3. **Less code to maintain** - Focus on graph operations, let others handle text processing
+4. **Unix philosophy** - Do one thing well, compose with ecosystem
+
+### Decision Framework for New Features
+
+Before adding a new feature, ask:
+
+1. **Does it require the graph?** If no → Document composition pattern instead
+2. **Can it be done by piping to existing tools?** If yes → Don't build it
+3. **Does it duplicate ripgrep/sed/awk/find?** If yes → Don't build it
+4. **Will it lock users into mdite?** If yes → Reconsider approach
+5. **Does it follow Unix philosophy?** If no → Reconsider design
+
+**Examples:**
+
+- ✅ **`files` command** - Requires graph, provides unique value (depth/frontmatter filtering)
+- ✅ **`deps` command** - Requires graph, shows relationships
+- ✅ **Link validation** - Requires graph traversal
+- ❌ **Content search** - Doesn't require graph, ripgrep does it better
+- ❌ **Find/replace** - Doesn't require graph, sed does it better
 
 ## Architecture Quick Reference
 
 **Core modules** (see `src/` for implementation):
 
-- `commands/` - CLI command handlers (lint, init, config, deps; future: query, cat, toc)
+- `commands/` - CLI command handlers (lint, init, config, deps, cat, files; future: toc, stats)
 - `core/` - Business logic (doc-linter orchestrator, graph-analyzer, link-validator, config-manager, remark-engine, reporter)
 - `types/` - Zod schemas (config, graph, results, errors, exit-codes)
 - `utils/` - Shared utilities (Unix-friendly logger with TTY detection, errors, error-handler, fs, paths, slug)

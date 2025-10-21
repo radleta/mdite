@@ -187,6 +187,67 @@ run_cat_example() {
     fi
 }
 
+# Run a files command example
+run_files_example() {
+    local name=$1
+    local dir=$2
+    local description=$3
+    shift 3  # Remove first 3 args, leaving any CLI flags
+    local cli_args=("$@")
+
+    TOTAL=$((TOTAL + 1))
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    print_info "Test: $name"
+    print_info "Description: $description"
+    print_info "Directory: $dir"
+    if [ ${#cli_args[@]} -gt 0 ]; then
+        print_info "CLI args: mdite files ${cli_args[*]}"
+    else
+        print_info "CLI args: mdite files (default)"
+    fi
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    cd "$EXAMPLES_DIR/$dir" || {
+        print_error "Failed to cd to $dir"
+        RESULTS+=("✗ $name - Directory not found")
+        FAILED=$((FAILED + 1))
+        return 1
+    }
+
+    # Run mdite files and capture output and exit code
+    local output
+    local exit_code
+    output=$(mdite files "${cli_args[@]}" 2>&1) || exit_code=$?
+    exit_code=${exit_code:-0}
+
+    # Show output
+    echo "$output"
+    echo ""
+
+    # Files command should always succeed
+    if [ $exit_code -eq 0 ]; then
+        # Verify output is not empty
+        if [ -n "$output" ]; then
+            print_success "Test passed: Command succeeded with output"
+            RESULTS+=("✓ $name")
+            PASSED=$((PASSED + 1))
+            return 0
+        else
+            print_error "Test failed: Command succeeded but produced no output"
+            RESULTS+=("✗ $name - No output")
+            FAILED=$((FAILED + 1))
+            return 1
+        fi
+    else
+        print_error "Test failed: Command exited with code $exit_code"
+        RESULTS+=("✗ $name - Exit code $exit_code")
+        FAILED=$((FAILED + 1))
+        return 1
+    fi
+}
+
 # Main execution
 main() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -413,6 +474,57 @@ main() {
         false \
         "Multi-file mode (common ancestor scope)" \
         docs/api/README.md docs/guides/README.md
+
+    # Phase 7: Files Command
+    echo ""
+    print_info "═══ Phase 7: Files Command ═══"
+
+    run_files_example \
+        "12-files-basic" \
+        "12-files-command" \
+        "Basic file listing"
+
+    run_files_example \
+        "12-files-depth" \
+        "12-files-command" \
+        "Depth filtering" \
+        --depth 1
+
+    run_files_example \
+        "12-files-frontmatter-published" \
+        "12-files-command" \
+        "Frontmatter filtering (published)" \
+        --frontmatter "status=='published'"
+
+    run_files_example \
+        "12-files-frontmatter-tags" \
+        "12-files-command" \
+        "Frontmatter filtering (tags)" \
+        --frontmatter "contains(tags, 'api')"
+
+    run_files_example \
+        "12-files-orphans" \
+        "12-files-command" \
+        "Orphan detection" \
+        --orphans
+
+    run_files_example \
+        "12-files-json" \
+        "12-files-command" \
+        "JSON output format" \
+        --format json
+
+    run_files_example \
+        "12-files-sort-depth" \
+        "12-files-command" \
+        "Sort by depth" \
+        --sort depth
+
+    run_files_example \
+        "12-files-with-depth" \
+        "12-files-command" \
+        "Annotated with depth" \
+        --with-depth
 
     # Print summary
     echo ""

@@ -57,14 +57,20 @@ mdite lint
 mdite lint --format json
 ```
 
-### 🔍 Query & Search (coming soon)
+### 📋 List Files (`files`)
 
 ```bash
-# Search across your doc system
-mdite query "authentication" --files
+# List all reachable files
+mdite files
 
-# Find docs by name pattern
-mdite query "api-*" --names
+# Filter by depth
+mdite files --depth 2
+
+# Search with ripgrep (Unix composition)
+mdite files | xargs rg "authentication"
+
+# Filter by frontmatter and process
+mdite files --frontmatter "status=='published'" | xargs prettier --write
 ```
 
 ### 📤 Export & Pipe (`cat`)
@@ -719,6 +725,105 @@ mdite cat --format json | jq '[.[] | .wordCount] | add'
 mdite cat | awk '/```/,/```/'
 ````
 
+### `mdite files` - List Files in Documentation Graph
+
+**Unix Philosophy Approach:** mdite provides graph-filtered file lists that compose with the Unix ecosystem.
+
+```bash
+# List all reachable files
+mdite files
+
+# Filter by depth
+mdite files --depth 2
+
+# List orphaned files only
+mdite files --orphans
+
+# Output absolute paths
+mdite files --absolute
+
+# Filter by frontmatter metadata (JMESPath query)
+mdite files --frontmatter "status=='published'"
+mdite files --frontmatter "contains(tags, 'api')"
+
+# JSON output with metadata
+mdite files --format json
+
+# Annotate with depth information
+mdite files --with-depth
+
+# Null-separated for xargs -0
+mdite files --print0 | xargs -0 ls -l
+
+# Sort by depth, incoming, outgoing links, or alphabetically
+mdite files --sort depth
+mdite files --sort incoming
+mdite files --sort outgoing
+mdite files --sort alpha  # default
+```
+
+**Unix Composition (The Power of Files):**
+
+The `files` command is designed to compose with standard Unix tools via pipes:
+
+````bash
+# Search with ripgrep (graph-filtered search)
+mdite files --depth 2 | xargs rg "authentication" -C 2
+
+# Update published docs only
+mdite files --frontmatter "status=='published'" | xargs sed -i 's/v1/v2/g'
+
+# Lint reachable docs
+mdite files | xargs markdownlint
+mdite files | xargs prettier --write
+
+# Generate stats
+mdite files | xargs wc -w | tail -1  # Total words
+
+# Archive orphaned files
+mdite files --orphans | xargs -I {} mv {} archive/
+
+# Complex pipeline: find API docs, extract code blocks, count languages
+mdite files --frontmatter "contains(tags, 'api')" | \
+  xargs rg '```(\w+)' -o -r '$1' | \
+  sort | uniq -c | sort -rn
+
+# Custom processing
+mdite files | xargs ./my-script.sh
+````
+
+**Options:**
+
+- `--depth <n>` - Limit to files at depth N or less (default: unlimited)
+- `--orphans` - List only orphaned files
+- `--no-orphans` - Exclude orphaned files (default)
+- `--absolute` - Output absolute paths (default: relative)
+- `--frontmatter <query>` - Filter by frontmatter metadata (JMESPath query)
+- `--format <type>` - Output format: `list` (default) or `json`
+- `--with-depth` - Annotate output with depth information (list format only)
+- `--print0` - Use null character as separator (for `xargs -0`)
+- `--sort <type>` - Sort by: `alpha` (default), `depth`, `incoming`, `outgoing`
+- `--exclude <pattern...>` - Exclude file patterns (gitignore-style)
+- `--respect-gitignore` - Respect .gitignore patterns
+- `--no-exclude-hidden` - Don't exclude hidden directories
+
+**Why `files` instead of `query`?**
+
+Following Unix philosophy, mdite focuses on what it does best: graph operations. Instead of reimplementing search (ripgrep is better), mdite provides graph-filtered file lists that compose with ANY tool:
+
+- ✅ **Use ripgrep for search** - It's faster and more feature-rich
+- ✅ **Use sed/awk for transformation** - They're mature and powerful
+- ✅ **Use custom scripts** - Unlimited flexibility
+- ✅ **Infinite combinations** - Not locked into mdite's features
+
+**Use cases:**
+
+- 🔍 **Graph-aware search** - Filter files by graph/metadata, search with ripgrep
+- 🔄 **Bulk operations** - Process graph-filtered files with any tool
+- 📊 **Metadata filtering** - JMESPath queries on frontmatter combined with graph
+- 🧹 **Cleanup** - Find and archive orphaned files
+- 🎯 **Targeted operations** - Work on specific subsets of your documentation
+
 ### `mdite init` - Initialize Configuration
 
 Create a configuration file.
@@ -747,24 +852,18 @@ mdite config
 
 Coming soon as mdite expands:
 
-#### `mdite query <pattern>` - Search Documentation System
-
-```bash
-# Search content across all docs
-mdite query "authentication"
-
-# Search filenames
-mdite query "api-*" --names
-
-# Search in specific subsection
-mdite query "config" --from docs/reference/
-```
-
 #### `mdite toc` - Generate Table of Contents
 
 ```bash
 # Generate TOC from graph
 mdite toc --depth 2
+```
+
+#### `mdite stats` - Documentation Metrics
+
+```bash
+# Analyze documentation metrics
+mdite stats --depth 2
 ```
 
 ---

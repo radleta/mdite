@@ -90,7 +90,9 @@
     "chalk": "^5.4.1",
     "commander": "^14.0.1",
     "cosmiconfig": "^9.0.0",
+    "gray-matter": "^4.0.3",
     "ignore": "^7.0.5",
+    "jmespath": "^0.16.0",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0",
@@ -98,6 +100,7 @@
   },
   "devDependencies": {
     "@types/estree": "^1.0.8",
+    "@types/jmespath": "^0.15.2",
     "@types/ms": "^2.1.0",
     "@types/node": "^24.8.0",
     "@typescript-eslint/eslint-plugin": "^8.20.0",

@@ -5,6 +5,7 @@ import { initCommand } from './commands/init.js';
 import { configCommand } from './commands/config.js';
 import { depsCommand } from './commands/deps.js';
 import { catCommand } from './commands/cat.js';
+import { filesCommand } from './commands/files.js';
 import { ExitCode } from './types/exit-codes.js';
 
 // Import version from package.json
@@ -75,6 +76,7 @@ export async function cli() {
   program.addCommand(configCommand());
   program.addCommand(depsCommand());
   program.addCommand(catCommand());
+  program.addCommand(filesCommand());
 
   await program.parseAsync(process.argv);
 }
