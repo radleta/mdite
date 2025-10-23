@@ -12,7 +12,7 @@ Be respectful, inclusive, and constructive. We're all here to build something gr
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
+- Node.js >= 20.0.0
 - npm
 - Git
 
@@ -650,7 +650,7 @@ npm version 1.0.0-beta.1
 - Verify package name availability on npm
 - Check npm account has publish permissions
 - Ensure `.npmignore` doesn't exclude `dist/` directory
-- Verify provenance is supported (requires npm 9+ and Node 18+)
+- Verify provenance is supported (requires npm 9+ and Node 20+)
 
 #### Tag Already Exists
 

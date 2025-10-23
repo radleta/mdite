@@ -29,7 +29,7 @@ These standards apply to this file and any other CLAUDE\*.md files in the reposi
 
 ## Project Purpose
 
-**Markdown documentation toolkit** for working with documentation as a connected system. Treats documentation as a graph (files = nodes, links = edges), enabling system-wide operations: validation, dependency analysis, file listing, and output. Current focus: structural validation, dependency analysis, graph-filtered file lists (`files`), and content output (`cat`). Future: toc generation, stats. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, JMESPath, Vitest (513 tests with 80%+ coverage), Node 18+.
+**Markdown documentation toolkit** for working with documentation as a connected system. Treats documentation as a graph (files = nodes, links = edges), enabling system-wide operations: validation, dependency analysis, file listing, and output. Current focus: structural validation, dependency analysis, graph-filtered file lists (`files`), and content output (`cat`). Future: toc generation, stats. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, JMESPath, Vitest (513 tests with 80%+ coverage), Node 20+.
 
 ## Unix Philosophy & Tool Composition
 
@@ -270,7 +270,7 @@ See `examples/README.md` for full documentation.
 
 **GitHub Actions:**
 
-- `.github/workflows/ci.yml` - Multi-platform testing (Ubuntu/macOS/Windows, Node 18/20/22)
+- `.github/workflows/ci.yml` - Multi-platform testing (Ubuntu/macOS/Windows, Node 20/22)
 - `.github/workflows/release.yml` - Automated npm publish on tag push (OIDC trusted publishing)
 - `.github/workflows/coverage.yml` - Coverage reports and badging
 
@@ -305,7 +305,7 @@ Setup: Automatic via `prepare` script when running `npm install`
 - **Author:** Richard Adleta
 - **Package:** `mdite` (not yet published to npm)
 - **License:** MIT
-- **Engines:** Node 18+
+- **Engines:** Node 20+
 - **Package size:** ~25.6 kB (optimized)
 - **CI/CD:** Multi-OS testing, automated releases with OIDC
 

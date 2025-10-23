@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/mdite.svg)](https://www.npmjs.com/package/mdite)
 [![CI](https://github.com/radleta/mdite/actions/workflows/ci.yml/badge.svg)](https://github.com/radleta/mdite/actions/workflows/ci.yml)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Markdown documentation toolkit** - Work with your documentation as a connected system, not scattered files.

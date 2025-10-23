@@ -144,6 +144,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Node.js version requirement**: Updated minimum Node version from 18.0.0 to 20.0.0
+  - Required for Commander.js 14.x compatibility (engines: node >=20)
+  - Removed Node 18.x from CI test matrix (.github/workflows/ci.yml)
+  - Node 20 is the current LTS version (Node 18 EOL: April 2025)
+  - Breaking change: Drops support for Node 18.x
+
 - **Configuration schema**: Added exclusion and scope-related options to config schemas
   - `ProjectConfigSchema`: Added `exclude`, `respectGitignore`, `excludeHidden`, `validateExcludedLinks`, `scopeLimit`, `scopeRoot`, `externalLinks`
   - `RuntimeConfigSchema`: Added same fields plus `cliExclude` for CLI-level patterns
