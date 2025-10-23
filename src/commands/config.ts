@@ -4,9 +4,51 @@ import { Logger, shouldUseColors } from '../utils/logger.js';
 import { CliOptions } from '../types/config.js';
 import { ExitCode } from '../types/exit-codes.js';
 
+// ============================================================================
+// Help Text - Colocated with command for easy maintenance
+// ============================================================================
+
+const DESCRIPTION = `
+DESCRIPTION:
+  Display the merged configuration from all sources.
+  Shows the final runtime configuration after merging:
+
+  1. Built-in defaults
+  2. User config (~/.config/mdite/config.json)
+  3. Project config (.mditerc, mdite.config.js, etc.)
+  4. CLI flags (not shown here, applied at runtime)
+
+  Useful for debugging configuration issues and understanding
+  which values are being used.
+`;
+
+const EXAMPLES = `
+EXAMPLES:
+  View current configuration:
+      $ mdite config
+
+  Use custom config file:
+      $ mdite config --config custom.config.js
+
+  Extract specific config value with jq:
+      $ mdite config --quiet | jq '.entrypoint'
+`;
+
+const SEE_ALSO = `
+SEE ALSO:
+  mdite init  Create configuration file
+`;
+
+// ============================================================================
+// Command Definition
+// ============================================================================
+
 export function configCommand(): Command {
   return new Command('config')
     .description('Show current configuration')
+    .addHelpText('after', DESCRIPTION)
+    .addHelpText('after', EXAMPLES)
+    .addHelpText('after', SEE_ALSO)
     .action(async (_options, command) => {
       const globalOpts = command.optsWithGlobals();
 

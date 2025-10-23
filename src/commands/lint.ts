@@ -8,9 +8,84 @@ import { ExitCode } from '../types/exit-codes.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+// ============================================================================
+// Help Text - Colocated with command for easy maintenance
+// ============================================================================
+
+const DESCRIPTION = `
+DESCRIPTION:
+  Validate documentation structure and content. Builds a dependency graph
+  from the entrypoint file and checks for:
+
+  - Orphaned files (not reachable from entrypoint)
+  - Broken file links (links to non-existent files)
+  - Broken anchor links (references to non-existent headings)
+
+  Multi-file mode: Pass multiple files to lint them as separate entry points.
+  Each file starts at depth 0, results are merged. Perfect for pre-commit
+  hooks to validate only changed files.
+`;
+
+const EXAMPLES = `
+EXAMPLES:
+  Validate all documentation from current directory:
+      $ mdite lint
+
+  Lint specific directory:
+      $ mdite lint ./docs
+
+  JSON output for CI/CD:
+      $ mdite lint --format json
+
+  Pipe to jq for analysis:
+      $ mdite lint --format json | jq '.[] | select(.severity=="error")'
+
+  Lint only changed files (pre-commit hook):
+      $ mdite lint $(git diff --cached --name-only | grep '\\.md$') --depth 1
+
+  Limit validation depth:
+      $ mdite lint --depth 2
+
+  Quiet mode for scripting:
+      $ mdite lint --quiet || echo "Validation failed"
+
+  Multi-file validation:
+      $ mdite lint README.md docs/api.md docs/guide.md
+
+  Exclude patterns:
+      $ mdite lint --exclude "archive/**" --exclude "draft-*"
+
+  Respect .gitignore:
+      $ mdite lint --respect-gitignore
+`;
+
+const OUTPUT = `
+OUTPUT:
+  Text format (default):
+    - Data (errors/warnings) → stdout (pipeable)
+    - Messages (progress/info) → stderr (suppressible with --quiet)
+
+  JSON format:
+    - Structured JSON → stdout
+    - Errors → stderr
+    - Colors auto-disabled
+`;
+
+const SEE_ALSO = `
+SEE ALSO:
+  mdite deps    Analyze dependencies before refactoring
+  mdite files   List files in documentation graph
+  mdite config  View configuration
+`;
+
+// ============================================================================
+// Command Definition
+// ============================================================================
+
 export function lintCommand(): Command {
   return new Command('lint')
     .description('Lint documentation files')
+    .addHelpText('after', DESCRIPTION)
     .argument('[paths...]', 'Documentation files or directory', ['.'])
     .option('--format <type>', 'Output format (text|json)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
@@ -33,6 +108,9 @@ export function lintCommand(): Command {
       'How to handle external links (validate|warn|error|ignore)',
       'validate'
     )
+    .addHelpText('after', EXAMPLES)
+    .addHelpText('after', OUTPUT)
+    .addHelpText('after', SEE_ALSO)
     .action(async (pathsArg: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';

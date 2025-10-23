@@ -10,9 +10,92 @@ import { CliOptions } from '../types/config.js';
 import jmespath from 'jmespath';
 import matter from 'gray-matter';
 
+// ============================================================================
+// Help Text - Colocated with command for easy maintenance
+// ============================================================================
+
+const DESCRIPTION = `
+DESCRIPTION:
+  List files in the documentation graph with powerful filtering.
+  Following Unix philosophy, mdite provides graph-filtered file lists
+  that compose with the Unix ecosystem (ripgrep, sed, awk, etc.).
+
+  Instead of reimplementing search, mdite focuses on graph operations
+  and lets you use best-in-class Unix tools for everything else.
+
+  Filtering options:
+    - Depth: Files at specific distance from entrypoint
+    - Frontmatter: JMESPath queries on metadata
+    - Orphans: Files not reachable from entrypoint
+    - Sort: By depth, incoming links, outgoing links, or alphabetically
+`;
+
+const EXAMPLES = `
+EXAMPLES:
+  List all reachable files:
+      $ mdite files
+
+  Filter by depth:
+      $ mdite files --depth 2
+
+  List orphaned files:
+      $ mdite files --orphans
+
+  Unix Composition - Graph-aware search:
+      $ mdite files --depth 2 | xargs rg "authentication" -C 2
+
+  Filter by frontmatter and process:
+      $ mdite files --frontmatter "status=='published'" | xargs prettier --write
+
+  Find API docs:
+      $ mdite files --frontmatter "contains(tags, 'api')"
+
+  Bulk operations:
+      $ mdite files | xargs markdownlint
+
+  Archive orphaned files:
+      $ mdite files --orphans | xargs -I {} mv {} archive/
+
+  Null-separated for xargs -0:
+      $ mdite files --print0 | xargs -0 ls -l
+
+  JSON output with metadata:
+      $ mdite files --format json
+
+  Sort by most referenced:
+      $ mdite files --sort incoming
+
+  Sort by most connections:
+      $ mdite files --sort outgoing
+
+  Annotate with depth:
+      $ mdite files --with-depth
+
+  Count total documentation files:
+      $ mdite files | wc -l
+
+  Find deeply nested files:
+      $ mdite files --format json | jq '.[] | select(.depth > 3)'
+`;
+
+const SEE_ALSO = `
+SEE ALSO:
+  mdite cat     Output file content
+  mdite deps    Analyze dependencies
+  mdite lint    Validate documentation
+
+  JMESPath query syntax:
+      https://jmespath.org/
+`;
+
+// ============================================================================
+// Command Definition
+// ============================================================================
+
 export function filesCommand(): Command {
   return new Command('files')
     .description('List files in documentation graph')
+    .addHelpText('after', DESCRIPTION)
     .option('--depth <n>', 'Limit to files at depth N or less', 'unlimited')
     .option('--orphans', 'List only orphaned files')
     .option('--no-orphans', 'Exclude orphaned files (default)', true)
@@ -32,6 +115,8 @@ export function filesCommand(): Command {
     )
     .option('--respect-gitignore', 'Respect .gitignore patterns')
     .option('--no-exclude-hidden', "Don't exclude hidden directories")
+    .addHelpText('after', EXAMPLES)
+    .addHelpText('after', SEE_ALSO)
     .action(async (options, command) => {
       const globalOpts = command.optsWithGlobals();
 

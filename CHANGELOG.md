@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enhanced CLI help system**: Comprehensive help text following Unix CLI best practices
+  - **Extended descriptions**: All commands now include detailed explanations of purpose and use cases
+  - **Comprehensive examples**: ~50 examples across all commands demonstrating real-world workflows
+  - **Exit codes documentation**: Documented standard Unix exit codes (0, 1, 2, 130) in main help
+  - **Environment variables**: Documented `NO_COLOR`, `FORCE_COLOR`, and `CI` environment variables
+  - **Configuration precedence**: Main help now explains multi-layer config system
+  - **Cross-references**: "SEE ALSO" sections link related commands for discovery
+  - **Unix philosophy emphasis**: `files` command help emphasizes composition with Unix tools (ripgrep, sed, awk)
+  - **Hybrid approach**: Shared help sections in `src/utils/help-text.ts`, command-specific help colocated with commands for maintainability
+  - **27 new integration tests**: Comprehensive test coverage for all help sections using `spawnSync`
+  - Follows best practices from git, docker, npm, and ripgrep
+  - Formatted with clear sections: DESCRIPTION, EXAMPLES, OUTPUT, SEE ALSO, EXIT CODES, ENVIRONMENT, CONFIGURATION
+  - Main help expanded from 24 lines to ~80 lines
+  - Command help expanded: lint (~80 lines), files (~90 lines), deps (~80 lines), cat (~70 lines), init (~40 lines), config (~35 lines)
+
 - **File exclusion support**: Exclude files from validation using gitignore-style patterns
   - CLI: `--exclude <pattern>` flag for ad-hoc exclusions (can be used multiple times)
   - Config: `exclude: string[]` array in configuration files

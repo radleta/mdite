@@ -7,6 +7,13 @@ import { depsCommand } from './commands/deps.js';
 import { catCommand } from './commands/cat.js';
 import { filesCommand } from './commands/files.js';
 import { ExitCode } from './types/exit-codes.js';
+import {
+  EXIT_CODES,
+  ENVIRONMENT_VARS,
+  CONFIG_PRECEDENCE,
+  MAIN_EXAMPLES,
+  MAIN_DESCRIPTION,
+} from './utils/help-text.js';
 
 // Import version from package.json
 const require = createRequire(import.meta.url);
@@ -57,6 +64,7 @@ export async function cli() {
     .description(
       'Markdown documentation toolkit - Work with your documentation as a connected system'
     )
+    .addHelpText('after', MAIN_DESCRIPTION)
     .version(VERSION);
 
   // Global options
@@ -66,6 +74,13 @@ export async function cli() {
     .option('--no-colors', 'Disable colored output')
     .option('-q, --quiet', 'Quiet mode (suppress informational output)')
     .option('--verbose', 'Verbose output');
+
+  // Add global help sections
+  program
+    .addHelpText('after', MAIN_EXAMPLES)
+    .addHelpText('after', EXIT_CODES)
+    .addHelpText('after', ENVIRONMENT_VARS)
+    .addHelpText('after', CONFIG_PRECEDENCE);
 
   // Setup signal handlers before parsing
   setupSignalHandlers();

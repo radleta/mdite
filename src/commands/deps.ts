@@ -11,9 +11,64 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { CliOptions } from '../types/config.js';
 
+// ============================================================================
+// Help Text - Colocated with command for easy maintenance
+// ============================================================================
+
+const DESCRIPTION = `
+DESCRIPTION:
+  Analyze and display dependency relationships between markdown files.
+
+  Use cases:
+    - Impact analysis: What will break if I change this file?
+    - Refactoring: Which files depend on this one?
+    - Cleanup: Is this file still referenced?
+    - Navigation: What does this file link to?
+
+  Output formats:
+    - tree: Hierarchical view (default, human-readable)
+    - list: Flat file list (pipe-friendly)
+    - json: Structured data (programmatic processing)
+`;
+
+const EXAMPLES = `
+EXAMPLES:
+  Show all dependencies (tree view):
+      $ mdite deps README.md
+
+  Impact analysis - what references this file?
+      $ mdite deps docs/api.md --incoming
+
+  Scope analysis - what does this file depend on?
+      $ mdite deps docs/guide.md --outgoing
+
+  Limit depth for focused view:
+      $ mdite deps README.md --depth 2
+
+  JSON output for tooling:
+      $ mdite deps README.md --format json | jq '.stats'
+
+  List format for piping:
+      $ mdite deps README.md --format list
+
+  Check if file has dependencies:
+      $ mdite deps docs/orphan.md --outgoing && echo "Has dependencies"
+`;
+
+const SEE_ALSO = `
+SEE ALSO:
+  mdite lint    Validate all links
+  mdite files   List files in graph
+`;
+
+// ============================================================================
+// Command Definition
+// ============================================================================
+
 export function depsCommand(): Command {
   return new Command('deps')
     .description('Show file dependencies in the documentation graph')
+    .addHelpText('after', DESCRIPTION)
     .argument('<file>', 'Markdown file to analyze')
     .option('--incoming', 'Show only incoming dependencies (what references this file)')
     .option('--outgoing', 'Show only outgoing dependencies (what this file references)')
@@ -25,6 +80,8 @@ export function depsCommand(): Command {
     )
     .option('--respect-gitignore', 'Respect .gitignore patterns')
     .option('--no-exclude-hidden', "Don't exclude hidden directories")
+    .addHelpText('after', EXAMPLES)
+    .addHelpText('after', SEE_ALSO)
     .action(async (file: string, options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';

@@ -341,6 +341,23 @@ program.addCommand(myCommand());
 3. Update documentation
 4. Add comprehensive tests
 
+### Maintaining CLI Help Text
+
+mdite follows Unix CLI best practices. When adding or modifying commands, follow the **hybrid approach**:
+
+- **Shared sections** (identical across commands) → `src/utils/help-text.ts`
+- **Command-specific sections** (unique content) → Colocate with command
+
+**Pattern**: Define help as constants at the top of command files (DESCRIPTION, EXAMPLES, SEE_ALSO), then add via `.addHelpText('after', CONSTANT)`.
+
+**Reference implementations**:
+
+- `src/commands/config.ts` - Simple (~35 lines)
+- `src/commands/init.ts` - Medium (~40 lines)
+- `src/commands/files.ts` - Complex (~90 lines, Unix composition focus)
+
+**Testing**: Add integration tests to `tests/integration/cli-help.test.ts` checking for presence of each section
+
 ### Testing Guidelines
 
 - **All new features need tests**

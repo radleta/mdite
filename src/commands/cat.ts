@@ -9,15 +9,73 @@ import { MarkdownCache } from '../core/markdown-cache.js';
 import * as path from 'path';
 import { CliOptions } from '../types/config.js';
 
-/**
- * Cat command - Output documentation content
- *
- * Outputs documentation files in various formats and orderings.
- * Supports pipe-friendly operation with stdout/stderr separation.
- */
+// ============================================================================
+// Help Text - Colocated with command for easy maintenance
+// ============================================================================
+
+const DESCRIPTION = `
+DESCRIPTION:
+  Output documentation content in various formats and orderings.
+  Designed for Unix composition - pipe to pandoc, grep, jq, or custom tools.
+
+  Order options:
+    - deps: Dependency order (respects document relationships)
+    - alpha: Alphabetical order (predictable, reproducible)
+
+  Use cases:
+    - Export: Create single-file documentation artifacts
+    - Transform: Pipe to pandoc for PDF/HTML generation
+    - Analyze: Extract statistics or search patterns
+    - Integration: Build documentation pipelines
+`;
+
+const EXAMPLES = `
+EXAMPLES:
+  Output all files in dependency order:
+      $ mdite cat
+
+  Output in alphabetical order:
+      $ mdite cat --order alpha
+
+  Generate PDF documentation:
+      $ mdite cat --order deps | pandoc --toc -o docs.pdf
+
+  Find TODOs across documentation:
+      $ mdite cat | grep -n "TODO"
+
+  Count total words:
+      $ mdite cat | wc -w
+
+  JSON format with metadata:
+      $ mdite cat --format json | jq '.[] | {file, wordCount}'
+
+  Custom separator:
+      $ mdite cat --separator "\\n---\\n"
+
+  Output specific files:
+      $ mdite cat README.md docs/api.md
+
+  Extract code blocks:
+      $ mdite cat | awk '/\`\`\`/,/\`\`\`/'
+
+  Generate single HTML file:
+      $ mdite cat | pandoc -s -o documentation.html
+`;
+
+const SEE_ALSO = `
+SEE ALSO:
+  mdite files   List files for selective output
+  mdite deps    Understand dependency order
+`;
+
+// ============================================================================
+// Command Definition
+// ============================================================================
+
 export function catCommand(): Command {
   return new Command('cat')
     .description('Output documentation content')
+    .addHelpText('after', DESCRIPTION)
     .argument('[files...]', 'Specific files to output (optional, defaults to all files in graph)')
     .option(
       '--order <type>',
@@ -32,6 +90,8 @@ export function catCommand(): Command {
     )
     .option('--respect-gitignore', 'Respect .gitignore patterns')
     .option('--no-exclude-hidden', "Don't exclude hidden directories")
+    .addHelpText('after', EXAMPLES)
+    .addHelpText('after', SEE_ALSO)
     .action(async (files: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
