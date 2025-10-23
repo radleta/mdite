@@ -47,12 +47,36 @@ SEE ALSO:
 // ============================================================================
 
 const DEFAULT_CONFIG = `module.exports = {
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // mdite Configuration
+  // Docs: https://github.com/radleta/mdite#configuration
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  // Entry point for documentation graph traversal
   entrypoint: 'README.md',
+
+  // Validation rules (error | warn | off)
   rules: {
-    'orphan-files': 'error',
-    'dead-link': 'error',
-    'dead-anchor': 'error',
+    'orphan-files': 'error',  // Files not linked from entrypoint
+    'dead-link': 'error',     // Broken file links
+    'dead-anchor': 'error',   // Broken heading anchors
   },
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Optional: Uncomment to customize
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  // Limit graph traversal depth
+  // depth: 3,
+
+  // Exclude files (gitignore-style patterns)
+  // exclude: ['drafts/**', '*.temp.md'],
+
+  // Performance tuning (1-100)
+  // maxConcurrency: 10,
+
+  // Run 'mdite config --schema' to see all options
+  // Run 'mdite config --template' for comprehensive template
 };
 `;
 

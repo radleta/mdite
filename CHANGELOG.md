@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Config command DX improvements**: Self-documenting configuration system
+  - **`mdite config --schema`**: Display all available config options with descriptions, types, defaults, and examples
+    - Options grouped by category (Core, Rules, Performance, Exclusion, Scope)
+    - Shows which config layers support each option (defaults/user/project/CLI)
+    - Available in both text (human-readable) and JSON (machine-readable) formats
+  - **`mdite config --explain <key>`**: Detailed explanation of specific config option
+    - Long descriptions with use cases and when to change
+    - Examples in multiple formats
+    - Validation rules and constraints
+    - Related options cross-references
+    - Fuzzy matching for typos with "did you mean?" suggestions
+  - **`mdite config --template`**: Generate comprehensive config templates
+    - Supports multiple formats: JavaScript, JSON, YAML, Markdown
+    - All options documented with inline comments
+    - Optional fields commented out (uncomment to enable)
+    - Can output to stdout or write to file with `--output`
+  - **Improved `mdite init` template**: Enhanced default configuration
+    - Better inline comments explaining options
+    - Shows optional configuration commented out
+    - Points users to `--schema` and `--template` for discovery
+  - **Config metadata system**: Single source of truth for all config documentation
+    - New file: `src/types/config-metadata.ts`
+    - Comprehensive metadata for all 15+ config options
+    - Includes descriptions, types, examples, validation, use cases
+    - Used by all config documentation features
+    - Helper functions for fuzzy matching and grouping
+  - **README updates**: New "Discovering Options" section in Configuration
+    - Documents new config commands
+    - Emphasizes self-documenting nature
+    - Updated config command documentation
+  - Zero breaking changes: all new features are optional flags
+
 - **Enhanced CLI help system**: Comprehensive help text following Unix CLI best practices
   - **Extended descriptions**: All commands now include detailed explanations of purpose and use cases
   - **Comprehensive examples**: ~50 examples across all commands demonstrating real-world workflows

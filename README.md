@@ -840,13 +840,41 @@ mdite init --config .mditerc.json
 
 - `--config <path>` - Config file path (default: `mdite.config.js`)
 
-### `mdite config` - Show Configuration
+### `mdite config` - Explore Configuration
 
-Display merged configuration from all sources.
+Display or explore mdite configuration.
 
 ```bash
+# View current merged configuration
 mdite config
+
+# View all available options
+mdite config --schema
+
+# Learn about specific option
+mdite config --explain maxConcurrency
+
+# Generate comprehensive template
+mdite config --template > mdite.config.js
+
+# See where each value comes from (Phase 2 - not yet implemented)
+mdite config --sources
 ```
+
+**Options:**
+
+- `--schema` - Display all configuration options with descriptions, types, defaults
+- `--explain <key>` - Show detailed explanation of a specific option
+- `--template` - Generate comprehensive config template
+- `--sources` - Show which layer provides each value (planned for Phase 2)
+- `--format <type>` - Output format: `text` (default), `json`, `js`, `yaml`, `md`
+
+**Use cases:**
+
+- 🔍 **Discover options:** See what's configurable without leaving terminal
+- 📖 **Learn about options:** Get detailed help for specific configuration keys
+- 🎯 **Generate templates:** Create well-documented config files quickly
+- 🐛 **Debug config:** Understand where values come from (planned)
 
 ### Future Commands
 
@@ -884,6 +912,23 @@ mdite deps README.md  # Just works
 - Entrypoint: `README.md`
 - All rules: `error`
 - Output: colored text
+
+### Discovering Options
+
+mdite provides built-in help for configuration:
+
+```bash
+# See all available options
+mdite config --schema
+
+# Learn about specific option
+mdite config --explain maxConcurrency
+
+# Generate comprehensive template
+mdite config --template > mdite.config.js
+```
+
+**All configuration options are self-documented** - no need to search docs!
 
 ### Custom Configuration
 
