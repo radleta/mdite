@@ -7,6 +7,10 @@ import { tmpdir } from 'os';
 // Absolute path to the CLI binary
 const CLI_PATH = resolve(process.cwd(), 'dist/src/index.js');
 
+// Buffer size for spawnSync - 10MB to accommodate large JSON outputs
+// Current JSON schema output is ~12KB, this allows significant growth
+const MAX_BUFFER_SIZE = 10 * 1024 * 1024; // 10MB
+
 describe('mdite config advanced features', () => {
   describe('--schema flag', () => {
     describe('Text format', () => {
@@ -83,6 +87,7 @@ describe('mdite config advanced features', () => {
           ['dist/src/index.js', 'config', '--schema', '--format', 'json'],
           {
             encoding: 'utf-8',
+            maxBuffer: MAX_BUFFER_SIZE,
           }
         );
 
@@ -96,6 +101,7 @@ describe('mdite config advanced features', () => {
           ['dist/src/index.js', 'config', '--schema', '--format', 'json'],
           {
             encoding: 'utf-8',
+            maxBuffer: MAX_BUFFER_SIZE,
           }
         );
 
@@ -120,6 +126,7 @@ describe('mdite config advanced features', () => {
           ['dist/src/index.js', 'config', '--schema', '--format', 'json'],
           {
             encoding: 'utf-8',
+            maxBuffer: MAX_BUFFER_SIZE,
           }
         );
 

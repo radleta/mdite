@@ -107,6 +107,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command now properly respects `--config` flag for custom config file paths
   - Aligns with other commands (deps, config, lint) in using global options
 
+- **CI/CD**: Fixed JSON truncation issue in config schema tests on macOS
+  - Increased `maxBuffer` in `spawnSync` to 10MB to prevent truncation of large JSON output (>8KB)
+  - Affected tests: `tests/integration/config-advanced.test.ts` (3 JSON format tests)
+  - Issue occurred on macOS GitHub Actions runners due to platform-specific 8KB buffer limit
+  - No changes to production code, test-only fix
+
 ### Performance
 
 - **Centralized markdown cache**: Implemented `MarkdownCache` to eliminate redundant file parsing for 2-3x overall speedup
