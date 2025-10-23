@@ -265,7 +265,7 @@ async function explainOption(key: string, logger: Logger): Promise<void> {
     if (suggestions.length > 0) {
       logger.line();
       logger.info('Did you mean?');
-      suggestions.forEach(s => logger.log(`  - ${s}`));
+      suggestions.forEach(s => console.error(`  - ${s}`));
     }
 
     logger.line();
