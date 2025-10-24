@@ -107,9 +107,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command now properly respects `--config` flag for custom config file paths
   - Aligns with other commands (deps, config, lint) in using global options
 
-- **CI/CD**: Fixed JSON truncation issue in config schema output on macOS
-  - Root cause: `console.log()` doesn't reliably flush stdout on macOS when piped, causing truncation at 8KB pipe buffer boundary
-  - Fixed by replacing `console.log()` with `process.stdout.write()` in `src/commands/config.ts` for JSON output
+- **CI/CD**: Fixed JSON truncation issue in config schema output on macOS Node 20.x
+  - Root cause: On macOS Node 20.x, `process.stdout.write()` is async when piped and truncates at 8KB if `process.exit()` is called before write completes
+  - Fixed by using `fs.writeSync(1, data)` for synchronous, blocking stdout write that completes before process exit
+  - Works on all platforms and all Node versions (20.x, 22.x+)
   - Also improved test infrastructure:
     - Added diagnostic output to track stdout/stderr byte lengths
     - Added explicit `stdio: ['pipe', 'pipe', 'pipe']` to spawnSync calls
@@ -117,7 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added explicit `cwd: process.cwd()` to ensure correct working directory
     - Increased `maxBuffer` in `spawnSync` to 10MB for safety
   - Affected: `mdite config --schema --format json` command and 3 related tests
-  - Issue occurred on macOS GitHub Actions runners with JSON output truncated at exactly 8192 bytes
+  - Issue occurred on macOS GitHub Actions runners with Node 20.x, JSON output truncated at exactly 8192 bytes
 
 ### Performance
 

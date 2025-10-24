@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { writeSync } from 'fs';
 import { ConfigManager } from '../core/config-manager.js';
 import { Logger, shouldUseColors } from '../utils/logger.js';
 import { CliOptions } from '../types/config.js';
@@ -154,10 +155,12 @@ export function configCommand(): Command {
  */
 async function displaySchema(logger: Logger, format: string): Promise<void> {
   if (format === 'json') {
-    const json = JSON.stringify(buildSchemaJson(), null, 2);
-    // Use process.stdout.write() instead of console.log() to ensure proper flushing on macOS
-    // when stdout is piped. console.log() can truncate at pipe buffer boundaries (8KB on macOS).
-    process.stdout.write(json + '\n');
+    const json = JSON.stringify(buildSchemaJson(), null, 2) + '\n';
+    // Use fs.writeSync() with stdout file descriptor (1) instead of console.log() or process.stdout.write()
+    // to ensure synchronous, blocking write that completes before process.exit() on all platforms.
+    // On macOS Node 20.x, process.stdout.write() is async when piped and can truncate at 8KB if
+    // process.exit() is called before the write completes. writeSync() blocks until done.
+    writeSync(1, json);
   } else {
     displaySchemaText(logger);
   }
