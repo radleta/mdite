@@ -154,7 +154,10 @@ export function configCommand(): Command {
  */
 async function displaySchema(logger: Logger, format: string): Promise<void> {
   if (format === 'json') {
-    console.log(JSON.stringify(buildSchemaJson(), null, 2));
+    const json = JSON.stringify(buildSchemaJson(), null, 2);
+    // Use process.stdout.write() instead of console.log() to ensure proper flushing on macOS
+    // when stdout is piped. console.log() can truncate at pipe buffer boundaries (8KB on macOS).
+    process.stdout.write(json + '\n');
   } else {
     displaySchemaText(logger);
   }

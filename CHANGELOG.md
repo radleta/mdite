@@ -107,15 +107,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Command now properly respects `--config` flag for custom config file paths
   - Aligns with other commands (deps, config, lint) in using global options
 
-- **CI/CD**: Fixed JSON truncation issue in config schema tests on macOS
-  - Added explicit `stdio: ['pipe', 'pipe', 'pipe']` to spawnSync calls to ensure proper pipe configuration
-  - Removed `encoding: 'utf-8'` option and manually decode stdout buffer
-  - Added explicit `cwd: process.cwd()` to ensure correct working directory
-  - Increased `maxBuffer` in `spawnSync` to 10MB for safety
-  - Affected tests: `tests/integration/config-advanced.test.ts` (3 JSON format tests)
-  - Issue occurred on macOS GitHub Actions runners with truncation at 8KB
-  - Root cause: Platform-specific stdio handling differences on macOS
-  - No changes to production code, test infrastructure only
+- **CI/CD**: Fixed JSON truncation issue in config schema output on macOS
+  - Root cause: `console.log()` doesn't reliably flush stdout on macOS when piped, causing truncation at 8KB pipe buffer boundary
+  - Fixed by replacing `console.log()` with `process.stdout.write()` in `src/commands/config.ts` for JSON output
+  - Also improved test infrastructure:
+    - Added diagnostic output to track stdout/stderr byte lengths
+    - Added explicit `stdio: ['pipe', 'pipe', 'pipe']` to spawnSync calls
+    - Removed `encoding: 'utf-8'` option and manually decode stdout buffer
+    - Added explicit `cwd: process.cwd()` to ensure correct working directory
+    - Increased `maxBuffer` in `spawnSync` to 10MB for safety
+  - Affected: `mdite config --schema --format json` command and 3 related tests
+  - Issue occurred on macOS GitHub Actions runners with JSON output truncated at exactly 8192 bytes
 
 ### Performance
 
