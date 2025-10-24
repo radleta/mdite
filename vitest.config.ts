@@ -5,6 +5,17 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     testTimeout: 30000, // 30s for integration tests that spawn processes
+    // Pool configuration to prevent worker timeout errors with integration tests
+    // Using forks with singleFork to avoid worker communication timeouts
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true, // Run tests in single fork to prevent worker timeouts
+      },
+    },
+    // Increase timeouts for proper cleanup
+    teardownTimeout: 10000,
+    hookTimeout: 10000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],

@@ -102,6 +102,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Test Infrastructure**: Fixed Vitest worker timeout errors in test suite
+  - **Root cause**: Worker communication timeouts when running integration tests that spawn child processes
+  - **Symptoms**: All 614 tests passed, but 2 "Timeout calling onTaskUpdate" errors after test completion
+  - **Solution**: Configure Vitest to use `pool: 'forks'` with `singleFork: true` to run all tests in single fork
+  - **Additional improvements**:
+    - Added `teardownTimeout: 10000` for proper cleanup
+    - Added `hookTimeout: 10000` for hook execution
+  - **Impact**: Tests now complete cleanly with no worker timeout errors
+  - **Configuration changes**: Updated `vitest.config.ts` with pool options
+  - This was a **critical blocker** for npm publication (blocked CI/CD pipeline)
+
+- **Security**: Fixed moderate severity vulnerability in vite dependency
+  - **Vulnerability**: CVE allowing `server.fs.deny` bypass via backslash on Windows (vite 7.1.0-7.1.10)
+  - **Solution**: Ran `npm audit fix` to update vite to patched version
+  - **Verification**: `npm audit --audit-level=moderate` now reports 0 vulnerabilities
+  - **Impact**: Development dependency (used via vitest), affects Windows systems
+  - This was a **critical blocker** for npm publication (security-conscious users)
+
 - **`mdite init` command**: Fixed bug where `--config` flag was ignored
   - Removed conflicting local `--config` option that shadowed global option
   - Command now properly respects `--config` flag for custom config file paths
