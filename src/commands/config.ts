@@ -97,20 +97,20 @@ export function configCommand(): Command {
         // Handle --schema flag
         if (options.schema) {
           await displaySchema(logger, options.format);
-          process.exit(ExitCode.SUCCESS);
+          return; // Let process exit naturally instead of calling process.exit()
         }
 
         // Handle --explain flag
         if (options.explain) {
           await explainOption(options.explain, logger);
-          process.exit(ExitCode.SUCCESS);
+          return; // Let process exit naturally instead of calling process.exit()
         }
 
         // Handle --template flag
         if (options.template) {
           const templateFormat = options.format === 'text' ? 'js' : options.format;
           await generateTemplate(templateFormat, options.output, logger);
-          process.exit(ExitCode.SUCCESS);
+          return; // Let process exit naturally instead of calling process.exit()
         }
 
         // Build CLI options

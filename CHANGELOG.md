@@ -108,8 +108,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Aligns with other commands (deps, config, lint) in using global options
 
 - **CI/CD**: Fixed JSON truncation issue in config schema output on macOS Node 20.x
-  - Root cause: On macOS Node 20.x, `process.stdout.write()` is async when piped and truncates at 8KB if `process.exit()` is called before write completes
-  - Fixed by using `fs.writeSync(1, data)` for synchronous, blocking stdout write that completes before process exit
+  - Root cause: Calling `process.exit()` immediately after stdout write closes pipe before parent process finishes reading, causing truncation at 8KB on macOS
+  - Fixed by removing `process.exit()` calls and using `return` to let process exit naturally after event loop completes
+  - Combined with `fs.writeSync(1, data)` for synchronous stdout write (instead of async `process.stdout.write()`)
+  - Allows parent process (spawnSync) to fully read pipe contents before child process terminates
   - Works on all platforms and all Node versions (20.x, 22.x+)
   - Also improved test infrastructure:
     - Added diagnostic output to track stdout/stderr byte lengths
