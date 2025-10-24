@@ -173,24 +173,41 @@ async function displaySchema(logger: Logger, format: string): Promise<void> {
       console.error(`[DEBUG] File write ERROR:`, err);
     }
 
-    // Handle partial writes (macOS Node 20.x may not write all data in one call)
-    // This is a standard Unix pattern for writing to pipes/sockets
+    // Handle partial writes AND EAGAIN errors (macOS Node 20.x non-blocking stdout)
+    // Node.js sets stdout to non-blocking mode, causing EAGAIN when pipe buffer fills
+    // Solution: Retry loop with sleep on EAGAIN (standard Unix pattern)
     console.error(`[DEBUG] About to writeSync to fd 1...`);
-    try {
-      let offset = 0;
-      while (offset < json.length) {
-        const chunk = json.substring(offset);
-        const bytesWritten = writeSync(1, chunk);
-        console.error(
-          `[DEBUG] writeSync wrote ${bytesWritten} bytes (offset: ${offset}, remaining: ${chunk.length})`
-        );
-        offset += bytesWritten;
+    let offset = 0;
+    while (offset < json.length) {
+      const chunk = json.substring(offset);
+      let bytesWritten = 0;
+      let retries = 0;
+      const maxRetries = 100;
+
+      // Retry loop for EAGAIN errors
+      while (true) {
+        try {
+          bytesWritten = writeSync(1, chunk);
+          console.error(
+            `[DEBUG] writeSync wrote ${bytesWritten} bytes (offset: ${offset}, remaining: ${chunk.length})`
+          );
+          break; // Success, exit retry loop
+        } catch (err: unknown) {
+          const error = err as NodeJS.ErrnoException;
+          if (error.code === 'EAGAIN' && retries < maxRetries) {
+            retries++;
+            console.error(`[DEBUG] EAGAIN error, retry ${retries}/${maxRetries}, sleeping 10ms...`);
+            // Sleep 10ms using Atomics.wait (works in synchronous context)
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+            continue; // Retry
+          }
+          console.error(`[DEBUG] writeSync ERROR:`, error);
+          throw error; // Non-EAGAIN error or too many retries
+        }
       }
-      console.error(`[DEBUG] writeSync loop completed, total written: ${offset} bytes`);
-    } catch (err) {
-      console.error(`[DEBUG] writeSync ERROR:`, err);
-      throw err;
+      offset += bytesWritten;
     }
+    console.error(`[DEBUG] writeSync loop completed, total written: ${offset} bytes`);
     console.error(`[DEBUG] After writeSync, about to return`);
   } else {
     displaySchemaText(logger);
