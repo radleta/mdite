@@ -86,13 +86,14 @@ describe('mdite config advanced features', () => {
           'node',
           ['dist/src/index.js', 'config', '--schema', '--format', 'json'],
           {
-            encoding: 'utf-8',
+            cwd: process.cwd(),
             maxBuffer: MAX_BUFFER_SIZE,
           }
         );
 
         expect(result.status).toBe(0);
-        expect(() => JSON.parse(result.stdout)).not.toThrow();
+        const stdout = result.stdout?.toString('utf-8') || '';
+        expect(() => JSON.parse(stdout)).not.toThrow();
       });
 
       it('should include all metadata fields', () => {
@@ -100,12 +101,13 @@ describe('mdite config advanced features', () => {
           'node',
           ['dist/src/index.js', 'config', '--schema', '--format', 'json'],
           {
-            encoding: 'utf-8',
+            cwd: process.cwd(),
             maxBuffer: MAX_BUFFER_SIZE,
           }
         );
 
-        const json = JSON.parse(result.stdout);
+        const stdout = result.stdout?.toString('utf-8') || '';
+        const json = JSON.parse(stdout);
         expect(json.schema).toBeDefined();
         expect(json.layers).toBeDefined();
         expect(json.rules).toBeDefined();
@@ -125,12 +127,13 @@ describe('mdite config advanced features', () => {
           'node',
           ['dist/src/index.js', 'config', '--schema', '--format', 'json'],
           {
-            encoding: 'utf-8',
+            cwd: process.cwd(),
             maxBuffer: MAX_BUFFER_SIZE,
           }
         );
 
-        const json = JSON.parse(result.stdout);
+        const stdout = result.stdout?.toString('utf-8') || '';
+        const json = JSON.parse(stdout);
         const schemaKeys = Object.keys(json.schema);
 
         // Should have all major config options
