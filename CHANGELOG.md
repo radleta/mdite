@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Test Infrastructure**: Fixed flaky timing test in coverage workflow
+  - Increased delay in `test-infrastructure-demo.test.ts` from 50ms to 1000ms
+  - Reduces timing variance from 2% (1ms on 50ms) to 0.1% (1ms on 1000ms)
+  - Makes test virtually flake-proof in CI environments
+  - Test now reliably passes on GitHub Actions and all CI platforms
+  - File: `tests/integration/test-infrastructure-demo.test.ts:230`
+
 ## [1.0.1] - 2025-10-24
 
 ## [1.0.0] - 2025-10-24
