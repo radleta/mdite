@@ -173,11 +173,17 @@ async function displaySchema(logger: Logger, format: string): Promise<void> {
       console.error(`[DEBUG] File write ERROR:`, err);
     }
 
-    // OBSERVABILITY: Try to write to stdout with error handling
+    // Handle partial writes (macOS Node 20.x may not write all data in one call)
+    // This is a standard Unix pattern for writing to pipes/sockets
     console.error(`[DEBUG] About to writeSync to fd 1...`);
     try {
-      const bytesWritten = writeSync(1, json);
-      console.error(`[DEBUG] writeSync completed, returned: ${bytesWritten}`);
+      let offset = 0;
+      while (offset < json.length) {
+        const bytesWritten = writeSync(1, json.slice(offset));
+        console.error(`[DEBUG] writeSync wrote ${bytesWritten} bytes (offset: ${offset})`);
+        offset += bytesWritten;
+      }
+      console.error(`[DEBUG] writeSync loop completed, total written: ${offset} bytes`);
     } catch (err) {
       console.error(`[DEBUG] writeSync ERROR:`, err);
       throw err;
