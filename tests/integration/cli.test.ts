@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'child_process';
+import { createRequire } from 'module';
+
+// Read version from package.json (single source of truth)
+const require = createRequire(import.meta.url);
+const { version: EXPECTED_VERSION } = require('../../package.json');
 
 function runCli(args: string[]): {
   stdout: string;
@@ -20,7 +25,7 @@ function runCli(args: string[]): {
 describe('CLI', () => {
   it('shows version', () => {
     const result = runCli(['--version']);
-    expect(result.stdout.trim()).toBe('0.1.0');
+    expect(result.stdout.trim()).toBe(EXPECTED_VERSION);
   });
 
   it('shows help', () => {
