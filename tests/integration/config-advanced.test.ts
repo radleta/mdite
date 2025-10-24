@@ -88,6 +88,7 @@ describe('mdite config advanced features', () => {
           {
             cwd: process.cwd(),
             maxBuffer: MAX_BUFFER_SIZE,
+            stdio: ['pipe', 'pipe', 'pipe'],
           }
         );
 
@@ -103,6 +104,7 @@ describe('mdite config advanced features', () => {
           {
             cwd: process.cwd(),
             maxBuffer: MAX_BUFFER_SIZE,
+            stdio: ['pipe', 'pipe', 'pipe'],
           }
         );
 
@@ -129,6 +131,7 @@ describe('mdite config advanced features', () => {
           {
             cwd: process.cwd(),
             maxBuffer: MAX_BUFFER_SIZE,
+            stdio: ['pipe', 'pipe', 'pipe'],
           }
         );
 
