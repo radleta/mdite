@@ -92,8 +92,27 @@ describe('mdite config advanced features', () => {
           }
         );
 
+        // Diagnostic output
+        console.log('=== DIAGNOSTIC: should output valid JSON ===');
+        console.log('Exit code:', result.status);
+        console.log(
+          'stdout type:',
+          typeof result.stdout,
+          'is Buffer?',
+          Buffer.isBuffer(result.stdout)
+        );
+        console.log('stdout length (bytes):', result.stdout?.length || 0);
+        console.log('stderr length (bytes):', result.stderr?.length || 0);
+        if (result.stderr?.length) {
+          console.log('stderr:', result.stderr.toString('utf-8'));
+        }
+
         expect(result.status).toBe(0);
         const stdout = result.stdout?.toString('utf-8') || '';
+        console.log('stdout string length (chars):', stdout.length);
+        console.log('First 100 chars:', stdout.substring(0, 100));
+        console.log('Last 100 chars:', stdout.substring(stdout.length - 100));
+
         expect(() => JSON.parse(stdout)).not.toThrow();
       });
 
@@ -108,8 +127,25 @@ describe('mdite config advanced features', () => {
           }
         );
 
+        // Diagnostic output
+        console.log('=== DIAGNOSTIC: should include all metadata fields ===');
+        console.log('Exit code:', result.status);
+        console.log('stdout length (bytes):', result.stdout?.length || 0);
+        console.log('stderr length (bytes):', result.stderr?.length || 0);
+
         const stdout = result.stdout?.toString('utf-8') || '';
-        const json = JSON.parse(stdout);
+        console.log('stdout string length (chars):', stdout.length);
+
+        let json;
+        try {
+          json = JSON.parse(stdout);
+        } catch (e) {
+          console.log('JSON parse error:', (e as Error).message);
+          console.log('stdout preview (first 200 chars):', stdout.substring(0, 200));
+          console.log('stdout preview (around position 8192):', stdout.substring(8150, 8250));
+          console.log('stdout preview (last 200 chars):', stdout.substring(stdout.length - 200));
+          throw e;
+        }
         expect(json.schema).toBeDefined();
         expect(json.layers).toBeDefined();
         expect(json.rules).toBeDefined();
@@ -135,8 +171,25 @@ describe('mdite config advanced features', () => {
           }
         );
 
+        // Diagnostic output
+        console.log('=== DIAGNOSTIC: should include all config options in schema ===');
+        console.log('Exit code:', result.status);
+        console.log('stdout length (bytes):', result.stdout?.length || 0);
+        console.log('stderr length (bytes):', result.stderr?.length || 0);
+
         const stdout = result.stdout?.toString('utf-8') || '';
-        const json = JSON.parse(stdout);
+        console.log('stdout string length (chars):', stdout.length);
+
+        let json;
+        try {
+          json = JSON.parse(stdout);
+        } catch (e) {
+          console.log('JSON parse error:', (e as Error).message);
+          console.log('stdout preview (first 200 chars):', stdout.substring(0, 200));
+          console.log('stdout preview (around position 8192):', stdout.substring(8150, 8250));
+          console.log('stdout preview (last 200 chars):', stdout.substring(stdout.length - 200));
+          throw e;
+        }
         const schemaKeys = Object.keys(json.schema);
 
         // Should have all major config options
