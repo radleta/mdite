@@ -108,12 +108,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Aligns with other commands (deps, config, lint) in using global options
 
 - **CI/CD**: Fixed JSON truncation issue in config schema tests on macOS
+  - Added explicit `stdio: ['pipe', 'pipe', 'pipe']` to spawnSync calls to ensure proper pipe configuration
   - Removed `encoding: 'utf-8'` option and manually decode stdout buffer
   - Added explicit `cwd: process.cwd()` to ensure correct working directory
   - Increased `maxBuffer` in `spawnSync` to 10MB for safety
   - Affected tests: `tests/integration/config-advanced.test.ts` (3 JSON format tests)
   - Issue occurred on macOS GitHub Actions runners with truncation at 8KB
-  - Root cause: `encoding` option may cause early buffer conversion/truncation on macOS
+  - Root cause: Platform-specific stdio handling differences on macOS
   - No changes to production code, test infrastructure only
 
 ### Performance
