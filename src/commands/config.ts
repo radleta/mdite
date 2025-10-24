@@ -175,11 +175,13 @@ async function displaySchema(logger: Logger, format: string): Promise<void> {
 
     // Handle partial writes (macOS Node 20.x may not write all data in one call)
     // This is a standard Unix pattern for writing to pipes/sockets
+    // Use Buffer to avoid creating string slices on each iteration
     console.error(`[DEBUG] About to writeSync to fd 1...`);
     try {
+      const buffer = Buffer.from(json, 'utf8');
       let offset = 0;
-      while (offset < json.length) {
-        const bytesWritten = writeSync(1, json.slice(offset));
+      while (offset < buffer.length) {
+        const bytesWritten = writeSync(1, buffer, offset);
         console.error(`[DEBUG] writeSync wrote ${bytesWritten} bytes (offset: ${offset})`);
         offset += bytesWritten;
       }
