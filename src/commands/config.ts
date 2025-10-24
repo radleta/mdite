@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { writeSync, writeFileSync } from 'fs';
+import { writeSync } from 'fs';
 import { ConfigManager } from '../core/config-manager.js';
 import { Logger, shouldUseColors } from '../utils/logger.js';
 import { CliOptions } from '../types/config.js';
@@ -157,26 +157,11 @@ async function displaySchema(logger: Logger, format: string): Promise<void> {
   if (format === 'json') {
     const json = JSON.stringify(buildSchemaJson(), null, 2) + '\n';
 
-    // OBSERVABILITY: Log to stderr (doesn't interfere with stdout)
-    console.error(`[DEBUG] JSON generated, length: ${json.length} bytes`);
-    console.error(
-      `[DEBUG] Node: ${process.version}, Platform: ${process.platform}, PID: ${process.pid}`
-    );
-    console.error(`[DEBUG] stdout.isTTY: ${process.stdout.isTTY}`);
-
-    // OBSERVABILITY: Write to temp file as proof of full generation
-    try {
-      const debugFile = `/tmp/mdite-debug-${process.pid}-${Date.now()}.json`;
-      writeFileSync(debugFile, json);
-      console.error(`[DEBUG] Wrote to file: ${debugFile} (${json.length} bytes)`);
-    } catch (err) {
-      console.error(`[DEBUG] File write ERROR:`, err);
-    }
-
-    // Handle partial writes AND EAGAIN errors (macOS Node 20.x non-blocking stdout)
-    // Node.js sets stdout to non-blocking mode, causing EAGAIN when pipe buffer fills
-    // Solution: Retry loop with sleep on EAGAIN (standard Unix pattern)
-    console.error(`[DEBUG] About to writeSync to fd 1...`);
+    // Handle partial writes and EAGAIN errors when writing to stdout
+    // On macOS Node 20.x, writeSync() may:
+    // 1. Only write part of the data (up to pipe buffer size, typically 8KB)
+    // 2. Throw EAGAIN when stdout is in non-blocking mode and buffer is full
+    // Solution: Loop with retry on EAGAIN (standard Unix pattern)
     let offset = 0;
     while (offset < json.length) {
       const chunk = json.substring(offset);
@@ -188,27 +173,20 @@ async function displaySchema(logger: Logger, format: string): Promise<void> {
       while (true) {
         try {
           bytesWritten = writeSync(1, chunk);
-          console.error(
-            `[DEBUG] writeSync wrote ${bytesWritten} bytes (offset: ${offset}, remaining: ${chunk.length})`
-          );
           break; // Success, exit retry loop
         } catch (err: unknown) {
           const error = err as NodeJS.ErrnoException;
           if (error.code === 'EAGAIN' && retries < maxRetries) {
             retries++;
-            console.error(`[DEBUG] EAGAIN error, retry ${retries}/${maxRetries}, sleeping 10ms...`);
-            // Sleep 10ms using Atomics.wait (works in synchronous context)
+            // Sleep 10ms using Atomics.wait (synchronous sleep)
             Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
             continue; // Retry
           }
-          console.error(`[DEBUG] writeSync ERROR:`, error);
           throw error; // Non-EAGAIN error or too many retries
         }
       }
       offset += bytesWritten;
     }
-    console.error(`[DEBUG] writeSync loop completed, total written: ${offset} bytes`);
-    console.error(`[DEBUG] After writeSync, about to return`);
   } else {
     displaySchemaText(logger);
   }
