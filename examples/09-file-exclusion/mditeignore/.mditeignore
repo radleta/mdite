@@ -1,0 +1,12 @@
+# .mditeignore - mdite exclusion patterns
+# Syntax: gitignore-compatible
+
+# Exclude drafts directory
+drafts/
+
+# Exclude temporary files
+*.temp.md
+*.draft.md
+
+# Exclude scratch directory
+scratch/

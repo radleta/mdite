@@ -1,0 +1,16 @@
+{
+  "name": "myproject-example",
+  "version": "1.0.0",
+  "description": "Example project demonstrating mdite usage",
+  "private": true,
+  "scripts": {
+    "docs:lint": "mdite lint",
+    "docs:lint:json": "mdite lint --format json"
+  },
+  "keywords": [
+    "example",
+    "documentation"
+  ],
+  "author": "MyProject Team",
+  "license": "MIT"
+}

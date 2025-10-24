@@ -1,0 +1,5 @@
+# Exclude all drafts
+drafts/
+
+# But keep this important one
+!drafts/important.md

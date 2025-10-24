@@ -1,0 +1,318 @@
+# mdite - Developer Guide for Claude
+
+## CLAUDE.md Documentation Standards
+
+These standards apply to this file and any other CLAUDE\*.md files in the repository.
+
+**Critical: Token-Conscious Documentation**
+
+- Be concise and instructional, not exhaustive
+- No duplicate content across sections
+- Minimal examples, only when essential
+- CLAUDE.md is for instructions, not code dumps
+- Remove outdated content immediately
+
+**When adding to CLAUDE.md:**
+
+1. Does this content exist elsewhere?
+2. Can this be a 1-line reference?
+3. Will this age well or become stale quickly?
+
+## Documentation Organization
+
+@README.md - User documentation
+@ARCHITECTURE.md - Detailed architecture
+@CONTRIBUTING.md - Contributing guidelines
+@CHANGELOG.md - Version history
+
+**This file is for developers working ON mdite, not users of the tool.**
+
+## Project Purpose
+
+**Markdown documentation toolkit** for working with documentation as a connected system. Treats documentation as a graph (files = nodes, links = edges), enabling system-wide operations: validation, dependency analysis, file listing, and output. Current focus: structural validation, dependency analysis, graph-filtered file lists (`files`), and content output (`cat`). Future: toc generation, stats. TypeScript 5.8+, unified/remark, Commander.js, Zod validation, JMESPath, Vitest (513 tests with 80%+ coverage), Node 20+.
+
+## Unix Philosophy & Tool Composition
+
+**Core Principle:** Do one thing well, compose with the Unix ecosystem.
+
+### What mdite Does
+
+mdite focuses exclusively on **graph operations** - things that require understanding the documentation dependency graph:
+
+- ✅ **Graph building & traversal** - Build dependency graphs from markdown files
+- ✅ **Graph-aware file filtering** - List files by depth, reachability, orphan status
+- ✅ **Frontmatter + graph filtering** - JMESPath queries on metadata combined with graph operations
+- ✅ **Link validation** - Validate file links and anchors (requires graph)
+- ✅ **Dependency analysis** - Show incoming/outgoing links (requires graph)
+- ✅ **Orphan detection** - Find unreachable files (requires graph)
+
+### What mdite Does NOT Do
+
+mdite intentionally does NOT reimplement existing Unix tools. Instead, it composes with them:
+
+- ❌ **Content search** - Use ripgrep (`mdite files | xargs rg "pattern"`)
+- ❌ **Text transformation** - Use sed/awk (`mdite files | xargs sed -i 's/old/new/'`)
+- ❌ **File operations** - Use find/fd for file discovery
+- ❌ **JSON processing** - Use jq for JSON manipulation
+
+### The Pattern: File List Provider
+
+```bash
+# mdite provides graph-filtered file lists
+mdite files --depth 2 --frontmatter "status=='published'"
+
+# Unix tools process them
+| xargs rg "pattern"        # ripgrep for search
+| xargs sed -i 's/old/new/' # sed for replacement
+| xargs prettier --write    # prettier for formatting
+| xargs ./custom.sh         # custom scripts
+```
+
+**Why this approach?**
+
+1. **Leverages existing tools** - ripgrep is better at search than anything we could build
+2. **Infinite flexibility** - Users can pipe to ANY tool, not locked into mdite's features
+3. **Less code to maintain** - Focus on graph operations, let others handle text processing
+4. **Unix philosophy** - Do one thing well, compose with ecosystem
+
+### Decision Framework for New Features
+
+Before adding a new feature, ask:
+
+1. **Does it require the graph?** If no → Document composition pattern instead
+2. **Can it be done by piping to existing tools?** If yes → Don't build it
+3. **Does it duplicate ripgrep/sed/awk/find?** If yes → Don't build it
+4. **Will it lock users into mdite?** If yes → Reconsider approach
+5. **Does it follow Unix philosophy?** If no → Reconsider design
+
+**Examples:**
+
+- ✅ **`files` command** - Requires graph, provides unique value (depth/frontmatter filtering)
+- ✅ **`deps` command** - Requires graph, shows relationships
+- ✅ **Link validation** - Requires graph traversal
+- ❌ **Content search** - Doesn't require graph, ripgrep does it better
+- ❌ **Find/replace** - Doesn't require graph, sed does it better
+
+## Architecture Quick Reference
+
+**Core modules** (see `src/` for implementation):
+
+- `commands/` - CLI command handlers (lint, init, config, deps, cat, files; future: toc, stats)
+- `core/` - Business logic (doc-linter orchestrator, graph-analyzer, link-validator, config-manager, remark-engine, reporter)
+- `types/` - Zod schemas (config, graph, results, errors, exit-codes)
+- `utils/` - Shared utilities (Unix-friendly logger with TTY detection, errors, error-handler, fs, paths, slug)
+
+**Key directories:**
+
+- `src/` - Source code
+- `tests/` - Automated tests (unit, integration, fixtures)
+- `examples/` - Runnable examples and smoke tests (12 sets, 68 files)
+- `scripts/` - Build and release scripts
+- `.githooks/` - Pre-commit hooks
+
+**Key files:**
+
+- `src/index.ts` - CLI entry point (shebang for bin)
+- `src/cli.ts` - Commander setup with signal handlers, register all commands here
+- `src/core/doc-linter.ts` - Main orchestrator coordinating all operations
+- `src/core/graph-analyzer.ts` - **Graph foundation**: Dependency graph building via depth-first traversal (enables all features)
+- `src/core/link-validator.ts` - Validates file links and anchors
+- `src/types/config.ts` - Multi-layer config schema (defaults → user → project → CLI)
+- `src/types/exit-codes.ts` - Standard Unix exit codes (0/1/2/130)
+- `src/utils/logger.ts` - Unix-friendly logging (TTY detection, stdout/stderr separation, quiet/verbose modes)
+- `tests/setup.ts` - Test utilities and fixture helpers
+
+## Critical Concepts
+
+### scratch/ Directory
+
+YOUR working directory for development tasks on mdite itself:
+
+- NOT .gitignored (so you can access it)
+- Protected by pre-commit hook (won't be committed)
+- Separate from user docs being linted
+- For planning, experiments, analysis only
+
+### claude-iterate/ Directory
+
+AI workspace directory:
+
+- NOT .gitignored (AI agents need access)
+- Protected by pre-commit hook (won't be committed)
+- Contains iteration workspaces and reports
+- Never commit this to repo
+
+### Graph Foundation (Core Concept)
+
+**mdite treats documentation as a graph:**
+
+- **Nodes**: Markdown files (with depth tracking)
+- **Edges**: Links between files
+- **Root**: Entrypoint file (default: README.md, depth 0)
+
+This graph model enables ALL current and future features:
+
+- **Current**: Validation (lint), dependency analysis (deps), orphan detection
+- **Future**: Search (query), output (cat), TOC generation (toc), metrics (stats)
+
+**Graph traversal**: Depth-first from entrypoint (depth 0) → follows all relative `.md` links → increments depth per level → builds reachable set within `maxDepth` → orphans = all markdown files NOT in graph. Cycle detection prevents infinite loops.
+
+**Depth limiting**: `--depth <n>` or `depth` config option limits traversal depth. Default is `'unlimited'` (Infinity). Use for progressive validation, performance, or focused analysis. See `@ARCHITECTURE.md` Graph Building Algorithm section.
+
+### Multi-Layer Configuration
+
+Config loads in priority order (highest first):
+
+1. CLI options (`--entrypoint`, `--format`, `--depth`)
+2. Project config (`.mditerc`, `mdite.config.js`, `package.json#mdite`)
+3. User config (`~/.config/mdite/config.json` with `defaultDepth`)
+4. Defaults (in `src/types/config.ts`: `depth: 'unlimited'`)
+
+See `src/core/config-manager.ts` for implementation.
+
+### Error Hierarchy
+
+All errors extend `DocLintError` with `code`, `exitCode`, `context`, `cause`. 18 custom error classes for specific scenarios. See `src/utils/errors.ts`.
+
+### Unix CLI Patterns
+
+mdite is a tier-1 Unix CLI tool:
+
+- **TTY detection**: Auto-disables colors when piped, respects `NO_COLOR`/`FORCE_COLOR` env vars
+- **Stdout/stderr separation**: Data→stdout (pipeable), messages→stderr (suppressible with `--quiet`)
+- **Exit codes**: 0=success, 1=validation error, 2=usage error, 130=interrupted
+- **Signal handling**: SIGINT/SIGTERM/SIGPIPE handled gracefully
+- **Pipe-friendly**: Works with `grep`, `jq`, `awk`, `less`, etc.
+
+See `@ARCHITECTURE.md` Unix CLI Integration Patterns section for implementation details.
+
+## Development Workflow
+
+**Setup:** `git clone → npm install → npm run build → npm link` (test globally)
+
+**Change cycle:** Edit `src/` → `npm test` → `npm run typecheck` → `npm run lint` → `npm run build` → `npm link` → `cd examples && ./run-all-examples.sh` (smoke test)
+
+**Add command:** Create `src/commands/X.ts` → register in `src/cli.ts` → add tests → update README.md → add to CHANGELOG [Unreleased]
+
+**Modify schema:** Update `src/types/*.ts` Zod schema → update core logic → update tests → verify backwards compatibility
+
+**Add rule:** Define in appropriate module → add to `RuntimeConfig.rules` type → update `DEFAULT_CONFIG` → implement checking → add tests → update docs
+
+## Testing Strategy
+
+**Unit tests** (`tests/unit/`) - 17 files, 277 tests, isolated module testing, fast
+**Integration tests** (`tests/integration/`) - 58 tests, full CLI workflows, real filesystem operations
+**Smoke tests** (`examples/`) - 12 example sets for manual verification and regression testing
+**Test infrastructure** (`tests/setup.ts`, `tests/utils.ts`, `tests/mocks/`, `tests/fixtures/`)
+
+**Key test patterns:**
+
+- Logger tests (`tests/unit/logger.test.ts`) - 40 tests covering TTY detection, stdout/stderr separation, quiet/verbose modes
+- Integration tests use `spawnSync` to properly capture both stdout and stderr streams
+- Reporter tests verify stdout/stderr separation
+
+**Coverage:** 80%+ maintained, run `npm run test:coverage`
+
+## Examples Directory (Smoke Tests)
+
+**Location:** `examples/` (68 files across 12 example sets)
+
+**Purpose:** Manual testing, user documentation, regression verification
+
+**Quick Reference:**
+
+```bash
+# Run full smoke test suite (12 tests)
+cd examples && ./run-all-examples.sh
+
+# Test individual example
+cd examples/01-valid-docs && mdite lint
+```
+
+**Structure:**
+
+- **Phase 1 (01-04):** Core features (valid docs, orphans, broken links, broken anchors)
+- **Phase 2 (05-06):** Real-world site + config variations (5 examples)
+- **Phase 3 (07):** Edge cases (cycles, deep nesting, special chars)
+
+**When to Use:**
+
+Use `examples/` when:
+
+- Testing changes manually before committing
+- Verifying bug fixes work end-to-end
+- Adding new features (add corresponding example)
+- Preparing for releases (run smoke tests)
+
+Use `tests/fixtures/` when:
+
+- Writing automated unit tests
+- Testing specific edge cases in isolation
+- Running CI/CD pipelines
+
+**Adding New Examples:**
+
+1. Choose phase directory (01-04 core, 05-06 real-world, 07 edge cases)
+2. Create files with README.md + config + example docs
+3. Update `examples/run-all-examples.sh`
+4. Update `examples/README.md`
+5. Test: `cd examples/XX && mdite lint`
+
+See `examples/README.md` for full documentation.
+
+## Release Workflow
+
+**Pre-release:** Update CHANGELOG [Unreleased] section → `npm run validate` → `npm run build` → `npm run verify:package` → `npm run size:check` → `cd examples && ./run-all-examples.sh` (smoke test)
+
+**Release:** `npm version [patch|minor|major]` (auto-updates CHANGELOG via `scripts/update-changelog.js`, creates tag) → `git push && git push --tags` (triggers GitHub Actions CI/CD → npm publish with OIDC)
+
+**No auto-push** - Manual push required after version bump
+
+**GitHub Actions:**
+
+- `.github/workflows/ci.yml` - Multi-platform testing (Ubuntu/macOS/Windows, Node 20/22)
+- `.github/workflows/release.yml` - Automated npm publish on tag push (OIDC trusted publishing)
+- `.github/workflows/coverage.yml` - Coverage reports and badging
+
+## Common Issues
+
+- **TypeScript errors in tests**: Check `tests/setup.ts` imports vitest globals correctly
+- **Tests fail after schema change**: Update test fixtures in `tests/fixtures/` to match Zod schema
+- **npm link broken**: Run `npm run build` first (creates `dist/`)
+- **Examples failing**: Run `npm run build && npm link` then retry smoke tests
+- **Git hook not working**: Run `npm install` to trigger Husky setup via `prepare` script
+- **CLI not executable**: Check shebang in `src/index.ts` and `chmod +x dist/src/index.js` in postbuild
+- **Config not loading**: Verify cosmiconfig search paths in `src/core/config-manager.ts`
+- **New feature not tested**: Add example to `examples/` and update smoke test script
+
+## Build Scripts
+
+- `scripts/copy-files.js` - Copy package.json, README, CHANGELOG to dist/
+- `scripts/validate-build.js` - Verify build output structure
+- `scripts/update-changelog.js` - Auto-update CHANGELOG during version bump
+- `scripts/verify-package.js` - Verify package.json files array
+
+## Git Hooks
+
+- `.husky/pre-commit` - Blocks scratch/ and claude-iterate/, runs lint-staged (ESLint + Prettier on staged files)
+- Uses Husky + lint-staged for modern, cross-platform git hook management
+
+Setup: Automatic via `prepare` script when running `npm install`
+
+## Key Metadata
+
+- **Repo:** github.com/radleta/mdite
+- **Author:** Richard Adleta
+- **Package:** `mdite` (not yet published to npm)
+- **License:** MIT
+- **Engines:** Node 20+
+- **Package size:** ~25.6 kB (optimized)
+- **CI/CD:** Multi-OS testing, automated releases with OIDC
+
+## Related Docs
+
+See @README.md for user guide, @ARCHITECTURE.md for detailed design, @CONTRIBUTING.md for contribution guidelines, CHANGELOG.md for history.
+
+---
+
+**Remember:** This is developer context for building mdite. For usage docs, see README.md.

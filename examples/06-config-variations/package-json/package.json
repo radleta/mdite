@@ -1,0 +1,23 @@
+{
+  "name": "mdite-config-example",
+  "version": "1.0.0",
+  "description": "Example of mdite configuration in package.json",
+  "private": true,
+  "scripts": {
+    "docs:lint": "mdite lint"
+  },
+  "mdite": {
+    "entrypoint": "README.md",
+    "rules": {
+      "orphan-files": "error",
+      "dead-link": "error",
+      "dead-anchor": "error"
+    }
+  },
+  "keywords": [
+    "documentation",
+    "example"
+  ],
+  "author": "Example Team",
+  "license": "MIT"
+}

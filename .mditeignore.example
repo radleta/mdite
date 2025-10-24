@@ -1,0 +1,46 @@
+# .mditeignore - mdite ignore patterns
+#
+# Syntax: Gitignore-compatible patterns
+# - Use wildcards: *, **, ?
+# - Directory matching: trailing /
+# - Negation: ! prefix to re-include
+# - Comments: lines starting with #
+# - Blank lines are ignored
+#
+# See: https://git-scm.com/docs/gitignore#_pattern_format
+
+# Drafts and work-in-progress
+drafts/
+*.draft.md
+*.wip.md
+
+# Temporary files
+temp/
+scratch/
+*.temp.md
+
+# Generated documentation
+_generated/
+dist/docs/
+
+# Templates
+templates/
+_template-*.md
+
+# Node modules (auto-excluded by default, but explicit here)
+node_modules/
+
+# Hidden directories (auto-excluded by default)
+.git/
+.github/
+.vscode/
+
+# Negation example: keep important draft
+!drafts/important.md
+
+# Exclude all test docs
+**/*.test.md
+
+# Platform-specific
+.DS_Store
+Thumbs.db
