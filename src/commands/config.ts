@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { writeSync } from 'fs';
+import { writeSync, writeFileSync } from 'fs';
 import { ConfigManager } from '../core/config-manager.js';
 import { Logger, shouldUseColors } from '../utils/logger.js';
 import { CliOptions } from '../types/config.js';
@@ -156,11 +156,33 @@ export function configCommand(): Command {
 async function displaySchema(logger: Logger, format: string): Promise<void> {
   if (format === 'json') {
     const json = JSON.stringify(buildSchemaJson(), null, 2) + '\n';
-    // Use fs.writeSync() with stdout file descriptor (1) instead of console.log() or process.stdout.write()
-    // to ensure synchronous, blocking write that completes before process.exit() on all platforms.
-    // On macOS Node 20.x, process.stdout.write() is async when piped and can truncate at 8KB if
-    // process.exit() is called before the write completes. writeSync() blocks until done.
-    writeSync(1, json);
+
+    // OBSERVABILITY: Log to stderr (doesn't interfere with stdout)
+    console.error(`[DEBUG] JSON generated, length: ${json.length} bytes`);
+    console.error(
+      `[DEBUG] Node: ${process.version}, Platform: ${process.platform}, PID: ${process.pid}`
+    );
+    console.error(`[DEBUG] stdout.isTTY: ${process.stdout.isTTY}`);
+
+    // OBSERVABILITY: Write to temp file as proof of full generation
+    try {
+      const debugFile = `/tmp/mdite-debug-${process.pid}-${Date.now()}.json`;
+      writeFileSync(debugFile, json);
+      console.error(`[DEBUG] Wrote to file: ${debugFile} (${json.length} bytes)`);
+    } catch (err) {
+      console.error(`[DEBUG] File write ERROR:`, err);
+    }
+
+    // OBSERVABILITY: Try to write to stdout with error handling
+    console.error(`[DEBUG] About to writeSync to fd 1...`);
+    try {
+      const bytesWritten = writeSync(1, json);
+      console.error(`[DEBUG] writeSync completed, returned: ${bytesWritten}`);
+    } catch (err) {
+      console.error(`[DEBUG] writeSync ERROR:`, err);
+      throw err;
+    }
+    console.error(`[DEBUG] After writeSync, about to return`);
   } else {
     displaySchemaText(logger);
   }
