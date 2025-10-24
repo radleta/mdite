@@ -108,27 +108,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Aligns with other commands (deps, config, lint) in using global options
 
 - **CI/CD**: Fixed JSON truncation issue in config schema output on macOS Node 20.x
-  - **Root cause**: `fs.writeSync()` on macOS Node 20.x only writes up to pipe buffer size (8KB) in a single call, even though it's supposed to be synchronous and block until all data is written. This is a platform-specific behavior where writeSync() returns the number of bytes actually written (8192) instead of blocking until all bytes are written (12468).
-  - **Solution**: Handle partial writes with a loop - the standard Unix pattern for writing to pipes/sockets. Keep calling `writeSync()` with remaining data until all bytes are written.
-  - **Implementation**:
+  - **Root causes** (discovered through systematic observability and web research):
+    1. **Partial writes**: `fs.writeSync()` on macOS Node 20.x only writes up to pipe buffer size (8KB) per call
+    2. **EAGAIN errors**: Node.js sets stdout to non-blocking mode, causing EAGAIN when pipe buffer fills between successive test runs
+  - **Solutions implemented**:
+    1. **Partial write loop**: Retry with remaining data after each partial write
+    2. **EAGAIN retry loop**: Catch EAGAIN errors, sleep 10ms, and retry up to 100 times
+  - **Complete implementation**:
     ```typescript
     let offset = 0;
     while (offset < json.length) {
-      const bytesWritten = writeSync(1, json.slice(offset));
-      offset += bytesWritten;
+      const chunk = json.substring(offset);
+      // Retry loop for EAGAIN errors
+      while (true) {
+        try {
+          const bytesWritten = writeSync(1, chunk);
+          offset += bytesWritten;
+          break; // Success
+        } catch (err) {
+          if (err.code === 'EAGAIN' && retries < maxRetries) {
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10); // Sleep 10ms
+            continue; // Retry
+          }
+          throw err; // Non-EAGAIN or too many retries
+        }
+      }
     }
     ```
   - **How it works**:
-    - Linux/most platforms: Completes in 1 iteration (writes all 12468 bytes at once)
-    - macOS Node 20.x: Completes in 2 iterations (8192 + 4276 bytes)
-    - Adapts automatically to any platform's pipe buffer size
-  - **Discovery process**: Added comprehensive observability (stderr logging, temp file writes, bytesWritten tracking) which revealed that writeSync() was returning 8192 instead of 12468 on macOS 20.x
-  - Also improved test infrastructure:
-    - Added diagnostic output to track stdout/stderr byte lengths
-    - Added explicit `stdio: ['pipe', 'pipe', 'pipe']` to spawnSync calls
-    - Increased `maxBuffer` in `spawnSync` to 10MB for safety
+    - Linux/most platforms: Single write (12468 bytes), no EAGAIN
+    - macOS Node 20.x: 2 partial writes (8192 + 4276 bytes), occasional EAGAIN retries
+    - Adapts to any platform's pipe buffer size and timing
+  - **Discovery process**:
+    - Added comprehensive observability (stderr logging, temp file writes, bytesWritten tracking)
+    - Revealed partial write issue (writeSync returned 8192 instead of 12468)
+    - Web research revealed EAGAIN issue with non-blocking stdout
+    - Pattern: Tests 1-2 passed, test 3 failed (pipe buffer not drained between runs)
+  - Test infrastructure improvements:
+    - Diagnostic output tracking stdout/stderr byte lengths
+    - Explicit `stdio: ['pipe', 'pipe', 'pipe']` in spawnSync
+    - Increased `maxBuffer` to 10MB for safety
   - Affected: `mdite config --schema --format json` command and 3 related tests
-  - Fixed after 9 attempts using systematic observability to identify the exact failure point
+  - Fixed after 11 attempts using observability and targeted web research
+  - References: Stack Overflow on EAGAIN with Node.js pipes, Node.js GitHub issues on non-blocking stdio
 
 ### Performance
 
