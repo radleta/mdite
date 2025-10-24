@@ -1,6 +1,6 @@
 {
   "name": "mdite",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Markdown documentation toolkit - work with documentation as a connected system: validate, analyze dependencies, search, and output",
   "type": "module",
   "main": "dist/src/index.js",
