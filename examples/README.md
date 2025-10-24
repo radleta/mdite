@@ -218,6 +218,42 @@ mdite lint  # unlimited
 
 ---
 
+### 08-multi-file-validation/ 🔀
+
+Demonstrates multi-file linting with variadic arguments.
+
+**Try it:**
+
+```bash
+cd 08-multi-file-validation
+mdite lint core/api.md core/cli.md core/config.md
+mdite lint core/*.md --depth 1
+```
+
+**Expected:**
+
+- ✅ All specified files validated as entry points (depth 0)
+- ✅ shared.md found (linked from all core files)
+- ❌ orphan.md detected (not linked from any entry point)
+- **Exit code: 1** (orphan detected)
+
+**Features demonstrated:**
+
+- Linting multiple specific files simultaneously
+- Each file starts at depth 0
+- Graph merging and deduplication
+- Perfect for pre-commit hooks: `mdite lint $(git diff --cached --name-only | grep '\.md$')`
+- Selective validation of documentation sections
+
+**Use cases:**
+
+- Pre-commit hooks (lint only changed files)
+- CI/CD parallel validation
+- Selective section validation
+- Author workflow for related docs
+
+---
+
 ### 09-file-exclusion/ 🚫
 
 Comprehensive demonstration of file exclusion capabilities.
@@ -374,6 +410,71 @@ mdite lint docs/api/README.md docs/guides/README.md
 
 ---
 
+### 12-files-command/ 📋
+
+Demonstrates the `mdite files` command - a graph-filtered file list provider that follows Unix philosophy.
+
+**Try it:**
+
+```bash
+cd 12-files-command
+
+# Basic listing
+mdite files
+
+# Depth filtering
+mdite files --depth 1
+
+# Frontmatter filtering (JMESPath queries)
+mdite files --frontmatter "status=='published'"
+mdite files --frontmatter "contains(tags, 'api')"
+
+# Orphan detection
+mdite files --orphans
+
+# Output formats
+mdite files --format json
+mdite files --with-depth
+mdite files --print0  # For xargs -0
+
+# Sorting
+mdite files --sort depth
+mdite files --sort incoming
+mdite files --sort outgoing
+
+# Unix composition
+mdite files | xargs rg "API"
+mdite files --frontmatter "status=='published'" | xargs wc -w
+```
+
+**Expected:** ✅ File lists filtered by graph, metadata, and depth
+
+**Features demonstrated:**
+
+- Graph-filtered file listing
+- Depth filtering
+- Frontmatter metadata queries with JMESPath
+- Orphan file detection
+- Multiple output formats (list, JSON)
+- Depth annotation
+- Null-separated output for xargs
+- Sorting by depth, incoming/outgoing links, alphabetical
+- Unix tool composition (ripgrep, sed, wc, etc.)
+
+**Use cases:**
+
+- Graph-aware search: `mdite files | xargs rg "pattern"`
+- Bulk operations: `mdite files --frontmatter "status=='draft'" | xargs sed -i 's/old/new/'`
+- Metadata filtering combined with graph operations
+- Find and archive orphaned files
+- Statistics and analysis across filtered docs
+
+**Philosophy:**
+
+Following Unix philosophy, `mdite files` provides graph-filtered lists that compose with ANY Unix tool (ripgrep, sed, awk, custom scripts) rather than reimplementing search/transform functionality.
+
+---
+
 ## Running All Examples (Smoke Test)
 
 ```bash
@@ -475,6 +576,7 @@ After running examples, you should see:
 **Phase 4: Advanced Features**
 
 - ✅ **08-depth-limiting/** - Depth limiting feature (unlimited depth, no orphans)
+- ❌ **08-multi-file-validation/** - Multi-file linting (detects 1 orphan)
 - ✅ **09-file-exclusion/\*** - All exclusion methods work correctly
 
 **Phase 5: Content Output**
@@ -484,6 +586,10 @@ After running examples, you should see:
 **Phase 6: Scope Limiting**
 
 - ✅ **11-scope-limiting/** - Scoped validation with external link policies
+
+**Phase 7: Files Command**
+
+- ✅ **12-files-command/** - File listing with graph, depth, and frontmatter filtering
 
 All examples working correctly = mdite is functioning as expected! 🎉
 
@@ -526,6 +632,15 @@ examples/
 │           └── level3/
 │               └── advanced.md
 │
+├── 08-multi-file-validation/         # 🔀 Multi-File Validation
+│   ├── README.md
+│   ├── core/
+│   │   ├── api.md
+│   │   ├── cli.md
+│   │   └── config.md
+│   ├── shared.md
+│   └── orphan.md
+│
 ├── 09-file-exclusion/                # 🚫 File Exclusion
 │   ├── cli-exclude/
 │   ├── config-exclude/
@@ -540,15 +655,23 @@ examples/
 │       ├── installation.md
 │       └── configuration.md
 │
-└── 11-scope-limiting/                # 🎯 Scope Limiting
-    ├── docs/
-    │   ├── api/
-    │   │   ├── README.md
-    │   │   ├── endpoints.md
-    │   │   └── methods.md
-    │   └── guides/
-    │       ├── README.md
-    │       ├── setup.md
-    │       └── tutorial.md
-    └── root-README.md
+├── 11-scope-limiting/                # 🎯 Scope Limiting
+│   ├── docs/
+│   │   ├── api/
+│   │   │   ├── README.md
+│   │   │   ├── endpoints.md
+│   │   │   └── methods.md
+│   │   └── guides/
+│   │       ├── README.md
+│   │       ├── setup.md
+│   │       └── tutorial.md
+│   └── root-README.md
+│
+└── 12-files-command/                 # 📋 Files Command
+    ├── README.md
+    ├── api.md
+    ├── tutorial.md
+    ├── draft.md
+    ├── archive.md
+    └── orphan.md
 ```

@@ -4,7 +4,7 @@ This example demonstrates mdite's scope limiting feature, which restricts valida
 
 ## Feature Overview
 
-**Directory-scoped validation** (new in v1.0.0):
+**Directory-scoped validation** (new in v0.1.0):
 
 - When you run `mdite lint docs/api/README.md`, it only validates files within `docs/api/**` by default
 - Links pointing outside the scope are validated (file exists) but not traversed

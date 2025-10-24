@@ -1,6 +1,5 @@
 # mdite
 
-[![npm version](https://img.shields.io/npm/v/mdite.svg)](https://www.npmjs.com/package/mdite)
 [![CI](https://github.com/radleta/mdite/actions/workflows/ci.yml/badge.svg)](https://github.com/radleta/mdite/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -94,9 +93,13 @@ mdite cat --order deps | pandoc -o book.pdf
 
 ### Installation
 
+> **Note:** mdite will be published to npm with the first release. Once published, install via:
+
 ```bash
 npm install -g mdite
 ```
+
+> For now, you can clone and build from source: `git clone https://github.com/radleta/mdite.git && cd mdite && npm install && npm run build && npm link`
 
 ### Three Core Workflows
 
@@ -236,9 +239,12 @@ mdite cat --format json | jq '.[] | {file, wordCount}'
 
 **Coming Soon:**
 
+> ⚠️ **Note:** The following features are planned but not yet implemented. They are shown here to illustrate the project's vision.
+
 **Search across the system:**
 
 ```bash
+# FUTURE FEATURE - not yet available
 # Find all docs mentioning "authentication"
 mdite query "authentication" --content
 
@@ -252,6 +258,7 @@ mdite query "config" --from docs/reference/
 **Transform the system:**
 
 ```bash
+# FUTURE FEATURE - not yet available
 # Generate table of contents from graph
 mdite toc --depth 2
 
@@ -878,11 +885,14 @@ mdite config --sources
 
 ### Future Commands
 
+> ⚠️ **Note:** These commands are planned for future releases and are not yet available.
+
 Coming soon as mdite expands:
 
 #### `mdite toc` - Generate Table of Contents
 
 ```bash
+# FUTURE FEATURE - not yet available
 # Generate TOC from graph
 mdite toc --depth 2
 ```
@@ -890,6 +900,7 @@ mdite toc --depth 2
 #### `mdite stats` - Documentation Metrics
 
 ```bash
+# FUTURE FEATURE - not yet available
 # Analyze documentation metrics
 mdite stats --depth 2
 ```
@@ -1177,6 +1188,8 @@ mdite is evolving from a linter into a complete **documentation toolkit**.
   - Pipe-friendly for Unix workflows
 
 ### 🚧 Future Features
+
+> ⚠️ **Note:** These features are planned for future releases and are not yet implemented.
 
 - **`mdite query`** - Search across documentation system
   - Content search
