@@ -108,19 +108,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Aligns with other commands (deps, config, lint) in using global options
 
 - **CI/CD**: Fixed JSON truncation issue in config schema output on macOS Node 20.x
-  - Root cause: Calling `process.exit()` immediately after stdout write closes pipe before parent process finishes reading, causing truncation at 8KB on macOS
-  - Fixed by removing `process.exit()` calls and using `return` to let process exit naturally after event loop completes
-  - Combined with `fs.writeSync(1, data)` for synchronous stdout write (instead of async `process.stdout.write()`)
-  - Allows parent process (spawnSync) to fully read pipe contents before child process terminates
-  - Works on all platforms and all Node versions (20.x, 22.x+)
+  - **Root cause**: `fs.writeSync()` on macOS Node 20.x only writes up to pipe buffer size (8KB) in a single call, even though it's supposed to be synchronous and block until all data is written. This is a platform-specific behavior where writeSync() returns the number of bytes actually written (8192) instead of blocking until all bytes are written (12468).
+  - **Solution**: Handle partial writes with a loop - the standard Unix pattern for writing to pipes/sockets. Keep calling `writeSync()` with remaining data until all bytes are written.
+  - **Implementation**:
+    ```typescript
+    let offset = 0;
+    while (offset < json.length) {
+      const bytesWritten = writeSync(1, json.slice(offset));
+      offset += bytesWritten;
+    }
+    ```
+  - **How it works**:
+    - Linux/most platforms: Completes in 1 iteration (writes all 12468 bytes at once)
+    - macOS Node 20.x: Completes in 2 iterations (8192 + 4276 bytes)
+    - Adapts automatically to any platform's pipe buffer size
+  - **Discovery process**: Added comprehensive observability (stderr logging, temp file writes, bytesWritten tracking) which revealed that writeSync() was returning 8192 instead of 12468 on macOS 20.x
   - Also improved test infrastructure:
     - Added diagnostic output to track stdout/stderr byte lengths
     - Added explicit `stdio: ['pipe', 'pipe', 'pipe']` to spawnSync calls
-    - Removed `encoding: 'utf-8'` option and manually decode stdout buffer
-    - Added explicit `cwd: process.cwd()` to ensure correct working directory
     - Increased `maxBuffer` in `spawnSync` to 10MB for safety
   - Affected: `mdite config --schema --format json` command and 3 related tests
-  - Issue occurred on macOS GitHub Actions runners with Node 20.x, JSON output truncated at exactly 8192 bytes
+  - Fixed after 9 attempts using systematic observability to identify the exact failure point
 
 ### Performance
 
