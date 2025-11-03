@@ -87,7 +87,7 @@ export function lintCommand(): Command {
     .description('Lint documentation files')
     .addHelpText('after', DESCRIPTION)
     .argument('[paths...]', 'Documentation files or directory', ['.'])
-    .option('--format <type>', 'Output format (text|json)', 'text')
+    .option('--format <type>', 'Output format (text|json|grep)', 'text')
     .option('--entrypoint <file>', 'Entrypoint file (overrides config)')
     .option('--depth <n>', 'Maximum depth of traversal (default: unlimited)', 'unlimited')
     .option(
@@ -114,10 +114,11 @@ export function lintCommand(): Command {
     .action(async (pathsArg: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();
       const isJsonFormat = options.format === 'json';
+      const isGrepFormat = options.format === 'grep';
 
       // Determine colors setting
       const colors = (() => {
-        if (isJsonFormat) return false; // JSON never uses colors
+        if (isJsonFormat || isGrepFormat) return false; // JSON and grep never use colors
         if (globalOpts.colors === true) return true; // Forced on
         if (globalOpts.colors === false) return false; // Forced off
         return shouldUseColors(); // Auto-detect

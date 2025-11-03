@@ -449,7 +449,36 @@ mdite deps README.md --format json | jq -r '.outgoing[] | [.file, .depth] | @csv
 
 **Benefit:** Full integration with Unix ecosystem (grep, jq, awk, sed, mail, etc.)
 
-### 7. Progressive Validation
+### 7. Automated Link Fixing with Grep Format
+
+```bash
+# Find all dead links with literal paths (grep format)
+mdite lint --format grep > dead-links.tsv
+
+# Extract just the literal link text (field 7)
+mdite lint --format grep | cut -d$'\t' -f7
+
+# Extract file, line, and literal for manual fixing
+mdite lint --format grep | awk -F'\t' '{print $1 ":" $2 " → " $7}'
+
+# Automated fix workflow example
+mdite lint --format grep | while IFS=$'\t' read file line col endCol severity rule literal resolved; do
+  if [ "$rule" = "dead-link" ]; then
+    echo "Fix: $file:$line - Replace '$literal' with correct path"
+    # Add your automated fix logic here (sed, etc.)
+  fi
+done
+
+# Extract broken links by file
+mdite lint --format grep | awk -F'\t' '$6=="dead-link" {print $1, $7}' | sort
+
+# Count broken links by type
+mdite lint --format grep | cut -d$'\t' -f6 | sort | uniq -c
+```
+
+**Benefit:** Automated fix scripts can locate and replace broken links using exact text from source files, no path reverse-engineering needed.
+
+### 8. Progressive Validation
 
 ```bash
 # Start with core docs only
@@ -568,6 +597,15 @@ mdite lint ./docs
 # JSON output for CI/CD (auto-disables colors)
 mdite lint --format json
 
+# Grep format for automated fixes (tab-delimited)
+mdite lint --format grep
+
+# Extract all literal paths
+mdite lint --format grep | cut -d$'\t' -f7
+
+# Extract file and literal for processing
+mdite lint --format grep | awk -F'\t' '{print $1, $7}'
+
 # Pipe JSON to jq for analysis
 mdite lint --format json | jq '.[] | select(.severity=="error")'
 
@@ -614,7 +652,7 @@ mdite lint $(git diff --cached --name-only | grep '\.md$') --depth 1
 
 **Options:**
 
-- `--format <type>` - Output: `text` (default) or `json`
+- `--format <type>` - Output: `text` (default), `json`, or `grep`
 - `--entrypoint <file>` - Entrypoint file (overrides config, cannot be used with multiple files)
 - `--depth <n>` - Maximum depth of traversal (default: unlimited, applies to all files)
 - `-q, --quiet` - Suppress informational output (only show errors)

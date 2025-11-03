@@ -181,9 +181,14 @@ describe('mdite lint [paths...] (multi-file)', () => {
       const result = runLint(['A.md', 'B.md']);
 
       expect(result.exitCode).toBe(1);
-      // Should report broken.md error only once, not twice
+      // Should report broken.md error once per file (A.md and B.md)
+      // With literal/resolved format, "broken.md" appears twice per error line (literal + resolved)
+      // So we expect 2 errors * 2 occurrences = 4 total mentions
       const brokenCount = (result.stdout.match(/broken\.md/g) || []).length;
-      expect(brokenCount).toBeLessThanOrEqual(2); // Once in each file's context
+      expect(brokenCount).toBeGreaterThan(0); // At least some errors reported
+      // Count actual error lines instead
+      const errorLines = result.stdout.split('\n').filter(line => line.includes('dead-link'));
+      expect(errorLines.length).toBe(2); // One error per file
     });
   });
 

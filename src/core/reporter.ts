@@ -4,13 +4,15 @@ import { Logger } from '../utils/logger.js';
 
 export class Reporter {
   constructor(
-    private format: 'text' | 'json',
+    private format: 'text' | 'json' | 'grep',
     private logger: Logger
   ) {}
 
   report(results: LintResults): void {
     if (this.format === 'json') {
       this.reportJson(results);
+    } else if (this.format === 'grep') {
+      this.reportGrep(results);
     } else {
       this.reportText(results);
     }
@@ -45,6 +47,7 @@ export class Reporter {
         const severity = error.severity === 'error' ? chalk.red('error') : chalk.yellow('warn');
         const rule = chalk.gray(`[${error.rule}]`);
 
+        // Message already includes literal/resolved formatting if available
         this.logger.log(`  ${location} ${severity} ${error.message} ${rule}`);
       }
       this.logger.log('');
@@ -59,5 +62,25 @@ export class Reporter {
 
   private reportJson(results: LintResults): void {
     console.log(JSON.stringify(results.getAllErrors(), null, 2));
+  }
+
+  private reportGrep(results: LintResults): void {
+    const errors = results.getAllErrors();
+
+    // Grep format: tab-delimited fields (file, line, column, endColumn, severity, ruleId, literal, resolvedPath)
+    for (const error of errors) {
+      const file = error.file;
+      const line = error.line.toString();
+      const column = error.column.toString();
+      const endColumn = error.endColumn?.toString() || '';
+      const severity = error.severity;
+      const ruleId = error.rule;
+      const literal = error.literal || '';
+      const resolvedPath = error.resolvedPath || '';
+
+      // Tab-delimited output (ensure all fields are strings)
+      const fields = [file, line, column, endColumn, severity, ruleId, literal, resolvedPath];
+      console.log(fields.join('\t'));
+    }
   }
 }

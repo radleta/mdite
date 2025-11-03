@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Enhanced
+
+- **Literal path error reporting**: mdite lint now reports literal link text from source files alongside resolved paths
+  - Text format: Shows `'literal' resolves to 'resolved'` inline for clear understanding
+  - JSON format: Includes `literal`, `endColumn` fields (flat structure, backward compatible)
+  - New grep format: `--format grep` outputs tab-delimited for Unix tool parsing (cut/awk/sed)
+  - Enables automated fix scripts with grep/sed without reverse-engineering paths
+  - Example: `mdite lint --format grep | cut -d$'\t' -f7` extracts all literal paths
+  - All formats maintain backward compatibility with existing parsers
+
 ## [1.0.2] - 2025-10-24
 
 ### Fixed
