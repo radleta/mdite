@@ -23,7 +23,7 @@ DESCRIPTION:
   Without flags: Shows merged configuration from all sources
   With --schema: Shows all available configuration options
   With --explain: Shows detailed docs for specific option
-  With --sources: Shows which layer provides each value
+  With --sources: Shows which layer provides each value (Phase 2, currently shows placeholder)
   With --template: Generates comprehensive config template
 
   Configuration layers (highest to lowest priority):
@@ -57,9 +57,34 @@ EXAMPLES:
       $ mdite config --quiet | jq '.entrypoint'
 `;
 
+const OUTPUT = `
+OUTPUT:
+  - Data to stdout (pipeable): Configuration JSON or formatted text
+  - Messages to stderr (suppressible): Headers, prompts, help text
+  - Quiet mode (--quiet): Suppresses stderr messages, outputs only config data
+  - Format options (--format):
+      • text: Human-readable with colors (default, --schema and no-flag modes)
+      • json: Structured data for programmatic processing (pipeable to jq)
+      • js/yaml/md: Template formats (only with --template flag)
+  - Schema output: All options with descriptions, types, defaults, examples
+  - Explain output: Detailed help for specific option with fuzzy matching
+  - Color handling: Auto-disabled for JSON and when piped, respects NO_COLOR/FORCE_COLOR
+  - Exit codes: 0=success, 1=error, 2=invalid arguments (unknown option), 130=interrupted
+  - TTY detection: Colors auto-disable when piped to other tools (jq, grep, less)
+  - Template output: Can write to file with --output or stdout for piping
+`;
+
 const SEE_ALSO = `
 SEE ALSO:
-  mdite init  Create configuration file
+  Configuration:
+    mdite init               Create config file with defaults
+
+  Core workflow:
+    mdite lint               Use config for validation
+    mdite deps               Use config for graph traversal
+
+  Global:
+    mdite --help             Main help with exit codes and environment variables
 `;
 
 // ============================================================================
@@ -77,6 +102,7 @@ export function configCommand(): Command {
     .option('--output <file>', 'Write template to file (for --template)')
     .addHelpText('after', DESCRIPTION)
     .addHelpText('after', EXAMPLES)
+    .addHelpText('after', OUTPUT)
     .addHelpText('after', SEE_ALSO)
     .action(async (options, command) => {
       const globalOpts = command.optsWithGlobals();

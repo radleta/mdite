@@ -61,21 +61,33 @@ EXAMPLES:
 
 const OUTPUT = `
 OUTPUT:
-  Text format (default):
-    - Data (errors/warnings) → stdout (pipeable)
-    - Messages (progress/info) → stderr (suppressible with --quiet)
-
-  JSON format:
-    - Structured JSON → stdout
-    - Errors → stderr
-    - Colors auto-disabled
+  - Data to stdout (pipeable): Validation errors and warnings
+  - Messages to stderr (suppressible): Progress updates, summaries, headers
+  - Quiet mode (--quiet): Suppresses stderr messages, keeps only errors on stdout
+  - Format options (--format):
+      • text: Human-readable with colors, file:line:col format (default)
+      • json: Structured array [{file, line, column, severity, rule, message, endColumn?, literal?, resolvedPath?}]
+      • grep: Tab-delimited with 8 fields: file, line, column, endColumn, severity, rule, literal, resolvedPath
+  - Color handling: Auto-disabled for JSON/grep and when piped, respects NO_COLOR/FORCE_COLOR
+  - Exit codes: 0=no errors, 1=validation errors, 2=invalid arguments, 130=interrupted
+  - TTY detection: Colors auto-disable when piped to other tools (grep, jq, less)
+  - Error output: Validation errors go to stdout, system errors to stderr
+  - Pipe-friendly: Works with grep, jq, awk, cut - clean stdout for processing
+  - Grep format: Tab-delimited for easy extraction with cut/awk, includes literal link text
 `;
 
 const SEE_ALSO = `
 SEE ALSO:
-  mdite deps    Analyze dependencies before refactoring
-  mdite files   List files in documentation graph
-  mdite config  View configuration
+  Core workflow:
+    mdite deps               Analyze dependencies before refactoring
+    mdite files              List files in documentation graph
+
+  Configuration:
+    mdite config             View current configuration
+    mdite init               Create config file
+
+  Global:
+    mdite --help             Main help with exit codes and environment variables
 `;
 
 // ============================================================================

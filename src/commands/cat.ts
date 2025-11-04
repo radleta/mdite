@@ -62,10 +62,35 @@ EXAMPLES:
       $ mdite cat | pandoc -s -o documentation.html
 `;
 
+const OUTPUT = `
+OUTPUT:
+  - Data to stdout (pipeable): File content (markdown) or JSON with metadata
+  - Messages to stderr (suppressible): Progress messages, file counts, errors
+  - Quiet mode (--quiet): Suppresses stderr progress, keeps only content on stdout
+  - Format options (--format):
+      • markdown: Raw file content concatenated with separators (default)
+      • json: Array with {file, depth, content, wordCount, lineCount} per file
+  - Separator handling: --separator supports escape sequences (\\n, \\t, etc.)
+  - Order options: --order deps (respects document relationships), --order alpha (predictable)
+  - Color handling: Never uses colors (content must be parseable)
+  - Exit codes: 0=success, 1=error, 2=invalid arguments, 130=interrupted
+  - TTY detection: Output always pipe-friendly regardless of terminal
+  - Stream efficiency: Outputs files sequentially for memory efficiency on large docs
+  - Pipe compatibility: Works with pandoc, grep, awk, sed, jq - clean stdout for processing
+`;
+
 const SEE_ALSO = `
 SEE ALSO:
-  mdite files   List files for selective output
-  mdite deps    Understand dependency order
+  Core workflow:
+    mdite files              List files for selective output
+    mdite deps               Understand dependency order
+
+  Configuration:
+    mdite config             View current configuration
+    mdite init               Create config file
+
+  Global:
+    mdite --help             Main help with exit codes and environment variables
 `;
 
 // ============================================================================
@@ -91,6 +116,7 @@ export function catCommand(): Command {
     .option('--respect-gitignore', 'Respect .gitignore patterns')
     .option('--no-exclude-hidden', "Don't exclude hidden directories")
     .addHelpText('after', EXAMPLES)
+    .addHelpText('after', OUTPUT)
     .addHelpText('after', SEE_ALSO)
     .action(async (files: string[], options, command) => {
       const globalOpts = command.optsWithGlobals();

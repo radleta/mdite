@@ -525,6 +525,219 @@ Add an example if:
 
 See [examples/README.md](./examples/README.md) for existing examples and detailed documentation.
 
+## CLI Help Text Standards
+
+mdite follows industry best practices from established CLI tools (git, docker, npm, ripgrep) to provide comprehensive, agent-optimized help text. This section documents patterns for maintaining and extending CLI help.
+
+### Hybrid Architecture
+
+**Shared Content** (`src/utils/help-text.ts`):
+
+- Content identical across all commands
+- Examples: EXIT_CODES, ENVIRONMENT_VARS, CONFIG_PRECEDENCE
+- Export as constants, import where needed
+
+**Command-Specific Content** (colocated with command files):
+
+- DESCRIPTION, EXAMPLES, OUTPUT, SEE_ALSO constants
+- Defined at top of command file (e.g., `src/commands/lint.ts`)
+- Registered via `.addHelpText('after', CONSTANT)`
+
+### Help Text Components
+
+Every command should include these sections in order:
+
+#### 1. DESCRIPTION Constant
+
+```typescript
+const DESCRIPTION = `
+DESCRIPTION:
+  Brief explanation of what command does (1-2 sentences).
+
+  Use cases:
+    - Use case 1
+    - Use case 2
+    - Use case 3
+
+  Key features or behaviors:
+    - Feature 1
+    - Feature 2
+`;
+```
+
+**Guidelines:**
+
+- Start with high-level purpose
+- Include 3-4 use cases showing when to use the command
+- List key features or special behaviors
+- Keep concise but informative
+
+#### 2. EXAMPLES Constant
+
+```typescript
+const EXAMPLES = `
+EXAMPLES:
+  Basic usage:
+      $ mdite command
+
+  With common option:
+      $ mdite command --option value
+
+  Advanced scenario:
+      $ mdite command --flag1 --flag2 value
+
+  Piping to other tools:
+      $ mdite command | grep "pattern"
+
+  JSON output for tooling:
+      $ mdite command --format json | jq '.field'
+
+  CI/CD integration:
+      $ mdite command --quiet || exit 1
+
+  Complex workflow:
+      $ mdite command --multiple --flags | xargs other-tool
+
+  Edge case:
+      $ mdite command --special-case
+`;
+```
+
+**Guidelines:**
+
+- Aim for 8-10 examples covering all use cases
+- Use 6-space indentation for consistency
+- Prefix commands with `$` for clarity
+- Add blank line between examples
+- Include: basic usage, common options, advanced scenarios, piping, CI/CD, edge cases
+- Show Unix tool composition (grep, jq, xargs, etc.)
+
+#### 3. OUTPUT Constant
+
+```typescript
+const OUTPUT = `
+OUTPUT:
+  - Data to stdout (pipeable): What data goes to stdout
+  - Messages to stderr (suppressible): What messages go to stderr
+  - Quiet mode (--quiet): Suppresses stderr, keeps stdout data
+  - Format options (--format):
+      • format1: Description of format
+      • format2: Description of format
+      • format3: Description of format
+  - Color handling: Auto-disabled for JSON and when piped, respects NO_COLOR/FORCE_COLOR
+  - Exit codes: 0=success, 1=validation errors, 2=invalid arguments, 130=interrupted
+  - TTY detection: Colors auto-disable when piped to other tools
+  - Error output: Where errors appear (stdout vs stderr)
+  - Pipe-friendly: Works with grep, jq, awk - clean stdout for processing
+  - Additional behavior: Any other relevant output behavior
+`;
+```
+
+**Guidelines:**
+
+- Aim for 8-10 bullet points covering all output behaviors
+- Document stdout/stderr separation (critical for Unix composition)
+- Explain --quiet mode behavior
+- List all --format options with descriptions
+- Document color handling (TTY detection, NO_COLOR, FORCE_COLOR)
+- List exit codes
+- Explain piping behavior
+- Mention tools that work well with the command
+
+#### 4. SEE_ALSO Constant
+
+```typescript
+const SEE_ALSO = `
+SEE ALSO:
+  Core workflow:
+    mdite lint               Validate documentation structure
+    mdite deps               Analyze file dependencies
+
+  Configuration:
+    mdite config             View current configuration
+    mdite init               Create config file
+
+  Global:
+    mdite --help             Main help with exit codes and environment variables
+`;
+```
+
+**Guidelines:**
+
+- Organize by tier (Core workflow, Configuration, Global)
+- Include 3-5 references per command
+- Brief description per reference (2-5 words)
+- Bidirectional links (lint ↔ deps, init ↔ config)
+- All commands reference global help
+
+**Tier Structure:**
+
+- **Core workflow**: lint → deps → files → cat (main feature workflow)
+- **Configuration**: init ↔ config (configuration management)
+- **Global**: All commands reference `mdite --help`
+
+### Registration Pattern
+
+```typescript
+export function myCommand(): Command {
+  return new Command('my-command')
+    .description('Brief one-line description')
+    .addHelpText('after', DESCRIPTION)
+    .argument('<arg>', 'Argument description')
+    .option('--flag', 'Flag description')
+    .addHelpText('after', EXAMPLES)
+    .addHelpText('after', OUTPUT)
+    .addHelpText('after', SEE_ALSO)
+    .action(async (arg, options, command) => {
+      // Implementation
+    });
+}
+```
+
+**Registration order:**
+
+1. DESCRIPTION (after command definition)
+2. Arguments and options
+3. EXAMPLES (after options)
+4. OUTPUT (after examples)
+5. SEE_ALSO (after output)
+
+### Formatting Conventions
+
+- **Indentation**: 6 spaces for examples, 4 spaces for bullet sub-items
+- **Command prefix**: `$` before all command examples
+- **Blank lines**: Between examples, between tier groups in SEE_ALSO
+- **Bullet format**: `-` for main bullets, `•` for sub-items (format options)
+- **Line length**: Aim for 80 characters, wrap longer lines
+- **Escape sequences**: Support `\n`, `\t` in examples (e.g., --separator)
+
+### Checklist for Adding Help Text
+
+When adding or updating command help, verify:
+
+- [ ] DESCRIPTION constant present (1-2 sentences + use cases + features)
+- [ ] EXAMPLES constant present (8-10 examples covering all use cases)
+- [ ] OUTPUT constant present (8-10 bullets covering all output behaviors)
+- [ ] SEE_ALSO constant present (3-5 references organized by tier)
+- [ ] All constants registered via `.addHelpText('after', CONSTANT)`
+- [ ] Registration order correct (DESCRIPTION → args/opts → EXAMPLES → OUTPUT → SEE_ALSO)
+- [ ] Formatting consistent (6-space indent, $ prefix, blank lines)
+- [ ] Cross-references bidirectional (if command references another, that command references back)
+- [ ] Manual test: `mdite [command] --help` displays correctly
+- [ ] Integration test added to `tests/integration/cli-help.test.ts`
+
+### Reference Implementations
+
+**Simple**: `src/commands/init.ts` (~80 lines)
+**Medium**: `src/commands/config.ts` (~90 lines)
+**Complex**: `src/commands/files.ts` (~120 lines)
+
+### Related Documentation
+
+- **Industry patterns**: `scratch/cli-help-improvements/patterns.md` - Analysis of git, docker, npm, ripgrep
+- **Architecture**: `ARCHITECTURE.md` - Unix CLI Integration Patterns section
+- **User docs**: `README.md` - Commands section (keep aligned with help text)
+
 ## Documentation
 
 - Update README.md for user-facing features
