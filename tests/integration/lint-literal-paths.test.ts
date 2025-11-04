@@ -3,6 +3,7 @@ import { createTestDir, writeTestFile } from '../setup.js';
 import { join } from 'path';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { LintError } from '../../src/types/errors.js';
 
 describe('lint command - literal path reporting (integration)', () => {
   let testDir: string;
@@ -88,7 +89,7 @@ describe('lint command - literal path reporting (integration)', () => {
       expect(Array.isArray(errors)).toBe(true);
       expect(errors.length).toBeGreaterThan(0);
 
-      const deadLinkError = errors.find((e: any) => e.rule === 'dead-link');
+      const deadLinkError = errors.find((e: LintError) => e.rule === 'dead-link');
       expect(deadLinkError).toBeDefined();
       expect(deadLinkError.literal).toBe('./missing.md');
       expect(deadLinkError.endColumn).toBeDefined();
@@ -101,7 +102,7 @@ describe('lint command - literal path reporting (integration)', () => {
       const result = runCli(['lint', '--format', 'json']);
 
       const errors = JSON.parse(result.stdout);
-      const error = errors.find((e: any) => e.rule === 'dead-link');
+      const error = errors.find((e: LintError) => e.rule === 'dead-link');
 
       // Verify flat structure (all fields at top level)
       expect(error).toHaveProperty('literal');
@@ -221,10 +222,10 @@ describe('lint command - literal path reporting (integration)', () => {
 
       expect(result.exitCode).toBe(1);
       const errors = JSON.parse(result.stdout);
-      const deadLinks = errors.filter((e: any) => e.rule === 'dead-link');
+      const deadLinks = errors.filter((e: LintError) => e.rule === 'dead-link');
       expect(deadLinks.length).toBe(3);
 
-      deadLinks.forEach((error: any) => {
+      deadLinks.forEach((error: LintError) => {
         expect(error.literal).toBeDefined();
         expect(error.literal).toMatch(/\.\/missing\d\.md/);
         expect(error.endColumn).toBeGreaterThan(error.column);
@@ -238,7 +239,7 @@ describe('lint command - literal path reporting (integration)', () => {
 
       expect(result.exitCode).toBe(1);
       const errors = JSON.parse(result.stdout);
-      const deadLinkError = errors.find((e: any) => e.rule === 'dead-link');
+      const deadLinkError = errors.find((e: LintError) => e.rule === 'dead-link');
 
       expect(deadLinkError).toBeDefined();
       expect(deadLinkError.literal).toContain('./missing.md');
