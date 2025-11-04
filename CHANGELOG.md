@@ -7,15 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Enhanced
+### Added
 
-- **Literal path error reporting**: mdite lint now reports literal link text from source files alongside resolved paths
+- **Grep format for lint output**: New `--format grep` option for machine-parseable, tab-delimited output
+  - Field order: file, line, column, endColumn, severity, ruleId, literal, resolvedPath
+  - Enables automated link fixing with standard Unix tools (cut, awk, sed)
+  - Example: `mdite lint --format grep | cut -d$'\t' -f7` extracts all literal link texts
+  - Colors auto-disabled for machine readability
+  - Fully backward compatible with existing text and JSON formats
+
+- **Literal path error reporting**: mdite lint now captures and reports literal link text from source files
+  - Extended `LintError` interface with three optional fields: `literal`, `endColumn`, `resolvedPath`
   - Text format: Shows `'literal' resolves to 'resolved'` inline for clear understanding
-  - JSON format: Includes `literal`, `endColumn` fields (flat structure, backward compatible)
-  - New grep format: `--format grep` outputs tab-delimited for Unix tool parsing (cut/awk/sed)
-  - Enables automated fix scripts with grep/sed without reverse-engineering paths
-  - Example: `mdite lint --format grep | cut -d$'\t' -f7` extracts all literal paths
-  - All formats maintain backward compatibility with existing parsers
+  - JSON format: Includes all three new fields (flat structure, backward compatible)
+  - LinkValidator captures literal text and position from markdown AST during validation
+  - Enables automated fix scripts without reverse-engineering paths from error messages
+  - Added new workflow section to README.md: "Automated Link Fixing with Grep Format"
+  - Added 11 new integration tests in `tests/integration/lint-literal-paths.test.ts`
+
+- **Enhanced CLI help system**: Comprehensive help documentation following Unix CLI best practices
+  - Added CLI Help Text Standards section to CONTRIBUTING.md (213 lines)
+    - Documents hybrid architecture (shared vs command-specific help)
+    - Provides templates for DESCRIPTION, EXAMPLES, OUTPUT, SEE_ALSO sections
+    - Includes formatting guidelines and pre-merge checklist
+    - References industry patterns from git, docker, npm, and ripgrep
+  - Enhanced help text across all 6 commands with detailed OUTPUT sections (8-10 bullets each)
+  - Improved SEE_ALSO organization using three tiers: Core workflow, Configuration, Global
+  - Expanded ENVIRONMENT_VARS in shared help with detailed descriptions
+  - Added context for NO_COLOR, FORCE_COLOR, CI usage and precedence
+  - Updated integration tests to verify new help structure
+  - Modified 9 files with 403 insertions, maintaining 100% test coverage
+
+### Fixed
+
+- **CI/CD**: Restricted release workflow to main branch only
+  - Added branch filter to workflow trigger (only main branch)
+  - Added verification step to check tag is on main branch
+  - Fetches full git history for branch verification
+  - Prevents accidental releases from feature/develop branches
+
+### Changed
+
+- **Package publishing**: Removed redundant .npmignore file
+  - The .npmignore file was redundant because 'files' field in package.json takes absolute precedence per npm documentation
+  - Establishes package.json 'files' field as single source of truth
+  - Eliminates technical debt and maintainer confusion
+  - No impact on package contents (verified with `npm pack --dry-run`)
+  - Package size remains: 87.6 kB with unchanged file list
 
 ## [1.0.2] - 2025-10-24
 
