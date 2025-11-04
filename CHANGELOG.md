@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CI/CD**: Fixed release workflow test/build order - build now runs before tests (integration tests require compiled `dist/` directory)
+
+### Removed
+
+- **Dependabot**: Removed automated dependency updates (excessive PR noise for solo-maintained project, see CONTRIBUTING.md Dependency Management section)
+
 ## [1.1.0] - 2025-11-04
 
 ### Added
@@ -394,8 +402,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Better alignment with Node.js ESM best practices
 - **CI/CD Security**: Added automated security scanning
   - npm audit check runs on every CI build (fails on high/critical vulnerabilities)
-  - Dependabot configured for weekly npm and GitHub Actions updates
-  - Groups minor/patch updates to reduce PR noise
 - **Code Coverage**: Added Vitest coverage thresholds
   - Minimum 70% coverage required for lines, functions, branches, statements
   - Prevents coverage regression

@@ -143,6 +143,10 @@ npm run format
 npm run validate
 ```
 
+## Dependency Management
+
+This project uses **manual dependency management** (no Dependabot). Dependencies are updated in batches by maintainers. `npm audit` runs in CI/CD and fails on high/critical vulnerabilities. If you discover a vulnerability, open an issue.
+
 ## Development Workflow
 
 ### 1. Fork and Clone
