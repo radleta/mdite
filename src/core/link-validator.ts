@@ -121,6 +121,8 @@ export class LinkValidator {
     visit(ast, 'link', (node: Link) => {
       const url = node.url;
       const position = node.position?.start || { line: 0, column: 0 };
+      const endColumn = node.position?.end?.column;
+      const literal = url; // The URL is the literal text from source
 
       // Skip external links
       if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -129,7 +131,9 @@ export class LinkValidator {
 
       // Check anchor-only links
       if (url.startsWith('#')) {
-        linkChecks.push(this.validateAnchor(url.slice(1), filePath, filePath, position));
+        linkChecks.push(
+          this.validateAnchor(url.slice(1), filePath, filePath, position, literal, endColumn)
+        );
         return;
       }
 
@@ -140,10 +144,17 @@ export class LinkValidator {
         const targetPath = path.resolve(path.dirname(filePath), filePart);
 
         linkChecks.push(
-          this.validateFileLink(targetPath, filePath, position).then(error => {
+          this.validateFileLink(targetPath, filePath, position, literal, endColumn).then(error => {
             // If file link is valid and there's an anchor, check it
             if (!error && anchor) {
-              return this.validateAnchor(anchor, targetPath, filePath, position);
+              return this.validateAnchor(
+                anchor,
+                targetPath,
+                filePath,
+                position,
+                literal,
+                endColumn
+              );
             }
             return error;
           })
@@ -167,13 +178,17 @@ export class LinkValidator {
    * @param targetPath - Absolute path to target file
    * @param sourceFile - Source file containing the link
    * @param position - Line/column position of link in source
+   * @param literal - Literal link text from source file (for error reporting)
+   * @param endColumn - End column position for range extraction
    * @returns LintError if file doesn't exist or external link policy violated, null if valid
    * @private
    */
   private async validateFileLink(
     targetPath: string,
     sourceFile: string,
-    position: { line: number; column: number }
+    position: { line: number; column: number },
+    literal?: string,
+    endColumn?: number
   ): Promise<LintError | null> {
     const targetInScope = this.isWithinScope(targetPath);
 
@@ -187,13 +202,20 @@ export class LinkValidator {
     }
 
     if (!exists) {
+      const resolvedPath = path.relative(this.basePath, targetPath);
+      const message = literal
+        ? `Dead link: '${literal}' resolves to '${resolvedPath}'`
+        : `Dead link: ${resolvedPath}`;
       return {
         rule: 'dead-link',
         severity: 'error',
         file: sourceFile,
         line: position.line,
         column: position.column,
-        message: `Dead link: ${path.relative(this.basePath, targetPath)}`,
+        endColumn,
+        message,
+        literal,
+        resolvedPath,
       };
     }
 
@@ -206,25 +228,41 @@ export class LinkValidator {
         case 'validate':
           return null; // Already validated existence, no warning
 
-        case 'warn':
+        case 'warn': {
+          const resolvedPath = path.relative(this.basePath, targetPath);
+          const message = literal
+            ? `External link (outside scope): '${literal}' resolves to '${resolvedPath}'`
+            : `External link (outside scope): ${resolvedPath}`;
           return {
             rule: 'external-link',
             severity: 'warning',
             file: sourceFile,
             line: position.line,
             column: position.column,
-            message: `External link (outside scope): ${path.relative(this.basePath, targetPath)}`,
+            endColumn,
+            message,
+            literal,
+            resolvedPath,
           };
+        }
 
-        case 'error':
+        case 'error': {
+          const resolvedPath = path.relative(this.basePath, targetPath);
+          const message = literal
+            ? `External link not allowed: '${literal}' resolves to '${resolvedPath}'`
+            : `External link not allowed: ${resolvedPath}`;
           return {
             rule: 'external-link',
             severity: 'error',
             file: sourceFile,
             line: position.line,
             column: position.column,
-            message: `External link not allowed: ${path.relative(this.basePath, targetPath)}`,
+            endColumn,
+            message,
+            literal,
+            resolvedPath,
           };
+        }
       }
     }
 
@@ -241,6 +279,8 @@ export class LinkValidator {
    * @param targetFile - File containing the heading
    * @param sourceFile - Source file containing the link
    * @param position - Line/column position of link in source
+   * @param literal - Literal link text from source file (for error reporting)
+   * @param endColumn - End column position for range extraction
    * @returns LintError if anchor doesn't exist, null if valid
    * @private
    *
@@ -255,7 +295,9 @@ export class LinkValidator {
     anchor: string,
     targetFile: string,
     sourceFile: string,
-    position: { line: number; column: number }
+    position: { line: number; column: number },
+    literal?: string,
+    endColumn?: number
   ): Promise<LintError | null> {
     try {
       // Use cache to get headings
@@ -263,13 +305,20 @@ export class LinkValidator {
       const anchorSlug = slugify(anchor);
 
       if (!headings.includes(anchorSlug)) {
+        const resolvedPath = `#${anchor} in ${path.relative(this.basePath, targetFile)}`;
+        const message = literal
+          ? `Dead anchor: '${literal}' resolves to '${resolvedPath}'`
+          : `Dead anchor: ${resolvedPath}`;
         return {
           rule: 'dead-anchor',
           severity: 'error',
           file: sourceFile,
           line: position.line,
           column: position.column,
-          message: `Dead anchor: #${anchor} in ${path.relative(this.basePath, targetFile)}`,
+          endColumn,
+          message,
+          literal,
+          resolvedPath,
         };
       }
 

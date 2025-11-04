@@ -78,14 +78,38 @@ EXAMPLES:
       $ mdite files --format json | jq '.[] | select(.depth > 3)'
 `;
 
+const OUTPUT = `
+OUTPUT:
+  - Data to stdout (pipeable): File paths (one per line) or JSON array
+  - Messages to stderr (suppressible): Progress messages, errors, file counts
+  - Quiet mode (--quiet): Suppresses stderr messages, keeps only file paths on stdout
+  - Format options (--format):
+      • list: One file path per line (default, perfect for piping)
+      • json: Array of objects with {file, depth, orphan} metadata
+  - Path format: Relative paths by default, use --absolute for full paths
+  - Separator: Newline by default, use --print0 for null-separated (xargs -0)
+  - Color handling: Never uses colors (file paths must be parseable)
+  - Exit codes: 0=success, 1=error, 2=invalid arguments, 130=interrupted
+  - TTY detection: Output always pipe-friendly regardless of terminal
+  - Sorting: --sort alpha/depth/incoming/outgoing controls output order
+  - Frontmatter queries: JMESPath syntax for powerful metadata filtering
+`;
+
 const SEE_ALSO = `
 SEE ALSO:
-  mdite cat     Output file content
-  mdite deps    Analyze dependencies
-  mdite lint    Validate documentation
+  Core workflow:
+    mdite lint               Validate documentation structure
+    mdite deps               Analyze file dependencies
 
-  JMESPath query syntax:
-      https://jmespath.org/
+  Configuration:
+    mdite config             View current configuration
+    mdite init               Create config file
+
+  Global:
+    mdite --help             Main help with exit codes and environment variables
+
+  External:
+    JMESPath query syntax    https://jmespath.org/ (for --frontmatter queries)
 `;
 
 // ============================================================================
@@ -116,6 +140,7 @@ export function filesCommand(): Command {
     .option('--respect-gitignore', 'Respect .gitignore patterns')
     .option('--no-exclude-hidden', "Don't exclude hidden directories")
     .addHelpText('after', EXAMPLES)
+    .addHelpText('after', OUTPUT)
     .addHelpText('after', SEE_ALSO)
     .action(async (options, command) => {
       const globalOpts = command.optsWithGlobals();

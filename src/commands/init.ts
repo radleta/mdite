@@ -27,19 +27,52 @@ DESCRIPTION:
 
 const EXAMPLES = `
 EXAMPLES:
-  Create default config file:
+  Create default config file (mdite.config.js):
       $ mdite init
 
-  Create config with custom path:
+  Create JSON config:
       $ mdite init --config .mditerc.json
 
-  View current configuration:
+  Create YAML config:
+      $ mdite init --config .mditerc.yaml
+
+  Create config in package.json (manual edit required):
+      $ mdite init --config mdite.config.js
+      # Then move config to package.json "mdite": {} section
+
+  Initialize config in monorepo workspace root:
+      $ cd workspace-root
+      $ mdite init
+
+  Override global config with project-specific settings:
+      $ mdite init
+      # Edit mdite.config.js to customize rules, depth, excludes
+
+  CI/CD configuration (restrictive rules):
+      $ mdite init
+      # Edit rules to: orphan-files: 'error', dead-link: 'error'
+
+  Verify config creation and view merged settings:
+      $ mdite init
       $ mdite config
+
+  Development workflow (create, customize, test):
+      $ mdite init
+      $ vim mdite.config.js  # Edit entrypoint, depth, excludes
+      $ mdite lint           # Test configuration
 `;
 
 const SEE_ALSO = `
 SEE ALSO:
-  mdite config  View current configuration
+  Configuration:
+    mdite config --schema    Show all available config options
+    mdite config             View current merged configuration
+
+  Core workflow:
+    mdite lint               Validate documentation with your config
+
+  Global:
+    mdite --help             Main help with exit codes and environment variables
 `;
 
 // ============================================================================

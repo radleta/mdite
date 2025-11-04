@@ -126,7 +126,8 @@ describe('CLI Help Enhancement', () => {
     it('should include see also with JMESPath link', () => {
       const help = getHelp(['files', '--help']);
       expect(help).toContain('SEE ALSO:');
-      expect(help).toContain('JMESPath query syntax:');
+      expect(help).toContain('External:');
+      expect(help).toContain('JMESPath query syntax');
       expect(help).toContain('https://jmespath.org/');
     });
   });

@@ -18,9 +18,20 @@ EXIT CODES:
 
 export const ENVIRONMENT_VARS = `
 ENVIRONMENT:
-  NO_COLOR        Disable colored output (respects no-color.org standard)
-  FORCE_COLOR     Force colored output even when piped
-  CI=true         Auto-disable colors in CI environments
+  NO_COLOR
+      Disable colored output globally (respects no-color.org standard).
+      When set to any value, colors are disabled regardless of TTY detection.
+      Equivalent to --no-colors flag. Takes precedence over FORCE_COLOR.
+
+  FORCE_COLOR
+      Force colored output even when piped to other tools.
+      Useful for debugging or when piping to color-aware tools.
+      Equivalent to --colors flag. Overridden by NO_COLOR.
+
+  CI=true
+      Automatically disables colors in CI/CD environments.
+      Prevents color escape codes in build logs and CI output.
+      Can be overridden with FORCE_COLOR if needed.
 `;
 
 export const CONFIG_PRECEDENCE = `
