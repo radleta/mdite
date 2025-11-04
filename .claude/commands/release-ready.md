@@ -182,8 +182,7 @@ Manual package publishing is a high-risk activity that should be fully automated
 A project's security is only as strong as its weakest dependency. Proactively managing and monitoring dependencies for vulnerabilities is a critical aspect of modern software development.
 
 - **Vulnerability Scanning:** Recommend adding a scheduled GitHub Action or a CI step to run npm audit \--audit-level=high. This command scans the project's dependencies for known vulnerabilities and will fail the build if any high or critical severity issues are found, preventing vulnerable code from being deployed.
-- **Automated Dependency Updates (Dependabot):** Check for the presence of a Dependabot configuration file at .github/dependabot.yml. Dependabot automates the process of keeping dependencies up-to-date by creating pull requests for new versions, which is a key practice for both security and maintenance.
-- **Dependabot Configuration:** Analyze the dependabot.yml file for best practices. It should specify the correct package-ecosystem as npm and the directory as / (for the project root). To manage notification fatigue, recommend setting a reasonable schedule.interval (e.g., weekly) and consider using open-pull-requests-limit to prevent being overwhelmed by a large number of update PRs at once.
+- **Dependency Management:** This project uses manual dependency updates rather than automated tools like Dependabot. This is documented in CONTRIBUTING.md and is acceptable for solo-maintained projects where automated PR overhead outweighs benefits. Security scanning via npm audit still runs in CI/CD.
 
 ## **Audit Section 6: Project Documentation and Community Health**
 
