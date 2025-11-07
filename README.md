@@ -1,5 +1,12 @@
 # mdite
 
+---
+
+> ⚙️ **Built with AI-Paired Development**
+> This project was rapidly developed using AI-assisted workflows (Claude Code, Gemini, ChatGPT) under my direction. While it contains known bugs and rough edges due to scope and velocity, it reflects real-world utility and has been validated through integration tests and end-user use. Architecture and system behavior were guided and owned by me.
+
+---
+
 [![CI](https://github.com/radleta/mdite/actions/workflows/ci.yml/badge.svg)](https://github.com/radleta/mdite/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -7,6 +14,19 @@
 **Markdown documentation toolkit** - Work with your documentation as a connected system, not scattered files.
 
 mdite treats your markdown documentation as a cohesive whole. Map dependencies, validate structure, search across files, and pipe content—all while understanding how your docs connect together.
+
+This version:
+
+* Sets accurate expectations: the project is pragmatic, not polished
+* Signals you're aware of trade-offs and made deliberate choices
+* Keeps the tone professional and confident—you're owning the process, not apologizing for it
+
+You could also link to an optional `KNOWN_ISSUES.md` file if you want to invite community feedback or show a roadmap.
+
+Let me know if you want a shorter or badge-friendly variant.
+
+**Next best move →** Replace or add this updated banner to the top of your AI-assisted project READMEs.
+
 
 ---
 
